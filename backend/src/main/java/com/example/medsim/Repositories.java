@@ -16,7 +16,7 @@ interface SymptomRepository extends JpaRepository<SymptomEntity, UUID> { List<Sy
 interface TriageRepository extends JpaRepository<TriageResult, UUID> { Optional<TriageResult> findByVisitId(UUID visitId); }
 interface AgentRunRepository extends JpaRepository<AgentRun, UUID> { List<AgentRun> findByVisitIdOrderByCreatedAtDesc(UUID visitId); }
 interface CitationRepository extends JpaRepository<CitationEntity, UUID> { List<CitationEntity> findByAgentRunId(UUID runId); }
-interface FollowupPlanRepository extends JpaRepository<FollowupPlan, UUID> { List<FollowupPlan> findByOwnerId(UUID ownerId); }
+interface FollowupPlanRepository extends JpaRepository<FollowupPlan, UUID> { List<FollowupPlan> findByOwnerId(UUID ownerId); boolean existsByVisitId(UUID visitId); }
 interface FollowupTaskRepository extends JpaRepository<FollowupTask, UUID> { List<FollowupTask> findByPlanId(UUID planId); List<FollowupTask> findByAssigneeIdOrderByDueAtAsc(UUID assigneeId); }
 interface SafetyAlertRepository extends JpaRepository<SafetyAlert, UUID> { List<SafetyAlert> findAllByOrderByCreatedAtDesc(); }
 interface AuditRepository extends JpaRepository<AuditLog, UUID> { List<AuditLog> findTop100ByOrderByCreatedAtDesc(); }

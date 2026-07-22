@@ -58,6 +58,6 @@ record AiJobAccepted(String jobId, String runId, String status) {}
 record AiJobStatus(String jobId, String runId, String status, AiResult result, String errorCode, Long durationMs) {}
 record AiResult(String caseSummary, Urgency proposedUrgency, List<String> rationale, List<String> missingQuestions,
                 List<AiCitation> citations, AiSafety safety, String disclaimer, String provider, String model,
-                String outputHash, Map<String, String> versions) {}
-record AiCitation(String guidelineId, String chunkId, String claimKey, String quote, String title, String section) {}
+                String outputHash, Map<String, String> versions, List<String> agentTrace) {}
+record AiCitation(String guidelineId, String chunkId, String claimKey, String quote, String title, String section, String sourceUrl, String licenseNote) {}
 record AiSafety(String decision, List<String> reasonCodes) {}

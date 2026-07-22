@@ -1,0 +1,22 @@
+.symptom-editor{padding:14px;border-bottom:1px solid var(--line)}
+.symptom-editor:last-child{border:0}
+.symptom-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.severity-row{display:grid;grid-template-columns:100px 1fr auto;align-items:center;gap:12px;margin-top:10px;font-size:11px;color:var(--muted)}
+.button-row,.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.top-gap{margin-top:18px}
+.inline-fields.three{grid-template-columns:160px 180px 1fr}
+.decision-banner{padding:12px;background:#eef6ff;color:#375b89;border-radius:10px;margin-bottom:12px}
+.license{font-size:10px!important;color:var(--muted);margin-bottom:0!important}
+.result-summary{padding:8px;background:#f2f6f4;border-radius:8px}
+.pagination{justify-content:center;margin-top:20px}
+.knowledge-panel{margin-bottom:20px}
+.guideline-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.guideline-card{border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.guideline-card p,.guideline-card a,.guideline-card small,.guideline-card code{display:block;font-size:10px;margin-top:8px;overflow-wrap:anywhere}
+.guideline-card a{color:var(--green)}
+.guideline-card small{color:var(--muted)}
+.trace-row{border-bottom:1px solid var(--line);padding:12px}
+.trace-row summary{display:grid;grid-template-columns:1.2fr 1fr auto;align-items:center;gap:10px;cursor:pointer;font-size:11px}
+.trace-row ol,.trace-row p{font-size:11px;color:var(--muted);line-height:1.8}
+@media(max-width:900px){.guideline-grid{grid-template-columns:1fr}.inline-fields.three{grid-template-columns:1fr}}
+@media(max-width:640px){.symptom-fields,.severity-row{grid-template-columns:1fr}.trace-row summary{grid-template-columns:1fr auto}.trace-row summary span{display:none}}

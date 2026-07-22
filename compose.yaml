@@ -41,21 +41,6 @@ services:
       retries: 20
     restart: unless-stopped
 
-  minio-init:
-    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
-    depends_on:
-      minio: {condition: service_healthy}
-    environment:
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-change-me-local-only}
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - >-
-        mc alias set local http://minio:9000 "$${MINIO_ACCESS_KEY}" "$${MINIO_SECRET_KEY}" &&
-        mc mb --ignore-existing local/guidelines &&
-        mc mb --ignore-existing local/artifacts
-    restart: "no"
-
   ai-api:
     build: {context: ./ai-service}
     environment: &ai-env
@@ -66,6 +51,7 @@ services:
       AI_API_KEY: ${AI_API_KEY:-}
       REDIS_URL: redis://redis:6379/0
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-change-me-local-only}
+      KNOWLEDGE_BASE_URL: http://backend:8080/internal/v1/knowledge/search
     depends_on:
       redis: {condition: service_healthy}
     healthcheck:
@@ -98,8 +84,15 @@ services:
       AI_BASE_URL: http://ai-api:8000
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-change-me-local-only}
       AI_JOB_TIMEOUT_SECONDS: ${AI_JOB_TIMEOUT_SECONDS:-10}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-change-me-local-only}
+      MINIO_BUCKET_GUIDELINES: ${MINIO_BUCKET_GUIDELINES:-guidelines}
+      MINIO_BUCKET_ARTIFACTS: ${MINIO_BUCKET_ARTIFACTS:-artifacts}
+      KNOWLEDGE_SEED_ENABLED: "true"
     depends_on:
       postgres: {condition: service_healthy}
+      minio: {condition: service_healthy}
       ai-api: {condition: service_healthy}
       ai-worker: {condition: service_healthy}
     healthcheck:

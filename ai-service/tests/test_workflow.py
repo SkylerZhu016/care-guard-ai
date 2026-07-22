@@ -1,5 +1,5 @@
-from app.guardrails import inspect_input, validate_citations
-from app.knowledge import VALID_CHUNK_IDS
+from app.guardrails import inspect_input, inspect_output, validate_citations
+from app.knowledge import TEST_FALLBACK
 from app.schemas import AnalysisRequest
 from app.workflow import analyze
 
@@ -21,7 +21,13 @@ def test_fake_provider_is_deterministic_and_cited():
     assert first.outputHash == second.outputHash
     assert first.proposedUrgency.value == "EMERGENCY"
     assert first.safety.decision.value == "PASS"
-    assert validate_citations([c.chunkId for c in first.citations], VALID_CHUNK_IDS)
+    assert validate_citations([c.chunkId for c in first.citations], {item["chunkId"] for item in TEST_FALLBACK})
+    assert first.agentTrace == [
+        "InputGuardAgent:COMPLETED", "EvidenceRetrieverAgent:COMPLETED",
+        "ClinicalSummaryAgent:COMPLETED", "SafetyCriticAgent:COMPLETED",
+        "CitationVerifierAgent:COMPLETED",
+    ]
+    assert first.citations[0].sourceUrl.startswith("https://")
 
 
 def test_prompt_attack_is_blocked_but_rule_level_remains():
@@ -42,4 +48,9 @@ def test_routine_case_remains_reviewable():
     ))
     assert result.proposedUrgency.value == "ROUTINE"
     assert result.disclaimer.startswith("仅用于教学模拟")
+
+
+def test_output_guard_blocks_diagnosis_and_dosage_language():
+    reasons = inspect_output(["已经确诊为高血压疾病", "每天服用 20mg"])
+    assert "AI_OUTPUT_SCOPE_VIOLATION" in reasons
 

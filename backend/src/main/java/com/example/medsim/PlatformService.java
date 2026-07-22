@@ -11,30 +11,32 @@ import java.util.*;
 
 @Service
 class PlatformService {
-    private static final Set<String> VALID_CHUNKS = Set.of("chunk-red-flag-chest-pain-001", "chunk-red-flag-consciousness-001", "chunk-routine-followup-001");
+    private static final Set<String> VALID_TEMPLATES = Set.of("HYPERTENSION_TEACHING_V1");
     private final VisitRepository visits; private final SymptomRepository symptoms; private final TriageRepository triage;
     private final AgentRunRepository runs; private final CitationRepository citations; private final FollowupPlanRepository plans;
     private final FollowupTaskRepository tasks; private final SafetyAlertRepository alerts; private final AuditRepository audits;
     private final UserRepository users; private final RuleEngine rules; private final AiClient ai; private final ObjectMapper mapper;
+    private final PrivacySanitizer privacy; private final KnowledgeService knowledge;
 
     PlatformService(VisitRepository visits, SymptomRepository symptoms, TriageRepository triage, AgentRunRepository runs,
                     CitationRepository citations, FollowupPlanRepository plans, FollowupTaskRepository tasks,
                     SafetyAlertRepository alerts, AuditRepository audits, UserRepository users, RuleEngine rules,
-                    AiClient ai, ObjectMapper mapper) {
+                    AiClient ai, ObjectMapper mapper, PrivacySanitizer privacy, KnowledgeService knowledge) {
         this.visits=visits; this.symptoms=symptoms; this.triage=triage; this.runs=runs; this.citations=citations;
         this.plans=plans; this.tasks=tasks; this.alerts=alerts; this.audits=audits; this.users=users; this.rules=rules; this.ai=ai; this.mapper=mapper;
+        this.privacy=privacy; this.knowledge=knowledge;
     }
 
     @Transactional
     VisitView createVisit(AuthPrincipal actor, VisitInput input) {
-        var visit = new Visit(); visit.id=UUID.randomUUID(); visit.ownerId=actor.id(); visit.chiefComplaint=input.chiefComplaint(); visit.freeText=clean(input.freeText());
+        var visit = new Visit(); visit.id=UUID.randomUUID(); visit.ownerId=actor.id(); visit.chiefComplaint=privacy.sanitize(input.chiefComplaint()); visit.freeText=privacy.sanitize(input.freeText());
         visits.save(visit); replaceSymptoms(visit.id, input.symptoms()); audit(actor.id(), "VISIT_CREATED", "VISIT", visit.id, "SUCCESS", Map.of("synthetic", true));
         return view(visit);
     }
 
     @Transactional
     VisitView updateIntake(AuthPrincipal actor, UUID visitId, VisitInput input) {
-        var visit = ownedDraft(actor, visitId); visit.chiefComplaint=input.chiefComplaint(); visit.freeText=clean(input.freeText());
+        var visit = ownedDraft(actor, visitId); visit.chiefComplaint=privacy.sanitize(input.chiefComplaint()); visit.freeText=privacy.sanitize(input.freeText());
         replaceSymptoms(visit.id, input.symptoms()); audit(actor.id(), "VISIT_INTAKE_UPDATED", "VISIT", visit.id, "SUCCESS", Map.of());
         return view(visit);
     }
@@ -82,10 +84,13 @@ class PlatformService {
         var visit=visits.findById(result.visitId).orElseThrow(ApiException::notFound);
         if (visit.status!=VisitStatus.PENDING_REVIEW) throw ApiException.conflict("VISIT_INVALID_TRANSITION", "病例不在待审核状态");
         Urgency requested=input.finalUrgency()==null ? (result.aiUrgency==null?result.ruleUrgency:result.aiUrgency) : input.finalUrgency();
-        if (requested.ordinal()<result.ruleUrgency.ordinal()) throw ApiException.conflict("TRIAGE_RULE_DOWNGRADE_FORBIDDEN", "最终等级不能低于规则等级");
-        result.finalUrgency=requested; result.reviewDecision=input.decision(); result.reviewReason=input.reason(); result.reviewerId=actor.id(); result.reviewedAt=OffsetDateTime.now();
-        triage.save(result); transition(visit, VisitStatus.REVIEWED); visits.save(visit);
-        audit(actor.id(), "TRIAGE_REVIEWED", "TRIAGE_RESULT", result.id, "SUCCESS", Map.of("decision", input.decision(), "finalUrgency", requested.name()));
+        if (input.decision()!=ReviewDecision.REJECT && requested.ordinal()<result.ruleUrgency.ordinal()) throw ApiException.conflict("TRIAGE_RULE_DOWNGRADE_FORBIDDEN", "最终等级不能低于规则等级");
+        result.finalUrgency=input.decision()==ReviewDecision.REJECT?null:requested; result.reviewDecision=input.decision(); result.reviewReason=privacy.sanitize(input.reason()); result.reviewerId=actor.id(); result.reviewedAt=OffsetDateTime.now();
+        triage.save(result);
+        if (input.decision()==ReviewDecision.REJECT) transition(visit, VisitStatus.REJECTED); else transition(visit, VisitStatus.REVIEWED);
+        visits.save(visit);
+        var metadata=new LinkedHashMap<String,Object>(); metadata.put("decision",input.decision().name()); if(result.finalUrgency!=null) metadata.put("finalUrgency",result.finalUrgency.name());
+        audit(actor.id(), input.decision()==ReviewDecision.REJECT?"TRIAGE_REJECTED":"TRIAGE_REVIEWED", "TRIAGE_RESULT", result.id, "SUCCESS", metadata);
         return view(visit);
     }
 
@@ -93,8 +98,9 @@ class PlatformService {
     PlanView createPlan(AuthPrincipal actor, PlanInput input) {
         var visit=visits.findById(input.visitId()).orElseThrow(ApiException::notFound);
         if (visit.status!=VisitStatus.REVIEWED) throw ApiException.conflict("FOLLOWUP_REQUIRES_REVIEW", "病例审核后才能创建随访计划");
-        var plan=new FollowupPlan(); plan.id=UUID.randomUUID(); plan.visitId=visit.id; plan.ownerId=visit.ownerId;
-        if (input.templateCode()!=null && !input.templateCode().isBlank()) plan.templateCode=input.templateCode();
+        if (!VALID_TEMPLATES.contains(input.templateCode())) throw new ApiException(HttpStatus.BAD_REQUEST, "FOLLOWUP_TEMPLATE_UNKNOWN", "未知的随访计划模板");
+        if (plans.existsByVisitId(visit.id)) throw ApiException.conflict("FOLLOWUP_PLAN_ALREADY_EXISTS", "该病例已经创建随访计划");
+        var plan=new FollowupPlan(); plan.id=UUID.randomUUID(); plan.visitId=visit.id; plan.ownerId=visit.ownerId; plan.templateCode=input.templateCode();
         plans.save(plan); audit(actor.id(), "FOLLOWUP_PLAN_CREATED", "FOLLOWUP_PLAN", plan.id, "SUCCESS", Map.of("template", plan.templateCode));
         return planView(plan);
     }
@@ -127,8 +133,11 @@ class PlatformService {
     TaskView updateTask(AuthPrincipal actor, UUID taskId, TaskUpdate input) {
         var task=tasks.findById(taskId).orElseThrow(ApiException::notFound);
         if (!Objects.equals(task.assigneeId, actor.id())) throw ApiException.forbidden();
-        if (input.status()!=TaskStatus.IN_PROGRESS && input.status()!=TaskStatus.COMPLETED) throw ApiException.conflict("FOLLOWUP_TASK_INVALID_TRANSITION", "随访人员只能开始或完成任务");
-        task.status=input.status(); task.resultSummary=clean(input.resultSummary()); if(task.status==TaskStatus.COMPLETED) task.completedAt=OffsetDateTime.now();
+        boolean start=task.status==TaskStatus.PENDING && input.status()==TaskStatus.IN_PROGRESS;
+        boolean complete=task.status==TaskStatus.IN_PROGRESS && input.status()==TaskStatus.COMPLETED;
+        if (!start && !complete) throw ApiException.conflict("FOLLOWUP_TASK_INVALID_TRANSITION", "任务只允许待执行→进行中→已完成");
+        if (complete && (input.resultSummary()==null || input.resultSummary().isBlank())) throw new ApiException(HttpStatus.BAD_REQUEST,"FOLLOWUP_RESULT_REQUIRED","完成任务必须填写结果摘要");
+        task.status=input.status(); task.resultSummary=privacy.sanitize(input.resultSummary()); if(task.status==TaskStatus.COMPLETED) task.completedAt=OffsetDateTime.now();
         tasks.save(task); audit(actor.id(), "FOLLOWUP_TASK_UPDATED", "FOLLOWUP_TASK", task.id, "SUCCESS", Map.of("status", task.status.name()));
         return taskView(task);
     }
@@ -136,6 +145,9 @@ class PlatformService {
     @Transactional(readOnly = true) List<AlertView> listAlerts() { return alerts.findAllByOrderByCreatedAtDesc().stream().map(this::alertView).toList(); }
     @Transactional(readOnly = true) List<AuditView> listAudits() { return audits.findTop100ByOrderByCreatedAtDesc().stream().map(this::auditView).toList(); }
     @Transactional(readOnly = true) List<AgentRunView> listRuns() { return runs.findAll().stream().sorted(Comparator.comparing((AgentRun r)->r.createdAt).reversed()).map(this::runView).toList(); }
+    @Transactional(readOnly = true) List<GuidelineView> listGuidelines() { return knowledge.listGuidelines(); }
+    @Transactional void reindexGuidelines(AuthPrincipal actor) { knowledge.reindexKnowledge(); audit(actor.id(),"KNOWLEDGE_REINDEXED","KNOWLEDGE_BASE",null,"SUCCESS",Map.of("source","official-web-corpus")); }
+    @Transactional void activateGuideline(AuthPrincipal actor,String guidelineId,String versionId) { knowledge.activateVersion(guidelineId,versionId); audit(actor.id(),"KNOWLEDGE_VERSION_ACTIVATED","GUIDELINE_VERSION",null,"SUCCESS",Map.of("guidelineId",guidelineId,"versionId",versionId)); }
 
     private void runAi(Visit visit, List<SymptomEntity> symptomEntities, RuleOutcome outcome, TriageResult triageResult, UUID actor) {
         String runId="run-"+UUID.randomUUID(); var run=new AgentRun(); run.id=UUID.randomUUID(); run.runId=runId; run.visitId=visit.id; run.status="QUEUED"; runs.save(run);
@@ -144,13 +156,14 @@ class PlatformService {
             if(job.result()!=null) {
                 var result=job.result();
                 if (result.proposedUrgency().ordinal()<outcome.urgency().ordinal()) throw new IllegalStateException("AI_RULE_DOWNGRADE");
-                if (result.citations()==null || result.citations().isEmpty() || result.citations().stream().anyMatch(c->!VALID_CHUNKS.contains(c.chunkId()))) throw new IllegalStateException("AI_INVALID_CITATION");
+                if (result.citations()==null || result.citations().isEmpty() || result.citations().stream().anyMatch(c->!knowledge.isActiveChunk(c.chunkId()))) throw new IllegalStateException("AI_INVALID_CITATION");
                 run.provider=result.provider(); run.modelName=result.model(); run.outputHash=result.outputHash(); run.safetyDecision=result.safety().decision();
                 run.safetyReasonCodes=String.join(",", result.safety().reasonCodes());
+                run.agentTrace=result.agentTrace()==null?"":String.join(",",result.agentTrace());
                 if(result.versions()!=null){ run.promptVersion=result.versions().getOrDefault("prompt",run.promptVersion); run.knowledgeBaseVersion=result.versions().getOrDefault("knowledgeBase",run.knowledgeBaseVersion); run.ruleSetVersion=result.versions().getOrDefault("rules",run.ruleSetVersion); }
                 triageResult.aiUrgency=rules.max(outcome.urgency(), result.proposedUrgency()); triageResult.aiSummary=result.caseSummary(); triage.save(triageResult);
                 runs.save(run);
-                for(var item:result.citations()){ var c=new CitationEntity(); c.id=UUID.randomUUID(); c.agentRunId=run.id; c.guidelineId=item.guidelineId(); c.chunkId=item.chunkId(); c.claimKey=item.claimKey(); c.title=item.title(); c.section=item.section(); c.quote=item.quote(); citations.save(c); }
+                for(var item:result.citations()){ var c=new CitationEntity(); c.id=UUID.randomUUID(); c.agentRunId=run.id; c.guidelineId=item.guidelineId(); c.chunkId=item.chunkId(); c.claimKey=item.claimKey(); c.title=item.title(); c.section=item.section(); c.quote=item.quote(); c.sourceUrl=item.sourceUrl(); c.licenseNote=item.licenseNote(); citations.save(c); }
                 if(!"PASS".equals(result.safety().decision())) createAlert(run, visit, result.safety().reasonCodes(), "AI_SAFETY_BLOCK");
             } else { run.errorCode=job.errorCode(); runs.save(run); }
         } catch(Exception ex) {
@@ -165,14 +178,13 @@ class PlatformService {
     }
     private void transition(Visit visit, VisitStatus target) { if(!rules.canTransition(visit.status,target)) throw ApiException.conflict("VISIT_INVALID_TRANSITION", "不允许的病例状态迁移"); visit.status=target; }
     private Visit ownedDraft(AuthPrincipal actor, UUID id) { var v=visits.findById(id).orElseThrow(ApiException::notFound); if(!v.ownerId.equals(actor.id())) throw ApiException.notFound(); if(v.status!=VisitStatus.DRAFT) throw ApiException.conflict("VISIT_NOT_EDITABLE", "只有草稿可编辑"); return v; }
-    private void replaceSymptoms(UUID visitId, List<SymptomInput> input) { symptoms.deleteByVisitId(visitId); for(var item:input){ var s=new SymptomEntity(); s.id=UUID.randomUUID(); s.visitId=visitId; s.code=item.code(); s.name=item.name(); s.severity=item.severity(); s.onset=item.onset(); symptoms.save(s); } }
+    private void replaceSymptoms(UUID visitId, List<SymptomInput> input) { symptoms.deleteByVisitId(visitId); for(var item:input){ var s=new SymptomEntity(); s.id=UUID.randomUUID(); s.visitId=visitId; s.code=item.code(); s.name=privacy.sanitize(item.name()); s.severity=item.severity(); s.onset=privacy.sanitize(item.onset()); symptoms.save(s); } }
     private void createTask(FollowupPlan plan, UUID assignee, String code, String title, int dueDays) { var t=new FollowupTask(); t.id=UUID.randomUUID(); t.planId=plan.id; t.assigneeId=assignee; t.taskCode=code; t.title=title; t.dueAt=OffsetDateTime.now().plusDays(dueDays); tasks.save(t); }
-    private String clean(String value) { return value==null?"":value.replaceAll("[\\p{Cntrl}&&[^\\n\\t]]","").strip(); }
     private List<String> split(String value) { return value==null||value.isBlank()?List.of():Arrays.stream(value.split(",")).filter(s->!s.isBlank()).toList(); }
     private SymptomInput symptomInput(SymptomEntity s){ return new SymptomInput(s.code,s.name,s.severity,s.onset); }
     private VisitView view(Visit v){ var tr=triage.findByVisitId(v.id).map(this::triageView).orElse(null); return new VisitView(v.id,v.ownerId,v.status,v.chiefComplaint,v.freeText,symptoms.findByVisitId(v.id).stream().map(this::symptomInput).toList(),tr,runs.findByVisitIdOrderByCreatedAtDesc(v.id).stream().map(this::runView).toList(),v.createdAt,v.submittedAt); }
     private TriageView triageView(TriageResult t){ return new TriageView(t.id,t.ruleUrgency,t.aiUrgency,t.finalUrgency,split(t.ruleReasonCodes),t.aiSummary,t.reviewDecision,t.reviewReason); }
-    private AgentRunView runView(AgentRun r){ return new AgentRunView(r.runId,r.status,r.provider,r.modelName,r.safetyDecision,split(r.safetyReasonCodes),r.durationMs,r.errorCode,citations.findByAgentRunId(r.id).stream().map(c->new CitationView(c.guidelineId,c.chunkId,c.claimKey,c.title,c.section,c.quote)).toList()); }
+    private AgentRunView runView(AgentRun r){ return new AgentRunView(r.runId,r.status,r.provider,r.modelName,r.safetyDecision,split(r.safetyReasonCodes),split(r.agentTrace),r.durationMs,r.errorCode,citations.findByAgentRunId(r.id).stream().map(c->new CitationView(c.guidelineId,c.chunkId,c.claimKey,c.title,c.section,c.quote,c.sourceUrl,c.licenseNote)).toList()); }
     private PlanView planView(FollowupPlan p){ return new PlanView(p.id,p.visitId,p.status,p.templateCode,p.activatedAt,tasks.findByPlanId(p.id).stream().map(this::taskView).toList()); }
     private TaskView taskView(FollowupTask t){ return new TaskView(t.id,t.planId,t.taskCode,t.title,t.dueAt,t.status,t.resultSummary); }
     private AlertView alertView(SafetyAlert a){ return new AlertView(a.id,a.runId,a.visitId,a.category,a.severity,split(a.reasonCodes),a.redactedSummary,a.status,a.createdAt); }

@@ -16,7 +16,7 @@ class PlatformController {
 
     @PostMapping("/visits") @PreAuthorize("hasRole('SIMULATED_PATIENT')") VisitView create(Authentication auth,@Valid @RequestBody VisitInput body){return service.createVisit(actor(auth),body);}
     @PutMapping("/visits/{id}/intake") @PreAuthorize("hasRole('SIMULATED_PATIENT')") VisitView update(Authentication auth,@PathVariable UUID id,@Valid @RequestBody VisitInput body){return service.updateIntake(actor(auth),id,body);}
-    @PostMapping("/visits/{id}/submit") @PreAuthorize("hasRole('SIMULATED_PATIENT')") VisitView submit(Authentication auth,@PathVariable UUID id,@RequestHeader("Idempotency-Key") String key){return service.submit(actor(auth),id,key);}
+    @PostMapping("/visits/{id}/submit") @PreAuthorize("hasRole('SIMULATED_PATIENT')") VisitView submit(Authentication auth,@PathVariable UUID id,@RequestHeader(value="Idempotency-Key",required=false) String key){return service.submit(actor(auth),id,key);}
     @GetMapping("/visits/mine") @PreAuthorize("hasRole('SIMULATED_PATIENT')") List<VisitView> mine(Authentication auth){return service.myVisits(actor(auth));}
     @GetMapping("/visits/{id}") VisitView visit(Authentication auth,@PathVariable UUID id){return service.getVisit(actor(auth),id);}
 
@@ -31,5 +31,8 @@ class PlatformController {
     @GetMapping("/admin/safety-alerts") @PreAuthorize("hasRole('ADMIN')") List<AlertView> alerts(){return service.listAlerts();}
     @GetMapping("/admin/audit-logs") @PreAuthorize("hasRole('ADMIN')") List<AuditView> audits(){return service.listAudits();}
     @GetMapping("/admin/agent-runs") @PreAuthorize("hasRole('ADMIN')") List<AgentRunView> runs(){return service.listRuns();}
+    @GetMapping("/admin/guidelines") @PreAuthorize("hasRole('ADMIN')") List<GuidelineView> guidelines(){return service.listGuidelines();}
+    @PostMapping("/admin/guidelines/reindex") @PreAuthorize("hasRole('ADMIN')") void reindex(Authentication auth){service.reindexGuidelines(actor(auth));}
+    @PostMapping("/admin/guidelines/{guidelineId}/versions/{versionId}/activate") @PreAuthorize("hasRole('ADMIN')") void activateGuideline(Authentication auth,@PathVariable String guidelineId,@PathVariable String versionId){service.activateGuideline(actor(auth),guidelineId,versionId);}
 }
 

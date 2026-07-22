@@ -7,6 +7,7 @@ import java.util.UUID;
 enum Role { SIMULATED_PATIENT, CLINICIAN, FOLLOWUP_STAFF, ADMIN }
 enum VisitStatus { DRAFT, SUBMITTED, PROCESSING, PENDING_REVIEW, REVIEWED, FOLLOWUP_ACTIVE, CLOSED, REJECTED }
 enum Urgency { ROUTINE, URGENT, EMERGENCY }
+enum ReviewDecision { ACCEPT, MODIFY, REJECT }
 enum PlanStatus { DRAFT, ACTIVE, PAUSED, COMPLETED, CANCELLED }
 enum TaskStatus { PENDING, IN_PROGRESS, COMPLETED, OVERDUE, CANCELLED }
 
@@ -59,7 +60,7 @@ class TriageResult {
     @Enumerated(EnumType.STRING) @Column(name = "final_urgency") Urgency finalUrgency;
     @Column(name = "rule_reason_codes", nullable = false) String ruleReasonCodes;
     @Column(name = "ai_summary") String aiSummary;
-    @Column(name = "review_decision") String reviewDecision;
+    @Enumerated(EnumType.STRING) @Column(name = "review_decision") ReviewDecision reviewDecision;
     @Column(name = "review_reason") String reviewReason;
     @Column(name = "reviewer_id") UUID reviewerId;
     @Column(name = "reviewed_at") OffsetDateTime reviewedAt;
@@ -82,6 +83,7 @@ class AgentRun {
     @Column(name = "safety_reason_codes") String safetyReasonCodes;
     @Column(name = "duration_ms") Long durationMs;
     @Column(name = "error_code") String errorCode;
+    @Column(name = "agent_trace") String agentTrace;
     @Column(name = "created_at", nullable = false) OffsetDateTime createdAt = OffsetDateTime.now();
 }
 
@@ -95,6 +97,8 @@ class CitationEntity {
     @Column(nullable = false) String title;
     @Column(name = "section_name", nullable = false) String section;
     @Column(name = "quote_text", nullable = false) String quote;
+    @Column(name = "source_url") String sourceUrl;
+    @Column(name = "license_note") String licenseNote;
 }
 
 @Entity @Table(name = "followup_plans")

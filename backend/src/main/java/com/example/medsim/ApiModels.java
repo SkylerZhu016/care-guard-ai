@@ -9,18 +9,23 @@ import java.util.UUID;
 record LoginRequest(@NotBlank String username, @NotBlank String password) {}
 record AuthResponse(String accessToken, String tokenType, long expiresIn, UserView user) {}
 record UserView(UUID id, String username, String displayName, Role role) {}
-record SymptomInput(@NotBlank String code, @NotBlank String name, @Min(0) @Max(10) int severity, String onset) {}
+record SymptomInput(@NotBlank @Pattern(regexp="[A-Z][A-Z0-9_]{1,59}") String code, @NotBlank @Size(max=100) String name, @Min(0) @Max(10) int severity, @Size(max=100) String onset) {}
 record VisitInput(@NotBlank @Size(max=500) String chiefComplaint, @Size(max=2000) String freeText, @NotEmpty List<@Valid SymptomInput> symptoms) {}
-record ReviewInput(@NotBlank String decision, @NotBlank @Size(max=1000) String reason, Urgency finalUrgency) {}
-record PlanInput(@NotNull UUID visitId, String templateCode) {}
+record ReviewInput(@NotNull ReviewDecision decision, @NotBlank @Size(max=1000) String reason, Urgency finalUrgency) {}
+record PlanInput(@NotNull UUID visitId, @NotBlank String templateCode) {}
 record TaskUpdate(@NotNull TaskStatus status, @Size(max=1000) String resultSummary) {}
 record RuleOutcome(Urgency urgency, List<String> reasonCodes) {}
-record CitationView(String guidelineId, String chunkId, String claimKey, String title, String section, String quote) {}
-record AgentRunView(String runId, String status, String provider, String model, String safetyDecision, List<String> safetyReasons, Long durationMs, String errorCode, List<CitationView> citations) {}
-record TriageView(UUID id, Urgency ruleUrgency, Urgency aiUrgency, Urgency finalUrgency, List<String> ruleReasons, String aiSummary, String reviewDecision, String reviewReason) {}
+record CitationView(String guidelineId, String chunkId, String claimKey, String title, String section, String quote, String sourceUrl, String licenseNote) {}
+record AgentRunView(String runId, String status, String provider, String model, String safetyDecision, List<String> safetyReasons, List<String> agentTrace, Long durationMs, String errorCode, List<CitationView> citations) {}
+record TriageView(UUID id, Urgency ruleUrgency, Urgency aiUrgency, Urgency finalUrgency, List<String> ruleReasons, String aiSummary, ReviewDecision reviewDecision, String reviewReason) {}
 record VisitView(UUID id, UUID ownerId, VisitStatus status, String chiefComplaint, String freeText, List<SymptomInput> symptoms, TriageView triage, List<AgentRunView> runs, OffsetDateTime createdAt, OffsetDateTime submittedAt) {}
 record PlanView(UUID id, UUID visitId, PlanStatus status, String templateCode, OffsetDateTime activatedAt, List<TaskView> tasks) {}
 record TaskView(UUID id, UUID planId, String taskCode, String title, OffsetDateTime dueAt, TaskStatus status, String resultSummary) {}
 record AlertView(UUID id, String runId, UUID visitId, String category, String severity, List<String> reasonCodes, String redactedSummary, String status, OffsetDateTime createdAt) {}
 record AuditView(UUID id, String action, String targetType, UUID targetId, String requestId, String result, String metadata, OffsetDateTime createdAt) {}
+record KnowledgeSearchInput(@NotEmpty List<@NotBlank String> symptomCodes, @NotBlank @Size(max=500) String query, @Min(1) @Max(8) int limit) {}
+record KnowledgeChunkView(String guidelineId, String versionId, String chunkId, String title, String section, String quote, String sourceUrl, String licenseNote, double score) {}
+record GuidelineView(String guidelineId, String title, String publisher, String sourceUrl, String licenseNote,
+                     String activeVersion, long chunkCount, String objectKey, OffsetDateTime fetchedAt,
+                     String contentSha256, String sourceStatus, String retrievalMethod) {}
 

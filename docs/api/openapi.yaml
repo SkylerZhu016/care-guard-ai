@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: 基层医疗安全型预问诊与随访平台 API
-  version: 1.0.0
+  version: 1.1.0
 servers:
 - url: http://localhost:18088
   description: 本地 Compose 统一入口
@@ -31,6 +31,32 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/VisitView"
+  /internal/v1/knowledge/search:
+    post:
+      tags:
+      - knowledge-controller
+      operationId: search
+      parameters:
+      - name: X-Internal-Token
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KnowledgeSearchInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KnowledgeChunkView"
   /api/v1/visits:
     post:
       tags:
@@ -63,7 +89,7 @@ paths:
           format: uuid
       - name: Idempotency-Key
         in: header
-        required: true
+        required: false
         schema:
           type: string
       responses:
@@ -153,6 +179,33 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/AuthResponse"
+  /api/v1/admin/guidelines/{guidelineId}/versions/{versionId}/activate:
+    post:
+      tags:
+      - platform-controller
+      operationId: activateGuideline
+      parameters:
+      - name: guidelineId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: versionId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+  /api/v1/admin/guidelines/reindex:
+    post:
+      tags:
+      - platform-controller
+      operationId: reindex
+      responses:
+        "200":
+          description: OK
   /api/v1/followup-tasks/{id}:
     patch:
       tags:
@@ -265,6 +318,20 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AlertView"
+  /api/v1/admin/guidelines:
+    get:
+      tags:
+      - platform-controller
+      operationId: guidelines
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GuidelineView"
   /api/v1/admin/audit-logs:
     get:
       tags:
@@ -301,9 +368,11 @@ components:
         code:
           type: string
           minLength: 1
+          pattern: "[A-Z][A-Z0-9_]{1,59}"
         name:
           type: string
-          minLength: 1
+          maxLength: 100
+          minLength: 0
         severity:
           type: integer
           format: int32
@@ -311,6 +380,8 @@ components:
           minimum: 0
         onset:
           type: string
+          maxLength: 100
+          minLength: 0
       required:
       - code
       - name
@@ -350,6 +421,10 @@ components:
           type: array
           items:
             type: string
+        agentTrace:
+          type: array
+          items:
+            type: string
         durationMs:
           type: integer
           format: int64
@@ -373,6 +448,10 @@ components:
         section:
           type: string
         quote:
+          type: string
+        sourceUrl:
+          type: string
+        licenseNote:
           type: string
     TriageView:
       type: object
@@ -406,6 +485,10 @@ components:
           type: string
         reviewDecision:
           type: string
+          enum:
+          - ACCEPT
+          - MODIFY
+          - REJECT
         reviewReason:
           type: string
     VisitView:
@@ -448,12 +531,58 @@ components:
         submittedAt:
           type: string
           format: date-time
+    KnowledgeSearchInput:
+      type: object
+      properties:
+        symptomCodes:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          minItems: 1
+        query:
+          type: string
+          maxLength: 500
+          minLength: 0
+        limit:
+          type: integer
+          format: int32
+          maximum: 8
+          minimum: 1
+      required:
+      - query
+      - symptomCodes
+    KnowledgeChunkView:
+      type: object
+      properties:
+        guidelineId:
+          type: string
+        versionId:
+          type: string
+        chunkId:
+          type: string
+        title:
+          type: string
+        section:
+          type: string
+        quote:
+          type: string
+        sourceUrl:
+          type: string
+        licenseNote:
+          type: string
+        score:
+          type: number
+          format: double
     ReviewInput:
       type: object
       properties:
         decision:
           type: string
-          minLength: 1
+          enum:
+          - ACCEPT
+          - MODIFY
+          - REJECT
         reason:
           type: string
           maxLength: 1000
@@ -475,7 +604,9 @@ components:
           format: uuid
         templateCode:
           type: string
+          minLength: 1
       required:
+      - templateCode
       - visitId
     PlanView:
       type: object
@@ -613,6 +744,36 @@ components:
         createdAt:
           type: string
           format: date-time
+    GuidelineView:
+      type: object
+      properties:
+        guidelineId:
+          type: string
+        title:
+          type: string
+        publisher:
+          type: string
+        sourceUrl:
+          type: string
+        licenseNote:
+          type: string
+        activeVersion:
+          type: string
+        chunkCount:
+          type: integer
+          format: int64
+        objectKey:
+          type: string
+        fetchedAt:
+          type: string
+          format: date-time
+          nullable: true
+        contentSha256:
+          type: string
+        sourceStatus:
+          type: string
+        retrievalMethod:
+          type: string
     AuditView:
       type: object
       properties:
@@ -635,4 +796,3 @@ components:
         createdAt:
           type: string
           format: date-time
-

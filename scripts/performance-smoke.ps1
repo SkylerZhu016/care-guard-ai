@@ -3,7 +3,7 @@ param(
     [string]$BaseUrl = 'http://localhost:18088',
     [int]$Requests = 50,
     [int]$Concurrency = 10,
-    [int]$P95ThresholdMs = 1000
+    [int]$P95ThresholdMs = 500
 )
 
 $ErrorActionPreference = 'Stop'

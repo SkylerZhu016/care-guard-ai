@@ -8,4 +8,5 @@ spring:
       ddl-auto: validate
 app:
   ai-job-timeout-seconds: 1
+  knowledge-seed-enabled: false
 

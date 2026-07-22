@@ -60,6 +60,8 @@ Assert-That ($submitted.runs[0].status -eq 'SUCCEEDED') 'AI run must succeed in 
 Assert-That ($submitted.runs[0].citations.Count -ge 1) 'successful AI run must include at least one citation'
 Assert-That (-not [string]::IsNullOrWhiteSpace($submitted.runs[0].citations[0].chunkId)) 'citation chunkId must be non-empty'
 Assert-That (-not [string]::IsNullOrWhiteSpace($submitted.runs[0].citations[0].quote)) 'citation quote must be non-empty'
+Assert-That (-not [string]::IsNullOrWhiteSpace($submitted.runs[0].citations[0].sourceUrl)) 'citation source URL must be non-empty'
+Assert-That ($submitted.runs[0].agentTrace.Count -eq 5) 'multi-agent trace must contain five observable roles'
 
 $reviewed = Invoke-Api Post "/triage-results/$($submitted.triage.id)/review" $clinician.accessToken @{
     decision = 'ACCEPT'; reason = 'Automated test: deterministic rules and teaching citations checked'; finalUrgency = 'EMERGENCY'
@@ -81,13 +83,17 @@ $patientTasks = @(Invoke-Api Get '/followup-tasks/mine' $patient.accessToken $nu
 $alerts = @(Invoke-Api Get '/admin/safety-alerts' $admin.accessToken $null)
 $audits = @(Invoke-Api Get '/admin/audit-logs' $admin.accessToken $null)
 $runs = @(Invoke-Api Get '/admin/agent-runs' $admin.accessToken $null)
+$guidelines = @(Invoke-Api Get '/admin/guidelines' $admin.accessToken $null)
 Assert-That (($patientTasks | Where-Object { $_.planId -eq $plan.id }).Count -eq 4) 'patient must see all plan tasks'
 Assert-That ($audits.Count -gt 0) 'admin audit log must not be empty'
 Assert-That ($runs.Count -gt 0) 'admin agent run list must not be empty'
+Assert-That ($guidelines.Count -ge 2) 'admin must see active guideline metadata'
+Assert-That (($guidelines | Measure-Object -Property chunkCount -Sum).Sum -ge 3) 'knowledge base must expose seeded chunks'
 
 [pscustomobject]@{
     status = 'PASS'; visitId = $visit.id; ruleUrgency = $submitted.triage.ruleUrgency
     aiRunStatus = $submitted.runs[0].status; citationCount = $submitted.runs[0].citations.Count
     planId = $plan.id; completedTaskId = $task.id
     patientTaskCount = $patientTasks.Count; alertCount = $alerts.Count; auditCount = $audits.Count; agentRunCount = $runs.Count
+    agentTraceCount = $submitted.runs[0].agentTrace.Count; guidelineCount = $guidelines.Count
 } | ConvertTo-Json -Depth 5

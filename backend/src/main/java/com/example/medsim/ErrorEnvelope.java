@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -34,6 +36,11 @@ class ApiExceptionHandler {
     ResponseEntity<ErrorBody> validation(MethodArgumentNotValidException ex) {
         var fields = ex.getBindingResult().getFieldErrors().stream().map(e -> new FieldErrorView(e.getField(), e.getCode())).toList();
         return ResponseEntity.badRequest().body(body("COMMON_VALIDATION_FAILED", "输入校验失败", fields));
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    ResponseEntity<ErrorBody> malformed(Exception ex) {
+        return ResponseEntity.badRequest().body(body("COMMON_VALIDATION_FAILED", "输入格式或枚举值无效", List.of()));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

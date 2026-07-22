@@ -46,6 +46,8 @@ class Citation(BaseModel):
     quote: str
     title: str
     section: str
+    sourceUrl: str
+    licenseNote: str
 
 
 class SafetyResult(BaseModel):
@@ -65,6 +67,7 @@ class AnalysisResult(BaseModel):
     model: str = "fake-v1"
     outputHash: str
     versions: Dict[str, str]
+    agentTrace: List[str] = []
 
 
 class JobAccepted(BaseModel):

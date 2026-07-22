@@ -29,7 +29,7 @@ class RuleEngine {
             case DRAFT -> target == VisitStatus.SUBMITTED;
             case SUBMITTED -> target == VisitStatus.PROCESSING || target == VisitStatus.REJECTED;
             case PROCESSING -> target == VisitStatus.PENDING_REVIEW;
-            case PENDING_REVIEW -> target == VisitStatus.REVIEWED;
+            case PENDING_REVIEW -> target == VisitStatus.REVIEWED || target == VisitStatus.REJECTED;
             case REVIEWED -> target == VisitStatus.FOLLOWUP_ACTIVE || target == VisitStatus.CLOSED;
             case FOLLOWUP_ACTIVE -> target == VisitStatus.CLOSED;
             default -> false;

@@ -35,6 +35,9 @@ class DeterministicFakeProvider:
             "seedHash": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
         }
 
+    def critique(self, request: AnalysisRequest, draft: Dict, evidence: List[Dict[str, str]]) -> Dict:
+        return {"violations": [], "review": "规则单调性、引用归属和越界输出已由独立安全角色复核。"}
+
 
 class OpenAICompatibleProvider:
     name = "openai-compatible"
@@ -51,15 +54,29 @@ class OpenAICompatibleProvider:
                 {"role": "user", "content": json.dumps({"case": request.model_dump(mode="json"), "evidence": evidence}, ensure_ascii=False)},
             ],
         }
+        return self._call(payload)
+
+    def critique(self, request: AnalysisRequest, draft: Dict, evidence: List[Dict[str, str]]) -> Dict:
+        payload = {
+            "model": settings.model,
+            "temperature": 0,
+            "response_format": {"type": "json_object"},
+            "messages": [
+                {"role": "system", "content": "你是独立安全审查角色。只检查草案是否越过教学信息整理边界、降低规则紧急度或使用无来源证据。仅输出 JSON：{\"violations\":[],\"review\":\"\"}。"},
+                {"role": "user", "content": json.dumps({"case": request.model_dump(mode="json"), "draft": draft, "evidence": evidence}, ensure_ascii=False)},
+            ],
+        }
+        return self._call(payload)
+
+    def _call(self, payload: Dict) -> Dict:
         try:
-            response = httpx.post(
-                f"{settings.base_url.rstrip('/')}/chat/completions",
-                headers={"Authorization": f"Bearer {settings.api_key}"},
-                json=payload,
-                timeout=20,
-            )
+            response = httpx.post(f"{settings.base_url.rstrip('/')}/chat/completions",
+                headers={"Authorization": f"Bearer {settings.api_key}"}, json=payload, timeout=20)
             response.raise_for_status()
-            return json.loads(response.json()["choices"][0]["message"]["content"])
+            content=response.json()["choices"][0]["message"]["content"]
+            result=json.loads(content)
+            if not isinstance(result,dict): raise RuntimeError("AI_INVALID_JSON_OBJECT")
+            return result
         except httpx.TimeoutException as exc:
             raise ProviderTimeoutError("AI_TIMEOUT") from exc
 

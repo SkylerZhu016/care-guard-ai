@@ -231,7 +231,7 @@ AI_JOB_TIMEOUT_SECONDS=60
 
 ADR 使用统一模板：状态、日期、上下文、决策、备选方案、后果、回滚/替换条件、关联 Issue。M0 不需要无边界地重新做全部选型，但允许对本文基线进行快速现实校验；如果依赖、环境或测试证据不支持原方案，应及时修订，而不是为了遵守文档继续错误路线。
 
-Compose 基线使用一个内部网络；只暴露 Nginx、必要的本地管理端口和数据库调试端口。PostgreSQL 镜像必须自带 pgvector 扩展，MinIO 由 `minio-init` 幂等创建 `guidelines` 和 `artifacts` bucket。镜像具体补丁版本在初始化当天选择稳定版本并固定，不使用漂移的 `latest`。
+Compose 基线使用一个内部网络；只暴露 Nginx、必要的本地管理端口和数据库调试端口。PostgreSQL 镜像必须自带 pgvector 扩展，MinIO 的 `guidelines` 和 `artifacts` bucket 由后端启动过程幂等创建，失败时阻止就绪，避免一次性容器干扰 `compose --wait`。镜像具体补丁版本在初始化当天选择稳定版本并固定，不使用漂移的 `latest`。
 
 ---
 
@@ -857,7 +857,7 @@ AI：
 - `postgres`（带 pgvector）
 - `redis`
 - `minio`
-- `minio-init`
+- 后端启动期 MinIO bucket/受控知识种子初始化
 
 前端生产构建产物由 Nginx 提供，不再保留额外 Node 运行时容器。
 

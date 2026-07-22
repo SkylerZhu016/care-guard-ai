@@ -10,6 +10,11 @@ ATTACK_PATTERNS = [
     r"(override|bypass).{0,12}(rule|safety)",
 ]
 PII_PATTERNS = [r"\b\d{17}[0-9Xx]\b", r"\b1[3-9]\d{9}\b"]
+OUTPUT_SCOPE_PATTERNS = [
+    r"(确诊|诊断为|患有).{0,20}(疾病|病|症)",
+    r"(处方|开具|服用|用药).{0,20}(mg|毫克|片|次/日|每天)",
+    r"(停药|加量|减量|剂量)",
+]
 
 
 def inspect_input(chief_complaint: str, free_text: str) -> List[str]:
@@ -24,4 +29,12 @@ def inspect_input(chief_complaint: str, free_text: str) -> List[str]:
 
 def validate_citations(chunk_ids: List[str], valid_ids: set) -> bool:
     return bool(chunk_ids) and all(chunk_id in valid_ids for chunk_id in chunk_ids)
+
+
+def inspect_output(values: List[str]) -> List[str]:
+    text = "\n".join(values)
+    reasons = []
+    if any(re.search(pattern, text, re.IGNORECASE) for pattern in OUTPUT_SCOPE_PATTERNS):
+        reasons.append("AI_OUTPUT_SCOPE_VIOLATION")
+    return reasons
 
