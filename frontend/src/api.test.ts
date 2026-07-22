@@ -16,4 +16,12 @@ describe('ApiClient workflow contracts', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })))
     await expect(new ApiClient(() => 'token').reindexGuidelines()).resolves.toBeUndefined()
   })
+
+  it('requires and forwards an explicit follow-up template', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 'plan-1' }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    await new ApiClient(() => 'token').createPlan('visit-1', 'HYPERTENSION_TEACHING_V1')
+    const init = fetchMock.mock.calls[0][1] as RequestInit
+    expect(JSON.parse(init.body as string)).toEqual({ visitId: 'visit-1', templateCode: 'HYPERTENSION_TEACHING_V1' })
+  })
 })

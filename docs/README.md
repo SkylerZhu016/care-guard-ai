@@ -11,5 +11,6 @@
 - `security/SECURITY_AND_COMPLIANCE.md`：安全边界与威胁模型
 - `testing/TEST_REPORT.md`：自动化验证记录
 - `demo/DEMO_SCRIPT.md`：10 分钟主演示与降级脚本
+- `issues/PATIENT_SYMPTOM_COVERAGE_AND_FOLLOWUP_REPORT.md`：患者症状覆盖、规则缺口与随访模板适配问题报告
 - `adr/`：关键架构决策记录
 

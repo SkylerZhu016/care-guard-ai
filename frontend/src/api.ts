@@ -21,7 +21,7 @@ export class ApiClient {
   submitVisit(id: string) { return this.request<Visit>(`/visits/${id}/submit`, { method:'POST', headers:{'Idempotency-Key':crypto.randomUUID()} }) }
   queue() { return this.request<Visit[]>('/clinician/visits') }
   review(id:string, decision:ReviewDecision, reason:string, finalUrgency?:Urgency) { return this.request<Visit>(`/triage-results/${id}/review`, {method:'POST',body:JSON.stringify({decision,reason,...(decision==='REJECT'?{}:{finalUrgency})})}) }
-  createPlan(visitId:string, templateCode='HYPERTENSION_TEACHING_V1') { return this.request<{id:string}>(`/followup-plans`,{method:'POST',body:JSON.stringify({visitId,templateCode})}) }
+  createPlan(visitId:string, templateCode:string) { return this.request<{id:string}>(`/followup-plans`,{method:'POST',body:JSON.stringify({visitId,templateCode})}) }
   activatePlan(id:string) { return this.request(`/followup-plans/${id}/activate`,{method:'POST'}) }
   myTasks() { return this.request<Task[]>('/followup-tasks/mine') }
   updateTask(id:string,status:TaskStatus,resultSummary='') { return this.request<Task>(`/followup-tasks/${id}`,{method:'PATCH',body:JSON.stringify({status,resultSummary})}) }

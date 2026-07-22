@@ -26,8 +26,8 @@ Windows 命令使用 `D:\工程实训\final`，WSL/Docker 命令使用 `/mnt/d/�
 | 网络采集器 | `D:\Anaconda\envs\ML3.9\python.exe -m pytest .\data-pipeline\tests` | 3/3 通过 |
 | Spring Boot | `mvn -f .\backend\pom.xml '-Dmaven.repo.local=H:\Maven\repository' test` | 10/10 通过 |
 | AI 服务 | `D:\Anaconda\envs\ML3.9\python.exe -m pytest .\ai-service` | 9/9 通过，覆盖率 85.53% |
-| Vue 单元测试 | `pnpm --dir frontend test -- --run` | 7/7 通过 |
-| Vue 生产构建 | `pnpm --dir frontend build` | 通过，无大包警告 |
+| Vue 单元测试 | `pnpm --dir frontend --config.store-dir=H:/pnpm-store/v11 test -- --run` | 15/15 通过 |
+| Vue 生产构建 | `pnpm --dir frontend --config.store-dir=H:/pnpm-store/v11 build` | 通过 |
 | API 业务闭环 | `.\scripts\api-smoke.ps1` | PASS |
 | 并发性能冒烟 | `.\scripts\performance-smoke.ps1` | PASS |
 
@@ -86,14 +86,14 @@ Windows 命令使用 `D:\工程实训\final`，WSL/Docker 命令使用 `/mnt/d/�
 
 使用真实部署入口完成四个演示账号的登录和页面检查：
 
-- `patient`：动态症状由 2 项增加到 3 项，已有草稿可重新载入编辑；规则/AI 进度和患者随访任务正常渲染。
-- `clinician`：`ACCEPT`、`MODIFY`、`REJECT` 三种审核决定可选，审核与计划激活分步呈现。
-- `followup`：每页 6 项；待执行任务只显示“开始”，进行中任务才显示带独立摘要的“完成”。
-- `admin`：可查看 21 个官方网络来源、1 个受控安全基线及 1 个停用历史来源，并展示 chunk 数、抓取状态、采集方式、时间、SHA-256、MinIO key 和许可说明。
-- 浏览器控制台：无 warning/error。
-- 633px 视口：无横向页面溢出；指标为 2×2，管理图表与告警折叠为单栏。
+- `patient`：默认空表单，中文受控目录只包含胸痛、呼吸困难、晕厥和意识异常；红旗示例必须显式加载，病例与任务列表均分页。
+- `clinician`：病例信息、规则/AI 证据、人工终审、随访决策分段呈现；随访默认“不创建”，非高血压教学病例不能选择高血压模板。
+- `followup`：状态统计和筛选可操作；每页 6 项；任务使用人类可读标题和说明，并声明只来自医务人员明确激活的模板。
+- `admin`：23 个来源支持标题搜索、发布方筛选和分页；许可、SHA-256 与 MinIO key 默认收进可展开详情。
+- 浏览器控制台：0 个 error；Compose 入口 `/health` 返回 200。
+- 390×844 视口：患者核心表单宽 347px，页面 `scrollWidth` 不超过视口；桌面端按 1440×1000 验证四角色布局。
 
-前端已按需注册 Element Plus 组件。最终基础 JS 为 337.55 KB、基础 CSS 为 79.31 KB；管理员懒加载包为 436.05 KB。
+前端已按需注册 Element Plus 组件。最终基础 JS 为 351.77 KB、基础 CSS 为 94.63 KB；管理员懒加载包为 465.10 KB。该体积仍可继续按 ECharts 与 Element Plus 组件拆分优化，但不阻断当前教学验收。
 
 ## 7. 容器和运行日志
 

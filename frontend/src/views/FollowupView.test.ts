@@ -26,7 +26,7 @@ describe('FollowupView state machine controls', () => {
     const wrapper = mountView(); await flushPromises()
     expect(wrapper.text()).toContain('开始')
     expect(wrapper.text()).not.toContain('完成任务')
-    await wrapper.get('button').trigger('click')
+    await wrapper.findAll('button').find(button=>button.text().includes('开始任务'))!.trigger('click')
     expect(state.updateTask).toHaveBeenCalledWith('pending','IN_PROGRESS')
   })
 
@@ -36,7 +36,7 @@ describe('FollowupView state machine controls', () => {
     const inputs = wrapper.findAll('textarea')
     await inputs[0].setValue('第一项摘要')
     await inputs[1].setValue('第二项摘要')
-    const buttons = wrapper.findAll('button')
+    const buttons = wrapper.findAll('button').filter(button=>button.text().includes('完成任务'))
     await buttons[0].trigger('click'); await flushPromises()
     await buttons[1].trigger('click'); await flushPromises()
     expect(state.updateTask).toHaveBeenNthCalledWith(1,'first','COMPLETED','第一项摘要')
