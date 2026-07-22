@@ -1,798 +1,351 @@
 openapi: 3.1.0
 info:
-  title: 基层医疗安全型预问诊与随访平台 API
-  version: 1.1.0
+  title: 预问诊与随访信息服务 API
+  version: 2.0.0
+  description: 新问诊统一使用 v2；旧 v1 问诊写接口返回 410。
 servers:
-- url: http://localhost:18088
-  description: 本地 Compose 统一入口
+  - url: http://localhost:18088
+security:
+  - bearerAuth: []
 paths:
-  /api/v1/visits/{id}/intake:
-    put:
-      tags:
-      - platform-controller
-      operationId: update
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/VisitInput"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/VisitView"
-  /internal/v1/knowledge/search:
-    post:
-      tags:
-      - knowledge-controller
-      operationId: search
-      parameters:
-      - name: X-Internal-Token
-        in: header
-        required: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/KnowledgeSearchInput"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/KnowledgeChunkView"
-  /api/v1/visits:
-    post:
-      tags:
-      - platform-controller
-      operationId: create
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/VisitInput"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/VisitView"
-  /api/v1/visits/{id}/submit:
-    post:
-      tags:
-      - platform-controller
-      operationId: submit
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: Idempotency-Key
-        in: header
-        required: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/VisitView"
-  /api/v1/triage-results/{id}/review:
-    post:
-      tags:
-      - platform-controller
-      operationId: review
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReviewInput"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/VisitView"
-  /api/v1/followup-plans:
-    post:
-      tags:
-      - platform-controller
-      operationId: createPlan
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PlanInput"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PlanView"
-  /api/v1/followup-plans/{id}/activate:
-    post:
-      tags:
-      - platform-controller
-      operationId: activate
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PlanView"
   /api/v1/auth/login:
     post:
-      tags:
-      - auth-controller
-      operationId: login
+      security: []
+      summary: 登录
       requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+  /api/v2/intake-catalog:
+    get:
+      summary: 获取版本化症状目录与动态问题
+      responses:
+        '200':
+          description: 目录
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IntakeCatalog' }
+  /api/v2/patient-profile:
+    get:
+      summary: 获取当前患者健康资料
+      responses:
+        '200':
+          description: 健康资料
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PatientProfileView' }
+    put:
+      summary: 保存当前患者健康资料
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PatientProfileInput' }
+      responses:
+        '200':
+          description: 已保存
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PatientProfileView' }
+  /api/v2/visits:
+    post:
+      summary: 创建 v2 草稿
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VisitIntakeV2Input' }
+      responses:
+        '200':
+          description: 草稿
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisitViewV2' }
+  /api/v2/visits/{id}:
+    parameters:
+      - $ref: '#/components/parameters/VisitId'
+    get:
+      summary: 读取问诊；历史 v1 也以只读视图返回
+      responses:
+        '200':
+          description: 问诊
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisitViewV2' }
+    put:
+      summary: 自动保存或更新 v2 草稿
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VisitIntakeV2Input' }
+      responses:
+        '200':
+          description: 已保存
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisitViewV2' }
+        '409': { description: 已提交或历史问诊不可编辑 }
+  /api/v2/visits/{id}/submit:
+    post:
+      summary: 提交 v2 问诊
+      parameters:
+        - $ref: '#/components/parameters/VisitId'
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, maxLength: 100 }
+      responses:
+        '200':
+          description: 已进入人工审核
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VisitViewV2' }
+  /api/v2/visits/{id}/supplements:
+    post:
+      summary: 为已提交问诊追加补充信息
+      parameters:
+        - $ref: '#/components/parameters/VisitId'
+      requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LoginRequest"
-        required: true
+              type: object
+              required: [content]
+              properties:
+                content: { type: string, minLength: 1, maxLength: 2000 }
       responses:
-        "200":
-          description: OK
+        '200': { description: 已追加 }
+  /api/v2/visits/mine:
+    get:
+      summary: 当前患者的全部问诊
+      responses:
+        '200':
+          description: 问诊列表
           content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AuthResponse"
-  /api/v1/admin/guidelines/{guidelineId}/versions/{versionId}/activate:
-    post:
-      tags:
-      - platform-controller
-      operationId: activateGuideline
-      parameters:
-      - name: guidelineId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: versionId
-        in: path
-        required: true
-        schema:
-          type: string
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/VisitViewV2' } }
+  /api/v2/clinician/visits:
+    get:
+      summary: 医务人员待审队列
       responses:
-        "200":
-          description: OK
-  /api/v1/admin/guidelines/reindex:
+        '200':
+          description: 待审问诊
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/VisitViewV2' } }
+  /api/v1/triage-results/{id}/review:
     post:
-      tags:
-      - platform-controller
-      operationId: reindex
-      responses:
-        "200":
-          description: OK
-  /api/v1/followup-tasks/{id}:
-    patch:
-      tags:
-      - platform-controller
-      operationId: updateTask
+      summary: 医务人员人工终审
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
       requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewInput' }
+      responses:
+        '200': { description: 已终审 }
+        '409': { description: 尝试降低确定性规则等级 }
+  /api/v1/followup-plans:
+    post:
+      summary: 创建通用随访计划草稿
+      requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TaskUpdate"
-        required: true
+              type: object
+              required: [visitId, templateCode]
+              properties:
+                visitId: { type: string, format: uuid }
+                templateCode: { type: string, const: GENERAL_FOLLOWUP_V1 }
       responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/TaskView"
-  /api/v1/visits/{id}:
-    get:
-      tags:
-      - platform-controller
-      operationId: visit
+        '200': { description: 已创建 }
+  /api/v1/visits:
+    post:
+      deprecated: true
+      summary: 已停用的 v1 写接口
+      responses:
+        '410': { description: INTAKE_V1_DEPRECATED }
+  /api/v1/visits/{id}/intake:
+    put:
+      deprecated: true
+      summary: 已停用的 v1 更新接口
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - $ref: '#/components/parameters/VisitId'
       responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/VisitView"
-  /api/v1/visits/mine:
-    get:
-      tags:
-      - platform-controller
-      operationId: mine
+        '410': { description: INTAKE_V1_DEPRECATED }
+  /api/v1/visits/{id}/submit:
+    post:
+      deprecated: true
+      summary: 已停用的 v1 提交接口
+      parameters:
+        - $ref: '#/components/parameters/VisitId'
       responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/VisitView"
-  /api/v1/me:
-    get:
-      tags:
-      - auth-controller
-      operationId: me
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/UserView"
-  /api/v1/followup-tasks/mine:
-    get:
-      tags:
-      - platform-controller
-      operationId: tasks
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TaskView"
-  /api/v1/clinician/visits:
-    get:
-      tags:
-      - platform-controller
-      operationId: queue
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/VisitView"
-  /api/v1/admin/safety-alerts:
-    get:
-      tags:
-      - platform-controller
-      operationId: alerts
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AlertView"
-  /api/v1/admin/guidelines:
-    get:
-      tags:
-      - platform-controller
-      operationId: guidelines
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/GuidelineView"
-  /api/v1/admin/audit-logs:
-    get:
-      tags:
-      - platform-controller
-      operationId: audits
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AuditView"
-  /api/v1/admin/agent-runs:
-    get:
-      tags:
-      - platform-controller
-      operationId: runs
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AgentRunView"
+        '410': { description: INTAKE_V1_DEPRECATED }
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    VisitId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
   schemas:
-    SymptomInput:
-      type: object
-      properties:
-        code:
-          type: string
-          minLength: 1
-          pattern: "[A-Z][A-Z0-9_]{1,59}"
-        name:
-          type: string
-          maxLength: 100
-          minLength: 0
-        severity:
-          type: integer
-          format: int32
-          maximum: 10
-          minimum: 0
-        onset:
-          type: string
-          maxLength: 100
-          minLength: 0
-      required:
-      - code
-      - name
-    VisitInput:
-      type: object
-      properties:
-        chiefComplaint:
-          type: string
-          maxLength: 500
-          minLength: 0
-        freeText:
-          type: string
-          maxLength: 2000
-          minLength: 0
-        symptoms:
-          type: array
-          items:
-            $ref: "#/components/schemas/SymptomInput"
-          minItems: 1
-      required:
-      - chiefComplaint
-      - symptoms
-    AgentRunView:
-      type: object
-      properties:
-        runId:
-          type: string
-        status:
-          type: string
-        provider:
-          type: string
-        model:
-          type: string
-        safetyDecision:
-          type: string
-        safetyReasons:
-          type: array
-          items:
-            type: string
-        agentTrace:
-          type: array
-          items:
-            type: string
-        durationMs:
-          type: integer
-          format: int64
-        errorCode:
-          type: string
-        citations:
-          type: array
-          items:
-            $ref: "#/components/schemas/CitationView"
-    CitationView:
-      type: object
-      properties:
-        guidelineId:
-          type: string
-        chunkId:
-          type: string
-        claimKey:
-          type: string
-        title:
-          type: string
-        section:
-          type: string
-        quote:
-          type: string
-        sourceUrl:
-          type: string
-        licenseNote:
-          type: string
-    TriageView:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        ruleUrgency:
-          type: string
-          enum:
-          - ROUTINE
-          - URGENT
-          - EMERGENCY
-        aiUrgency:
-          type: string
-          enum:
-          - ROUTINE
-          - URGENT
-          - EMERGENCY
-        finalUrgency:
-          type: string
-          enum:
-          - ROUTINE
-          - URGENT
-          - EMERGENCY
-        ruleReasons:
-          type: array
-          items:
-            type: string
-        aiSummary:
-          type: string
-        reviewDecision:
-          type: string
-          enum:
-          - ACCEPT
-          - MODIFY
-          - REJECT
-        reviewReason:
-          type: string
-    VisitView:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        ownerId:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum:
-          - DRAFT
-          - SUBMITTED
-          - PROCESSING
-          - PENDING_REVIEW
-          - REVIEWED
-          - FOLLOWUP_ACTIVE
-          - CLOSED
-          - REJECTED
-        chiefComplaint:
-          type: string
-        freeText:
-          type: string
-        symptoms:
-          type: array
-          items:
-            $ref: "#/components/schemas/SymptomInput"
-        triage:
-          $ref: "#/components/schemas/TriageView"
-        runs:
-          type: array
-          items:
-            $ref: "#/components/schemas/AgentRunView"
-        createdAt:
-          type: string
-          format: date-time
-        submittedAt:
-          type: string
-          format: date-time
-    KnowledgeSearchInput:
-      type: object
-      properties:
-        symptomCodes:
-          type: array
-          items:
-            type: string
-            minLength: 1
-          minItems: 1
-        query:
-          type: string
-          maxLength: 500
-          minLength: 0
-        limit:
-          type: integer
-          format: int32
-          maximum: 8
-          minimum: 1
-      required:
-      - query
-      - symptomCodes
-    KnowledgeChunkView:
-      type: object
-      properties:
-        guidelineId:
-          type: string
-        versionId:
-          type: string
-        chunkId:
-          type: string
-        title:
-          type: string
-        section:
-          type: string
-        quote:
-          type: string
-        sourceUrl:
-          type: string
-        licenseNote:
-          type: string
-        score:
-          type: number
-          format: double
-    ReviewInput:
-      type: object
-      properties:
-        decision:
-          type: string
-          enum:
-          - ACCEPT
-          - MODIFY
-          - REJECT
-        reason:
-          type: string
-          maxLength: 1000
-          minLength: 0
-        finalUrgency:
-          type: string
-          enum:
-          - ROUTINE
-          - URGENT
-          - EMERGENCY
-      required:
-      - decision
-      - reason
-    PlanInput:
-      type: object
-      properties:
-        visitId:
-          type: string
-          format: uuid
-        templateCode:
-          type: string
-          minLength: 1
-      required:
-      - templateCode
-      - visitId
-    PlanView:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        visitId:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum:
-          - DRAFT
-          - ACTIVE
-          - PAUSED
-          - COMPLETED
-          - CANCELLED
-        templateCode:
-          type: string
-        activatedAt:
-          type: string
-          format: date-time
-        tasks:
-          type: array
-          items:
-            $ref: "#/components/schemas/TaskView"
-    TaskView:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        planId:
-          type: string
-          format: uuid
-        taskCode:
-          type: string
-        title:
-          type: string
-        dueAt:
-          type: string
-          format: date-time
-        status:
-          type: string
-          enum:
-          - PENDING
-          - IN_PROGRESS
-          - COMPLETED
-          - OVERDUE
-          - CANCELLED
-        resultSummary:
-          type: string
     LoginRequest:
       type: object
+      required: [username, password]
       properties:
-        username:
-          type: string
-          minLength: 1
-        password:
-          type: string
-          minLength: 1
-      required:
-      - password
-      - username
+        username: { type: string }
+        password: { type: string, format: password }
     AuthResponse:
       type: object
       properties:
-        accessToken:
-          type: string
-        tokenType:
-          type: string
-        expiresIn:
-          type: integer
-          format: int64
-        user:
-          $ref: "#/components/schemas/UserView"
-    UserView:
+        accessToken: { type: string }
+        tokenType: { type: string, const: Bearer }
+        expiresIn: { type: integer }
+        user: { $ref: '#/components/schemas/User' }
+    User:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        username:
-          type: string
-        displayName:
-          type: string
-        role:
-          type: string
-          enum:
-          - SIMULATED_PATIENT
-          - CLINICIAN
-          - FOLLOWUP_STAFF
-          - ADMIN
-    TaskUpdate:
+        id: { type: string, format: uuid }
+        username: { type: string }
+        displayName: { type: string }
+        role: { type: string, enum: [PATIENT, CLINICIAN, FOLLOWUP_STAFF, ADMIN] }
+    IntakeCatalog:
+      type: object
+      required: [version, symptoms]
+      properties:
+        version: { type: string }
+        symptoms:
+          type: array
+          items: { $ref: '#/components/schemas/CatalogSymptom' }
+    CatalogSymptom:
       type: object
       properties:
-        status:
-          type: string
-          enum:
-          - PENDING
-          - IN_PROGRESS
-          - COMPLETED
-          - OVERDUE
-          - CANCELLED
-        resultSummary:
-          type: string
-          maxLength: 1000
-          minLength: 0
-      required:
-      - status
-    AlertView:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        runId:
-          type: string
-        visitId:
-          type: string
-          format: uuid
-        category:
-          type: string
-        severity:
-          type: string
-        reasonCodes:
+        code: { type: string }
+        name: { type: string }
+        category: { type: string }
+        supportLevel: { $ref: '#/components/schemas/SupportLevel' }
+        common: { type: boolean }
+        questions:
           type: array
           items:
-            type: string
-        redactedSummary:
-          type: string
-        status:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-    GuidelineView:
+            type: object
+            properties:
+              id: { type: string }
+              prompt: { type: string }
+              type: { type: string }
+              multiple: { type: boolean }
+              options:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    value: { type: string }
+                    label: { type: string }
+    SupportLevel:
+      type: string
+      enum: [RULE_SUPPORTED, RECORD_ONLY, CUSTOM]
+    PatientProfileInput:
       type: object
       properties:
-        guidelineId:
-          type: string
-        title:
-          type: string
-        publisher:
-          type: string
-        sourceUrl:
-          type: string
-        licenseNote:
-          type: string
-        activeVersion:
-          type: string
-        chunkCount:
-          type: integer
-          format: int64
-        objectKey:
-          type: string
-        fetchedAt:
-          type: string
-          format: date-time
-          nullable: true
-        contentSha256:
-          type: string
-        sourceStatus:
-          type: string
-        retrievalMethod:
-          type: string
-    AuditView:
+        ageBand: { type: string, enum: [CHILD, ADOLESCENT, ADULT, OLDER_ADULT, UNKNOWN] }
+        physiologicalInfoStatus: { $ref: '#/components/schemas/ProfileFieldStatus' }
+        physiologicalInfo: { type: string }
+        chronicConditionsStatus: { $ref: '#/components/schemas/ProfileFieldStatus' }
+        chronicConditions: { type: array, items: { type: string } }
+        allergiesStatus: { $ref: '#/components/schemas/ProfileFieldStatus' }
+        allergies: { type: array, items: { type: string } }
+        longTermMedicationsStatus: { $ref: '#/components/schemas/ProfileFieldStatus' }
+        longTermMedications: { type: array, items: { type: string } }
+    ProfileFieldStatus:
+      type: string
+      enum: [NONE, UNKNOWN, PROVIDED]
+    PatientProfileView:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        action:
-          type: string
-        targetType:
-          type: string
-        targetId:
-          type: string
-          format: uuid
-        requestId:
-          type: string
-        result:
-          type: string
-        metadata:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
+        id: { type: [string, 'null'], format: uuid }
+        ownerId: { type: string, format: uuid }
+        version: { type: integer }
+        data: { $ref: '#/components/schemas/PatientProfileInput' }
+        updatedAt: { type: [string, 'null'], format: date-time }
+    VisitIntakeV2Input:
+      type: object
+      required: [primarySymptomCode, chiefComplaint, symptomReports]
+      properties:
+        primarySymptomCode: { type: string }
+        chiefComplaint: { type: string, minLength: 1, maxLength: 500 }
+        freeText: { type: string, maxLength: 2000 }
+        symptomReports:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/SymptomReportInput' }
+    SymptomReportInput:
+      type: object
+      required: [symptomCode]
+      properties:
+        symptomCode: { type: string }
+        customName: { type: string, maxLength: 100 }
+        source: { type: string, enum: [CATALOG, RELATED_ANSWER, CUSTOM] }
+        onsetRange: { type: string, enum: [JUST_NOW, TODAY, ONE_TO_THREE_DAYS, MORE_THAN_THREE_DAYS, UNKNOWN] }
+        course: { type: string, enum: [CONTINUOUS, INTERMITTENT, RELIEVED, UNKNOWN] }
+        currentStatus: { type: string, enum: [PRESENT, NOT_PRESENT, UNKNOWN] }
+        activityImpact: { type: string, enum: [NO_IMPACT, NEEDS_REST, UNABLE_NORMAL_ACTIVITY, UNKNOWN] }
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId: { type: string }
+              selectedOptions: { type: array, items: { type: string } }
+              supplementalText: { type: string }
+    VisitViewV2:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        ownerId: { type: string, format: uuid }
+        status: { type: string }
+        intakeVersion: { type: string, enum: [INTAKE_V1, INTAKE_V2] }
+        primarySymptomCode: { type: string }
+        chiefComplaint: { type: string }
+        freeText: { type: string }
+        symptomReports: { type: array, items: { $ref: '#/components/schemas/SymptomReportInput' } }
+        profileSnapshot: { $ref: '#/components/schemas/PatientProfileInput' }
+        triage: { $ref: '#/components/schemas/TriageV2' }
+        createdAt: { type: string, format: date-time }
+        submittedAt: { type: string, format: date-time }
+    TriageV2:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        ruleUrgency: { type: [string, 'null'], enum: [ROUTINE, URGENT, EMERGENCY, null] }
+        aiUrgency: { type: [string, 'null'] }
+        finalUrgency: { type: [string, 'null'] }
+        coverageStatus: { type: string, enum: [FULL, PARTIAL, NONE] }
+        assessmentStatus: { type: string, enum: [RULE_EVALUATED, REQUIRES_MANUAL_REVIEW] }
+        ruleReasons: { type: array, items: { type: string } }
+        aiSummary: { type: string }
+    ReviewInput:
+      type: object
+      required: [decision, reason]
+      properties:
+        decision: { type: string, enum: [ACCEPT, MODIFY, REJECT] }
+        reason: { type: string, minLength: 1, maxLength: 1000 }
+        finalUrgency: { type: string, enum: [ROUTINE, URGENT, EMERGENCY] }

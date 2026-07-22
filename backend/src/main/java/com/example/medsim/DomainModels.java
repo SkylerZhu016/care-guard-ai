@@ -1,12 +1,17 @@
 package com.example.medsim;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-enum Role { SIMULATED_PATIENT, CLINICIAN, FOLLOWUP_STAFF, ADMIN }
+enum Role { PATIENT, CLINICIAN, FOLLOWUP_STAFF, ADMIN }
 enum VisitStatus { DRAFT, SUBMITTED, PROCESSING, PENDING_REVIEW, REVIEWED, FOLLOWUP_ACTIVE, CLOSED, REJECTED }
 enum Urgency { ROUTINE, URGENT, EMERGENCY }
+enum SupportLevel { RULE_SUPPORTED, RECORD_ONLY, CUSTOM }
+enum CoverageStatus { FULL, PARTIAL, NONE }
+enum AssessmentStatus { RULE_EVALUATED, REQUIRES_MANUAL_REVIEW }
 enum ReviewDecision { ACCEPT, MODIFY, REJECT }
 enum PlanStatus { DRAFT, ACTIVE, PAUSED, COMPLETED, CANCELLED }
 enum TaskStatus { PENDING, IN_PROGRESS, COMPLETED, OVERDUE, CANCELLED }
@@ -34,6 +39,9 @@ class Visit {
     @Enumerated(EnumType.STRING) @Column(nullable = false) VisitStatus status = VisitStatus.DRAFT;
     @Column(name = "chief_complaint", nullable = false) String chiefComplaint;
     @Column(name = "free_text", nullable = false) String freeText = "";
+    @Column(name = "intake_version", nullable = false) String intakeVersion = "INTAKE_V1";
+    @Column(name = "primary_symptom_code") String primarySymptomCode;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(name = "profile_snapshot", columnDefinition = "jsonb") String profileSnapshot;
     @Column(name = "submitted_at") OffsetDateTime submittedAt;
     @Column(name = "idempotency_key", unique = true) String idempotencyKey;
     @Version long version;
@@ -47,18 +55,28 @@ class SymptomEntity {
     @Column(name = "code_system", nullable = false) String codeSystem = "LOCAL_SYMPTOM_V1";
     @Column(nullable = false) String code;
     @Column(nullable = false) String name;
-    @Column(nullable = false) int severity;
+    @Column(name = "legacy_severity") Integer legacySeverity;
     @Column(name = "onset_text") String onset;
+    @Column(name = "catalog_version") String catalogVersion;
+    @Enumerated(EnumType.STRING) @Column(name = "support_level") SupportLevel supportLevel;
+    @Column(name = "report_source") String reportSource;
+    @Column(name = "onset_range") String onsetRange;
+    @Column String course;
+    @Column(name = "current_status") String currentStatus;
+    @Column(name = "activity_impact") String activityImpact;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(name = "answers_json", columnDefinition = "jsonb") String answersJson;
 }
 
 @Entity @Table(name = "triage_results")
 class TriageResult {
     @Id UUID id;
     @Column(name = "visit_id", nullable = false, unique = true) UUID visitId;
-    @Enumerated(EnumType.STRING) @Column(name = "rule_urgency", nullable = false) Urgency ruleUrgency;
+    @Enumerated(EnumType.STRING) @Column(name = "rule_urgency") Urgency ruleUrgency;
     @Enumerated(EnumType.STRING) @Column(name = "ai_urgency") Urgency aiUrgency;
     @Enumerated(EnumType.STRING) @Column(name = "final_urgency") Urgency finalUrgency;
     @Column(name = "rule_reason_codes", nullable = false) String ruleReasonCodes;
+    @Enumerated(EnumType.STRING) @Column(name = "coverage_status") CoverageStatus coverageStatus;
+    @Enumerated(EnumType.STRING) @Column(name = "assessment_status") AssessmentStatus assessmentStatus;
     @Column(name = "ai_summary") String aiSummary;
     @Enumerated(EnumType.STRING) @Column(name = "review_decision") ReviewDecision reviewDecision;
     @Column(name = "review_reason") String reviewReason;
@@ -106,10 +124,28 @@ class FollowupPlan {
     @Id UUID id;
     @Column(name = "visit_id", nullable = false) UUID visitId;
     @Enumerated(EnumType.STRING) @Column(nullable = false) PlanStatus status = PlanStatus.DRAFT;
-    @Column(name = "template_code", nullable = false) String templateCode = "HYPERTENSION_TEACHING_V1";
+    @Column(name = "template_code", nullable = false) String templateCode = "GENERAL_FOLLOWUP_V1";
     @Column(name = "owner_id", nullable = false) UUID ownerId;
     @Column(name = "activated_at") OffsetDateTime activatedAt;
     @Version long version;
+    @Column(name = "created_at", nullable = false) OffsetDateTime createdAt = OffsetDateTime.now();
+}
+
+@Entity @Table(name = "patient_profiles")
+class PatientProfile {
+    @Id UUID id;
+    @Column(name = "owner_id", nullable = false, unique = true) UUID ownerId;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(name = "profile_data", nullable = false, columnDefinition = "jsonb") String profileData = "{}";
+    @Version long version;
+    @Column(name = "updated_at", nullable = false) OffsetDateTime updatedAt = OffsetDateTime.now();
+}
+
+@Entity @Table(name = "visit_supplements")
+class VisitSupplement {
+    @Id UUID id;
+    @Column(name = "visit_id", nullable = false) UUID visitId;
+    @Column(name = "owner_id", nullable = false) UUID ownerId;
+    @Column(nullable = false) String content;
     @Column(name = "created_at", nullable = false) OffsetDateTime createdAt = OffsetDateTime.now();
 }
 

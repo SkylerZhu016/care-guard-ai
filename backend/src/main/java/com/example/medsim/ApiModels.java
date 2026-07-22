@@ -14,7 +14,7 @@ record VisitInput(@NotBlank @Size(max=500) String chiefComplaint, @Size(max=2000
 record ReviewInput(@NotNull ReviewDecision decision, @NotBlank @Size(max=1000) String reason, Urgency finalUrgency) {}
 record PlanInput(@NotNull UUID visitId, @NotBlank String templateCode) {}
 record TaskUpdate(@NotNull TaskStatus status, @Size(max=1000) String resultSummary) {}
-record RuleOutcome(Urgency urgency, List<String> reasonCodes) {}
+record RuleOutcome(Urgency urgency, List<String> reasonCodes, CoverageStatus coverageStatus, AssessmentStatus assessmentStatus) {}
 record CitationView(String guidelineId, String chunkId, String claimKey, String title, String section, String quote, String sourceUrl, String licenseNote) {}
 record AgentRunView(String runId, String status, String provider, String model, String safetyDecision, List<String> safetyReasons, List<String> agentTrace, Long durationMs, String errorCode, List<CitationView> citations) {}
 record TriageView(UUID id, Urgency ruleUrgency, Urgency aiUrgency, Urgency finalUrgency, List<String> ruleReasons, String aiSummary, ReviewDecision reviewDecision, String reviewReason) {}

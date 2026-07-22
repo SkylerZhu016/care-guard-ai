@@ -47,10 +47,14 @@ def citation_verifier_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     request: AnalysisRequest = state["request"]
     draft = state["draft"]
     blocked: List[str] = list(state["blockedReasons"]) + list(state["criticViolations"])
-    proposed = Urgency(draft["proposedUrgency"])
-    if URGENCY_RANK[proposed] < URGENCY_RANK[request.ruleUrgency]:
+    proposed_value = draft.get("proposedUrgency")
+    proposed = Urgency(proposed_value) if proposed_value else None
+    if proposed is not None and request.ruleUrgency is not None and URGENCY_RANK[proposed.value] < URGENCY_RANK[request.ruleUrgency.value]:
         blocked.append("AI_ATTEMPTED_RULE_DOWNGRADE")
         proposed = request.ruleUrgency
+    if request.ruleUrgency is None and proposed is not None:
+        blocked.append("AI_ATTEMPTED_UNSUPPORTED_URGENCY")
+        proposed = None
     evidence = state["evidence"]
     valid_ids = {item["chunkId"] for item in evidence}
     evidence_ids = [item["chunkId"] for item in draft.get("evidence", evidence)]
@@ -63,7 +67,7 @@ def citation_verifier_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     blocked = sorted(set(blocked))
     decision = SafetyDecision.BLOCK if blocked else SafetyDecision.PASS
     trace = state["agentTrace"] + ["CitationVerifierAgent:COMPLETED"]
-    unsigned = {"caseSummary": draft["caseSummary"], "proposedUrgency": proposed.value,
+    unsigned = {"caseSummary": draft["caseSummary"], "proposedUrgency": proposed.value if proposed else None,
         "rationale": draft["rationale"], "missingQuestions": draft["missingQuestions"],
         "citations": [item.model_dump() for item in citations], "safety": {"decision": decision.value, "reasonCodes": blocked},
         "agentTrace": trace}

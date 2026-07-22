@@ -1,4 +1,4 @@
-# 医疗 RAG 实现、网络语料与边界
+﻿# 医疗 RAG 实现、网络语料与边界
 
 ## 当前状态
 
@@ -24,7 +24,7 @@ D:\Anaconda\envs\ML3.9\python.exe data-pipeline\crawl_official_medical_sources.p
 
 每个网络文档记录原始 URL、重定向后的 URL、抓取时间、HTTP 状态、ETag、Last-Modified、采集方式、许可说明、正文 SHA-256、版本 ID 和全部分块。内容哈希决定版本 ID；相同内容重复采集和重建是幂等的，内容变化会生成新版本，旧版本保留但不再激活。管理员页面可查看来源状态、采集方式、时间、哈希和 MinIO object key。
 
-项目仍保留 3 个明确标注为 `CONTROLLED_BASELINE` 的自制安全分块，用于红旗规则及离线测试兜底。它们不冒充网络指南，也不再是知识库主体。
+项目仍保留 3 个明确标注为 `CONTROLLED_BASELINE` 的测试回退分块，只用于离线测试。它们不冒充网络指南，也不参与确定性规则资格判断。
 
 ## 安全约束
 
@@ -33,11 +33,12 @@ D:\Anaconda\envs\ML3.9\python.exe data-pipeline\crawl_official_medical_sources.p
 - 不抓论坛、社交媒体、病例分享、患者数据或来源不明内容。
 - 页面许可说明是工程审计元数据，不构成法律意见；展示和再利用仍以原站条款及页面中的第三方版权标记为准。
 - `EvidenceRetrieverAgent` 只检索数据库中当前激活版本；`CitationVerifierAgent` 只接受本次检索返回的 chunk ID，后端落库前再次确认 chunk 仍激活。
-- RAG 结果不能降低确定性红旗规则给出的紧急度，不能绕过有资质人员终审。
+- RAG 结果不能改变确定性规则给出的紧急度，也不能为未支持症状生成自动紧急度。
 - 内部知识检索接口要求 `X-Internal-Token`，不经 Nginx 对外暴露。
 
 ## 验证与诚实边界
 
 采集器单测覆盖正文清洗、导航剔除、稳定 chunk ID、段落重叠和域名白名单；后端测试校验快照文档数、分块数、URL、许可、抓取时间、SHA-256 与 chunk ID 唯一性；集成测试继续连接真实 PostgreSQL/pgvector 并验证 HNSW、鉴权与检索返回。
 
-当前向量仍是 `fake-embedding-v1`（64 维确定性 hashing embedding）。它足以验证 pgvector/HNSW、版本治理、引用和部署链路，但不是医学语义向量模型。网络语料的增加改善了知识覆盖范围，不代表临床准确率已经得到证明。本系统只处理合成教学病例，不提供诊断、处方或真实医疗建议。
+当前向量仍是 `fake-embedding-v1`（64 维确定性 hashing embedding）。它足以验证 pgvector/HNSW、版本治理、引用和部署链路，但不是医学语义向量模型。网络语料的增加改善了知识覆盖范围，不代表临床准确率已经得到证明。系统只整理信息，不提供诊断或处方，自动结果必须人工审核。
+

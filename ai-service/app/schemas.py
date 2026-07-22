@@ -15,12 +15,40 @@ class SafetyDecision(str, Enum):
     REVIEW = "REVIEW"
 
 
+class SupportLevel(str, Enum):
+    RULE_SUPPORTED = "RULE_SUPPORTED"
+    RECORD_ONLY = "RECORD_ONLY"
+    CUSTOM = "CUSTOM"
+
+
+class CoverageStatus(str, Enum):
+    FULL = "FULL"
+    PARTIAL = "PARTIAL"
+    NONE = "NONE"
+
+
+class AssessmentStatus(str, Enum):
+    RULE_EVALUATED = "RULE_EVALUATED"
+    REQUIRES_MANUAL_REVIEW = "REQUIRES_MANUAL_REVIEW"
+
+
+class QuestionAnswer(BaseModel):
+    questionId: str
+    selectedOptions: List[str] = []
+    supplementalText: Optional[str] = None
+
+
 class Symptom(BaseModel):
-    codeSystem: str = "LOCAL_SYMPTOM_V1"
+    codeSystem: str = "LOCAL_SYMPTOM_V2"
     code: str
     name: str = ""
-    severity: int = Field(ge=0, le=10)
-    onset: Optional[str] = None
+    supportLevel: SupportLevel
+    source: str = "CATALOG"
+    onsetRange: str = "UNKNOWN"
+    course: str = "UNKNOWN"
+    currentStatus: str = "UNKNOWN"
+    activityImpact: str = "UNKNOWN"
+    answers: List[QuestionAnswer] = []
 
 
 class AnalysisRequest(BaseModel):
@@ -30,8 +58,10 @@ class AnalysisRequest(BaseModel):
     chiefComplaint: str = Field(min_length=1, max_length=500)
     symptoms: List[Symptom] = Field(min_length=1, max_length=30)
     freeText: str = Field(default="", max_length=2000)
-    ruleUrgency: Urgency
+    ruleUrgency: Optional[Urgency] = None
     ruleReasonCodes: List[str] = []
+    coverageStatus: CoverageStatus
+    assessmentStatus: AssessmentStatus
 
     @field_validator("freeText", "chiefComplaint")
     @classmethod
@@ -57,12 +87,12 @@ class SafetyResult(BaseModel):
 
 class AnalysisResult(BaseModel):
     caseSummary: str
-    proposedUrgency: Urgency
+    proposedUrgency: Optional[Urgency] = None
     rationale: List[str]
     missingQuestions: List[str]
     citations: List[Citation]
     safety: SafetyResult
-    disclaimer: str = "仅用于教学模拟，不构成诊断或医疗建议"
+    disclaimer: str = "系统仅整理信息，不构成诊断、处方或医疗建议；自动结果必须由人工审核"
     provider: str = "fake"
     model: str = "fake-v1"
     outputHash: str

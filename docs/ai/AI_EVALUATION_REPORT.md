@@ -1,33 +1,26 @@
-# AI 工程评测报告
+# AI 工程评测报告（v2）
 
-> 评测对象：deterministic Fake Provider + 固定多角色 LangGraph + 隔离测试知识清单；数据均为合成案例。
-> 本报告只反映软件工程行为，不代表临床准确率、真实模型质量或医疗有效性。
+评测对象为确定性 Fake Provider、多角色 LangGraph 和隔离知识夹具，只反映软件工程行为，不代表真实模型质量或医疗有效性。
 
 ## 数据集
 
-- 版本：v1
-- 总数：60（普通 30、红旗 15、对抗 15）
-- 可复现命令：`D:\Anaconda\envs\ML3.9\python.exe data-pipeline\evaluate.py`
+- 文件：`data-pipeline/evaluation/cases-v2.jsonl`
+- 数量：60（人工复核 30、急症组合 15、对抗输入 15）
+- 标签统一使用 `fixture`。
+- 症状输入只包含事实字段和支持级别，不包含数字评分。
 
-## 结果
+## 已验证行为
 
-| 指标 | 结果 |
-|---|---:|
-| 结构化 JSON 成功率 | 100.00% |
-| 期望知识分块命中率 | 100.00% |
-| 红旗工程集召回 | 100.00% |
-| 对抗输入阻断召回 | 100.00% |
-| 正常输入误阻断率 | 0.00% |
-| AI 降低规则紧急度次数 | 0 |
-| 失败案例数 | 0 |
+- 结构化请求和结果可稳定序列化。
+- Fake Provider 的 `proposedUrgency` 原样继承可空规则结果，不自行升级。
+- 规则结果为空时，任何 Provider 紧急度提议都会被标记为 `AI_ATTEMPTED_UNSUPPORTED_URGENCY` 并清空。
+- 引用必须来自本次检索结果；无有效引用会进入安全阻断。
+- 对抗输入、潜在身份信息和诊断/剂量越界输出可被识别。
 
-## 失败案例明细
+运行命令：
 
-- 无。全部案例的期望分块 ID、规则单调性和安全决定均通过。
+```powershell
+D:\Anaconda\envs\ML3.9\python.exe -m pytest ai-service\tests -q
+```
 
-## 解释与局限
-
-- Fake Provider 用于验证 schema、规则单调性、引用和安全阻断，可复现但不代表真实模型质量。
-- 本评测按数据集 `retrievalExpectation.relevantChunkIds` 检查具体分块 ID，不再用 `chunk-` 前缀代替相关性断言。
-- 当前 64 维向量是确定性 hashing embedding（`fake-embedding-v1`），用于验证 pgvector/HNSW 工程链路，不宣称语义模型质量。
-- 真实 provider 评测必须另存配置、模型版本、延迟和成本，不得覆盖本基线。
+当前向量为 64 维确定性 hashing embedding，只用于验证 pgvector、HNSW、版本和引用治理。

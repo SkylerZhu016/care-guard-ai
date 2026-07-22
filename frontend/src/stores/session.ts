@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { Role, User } from '../types'
 
-const homeByRole: Record<Role,string> = { SIMULATED_PATIENT:'/patient', CLINICIAN:'/clinician', FOLLOWUP_STAFF:'/followup', ADMIN:'/admin' }
+const homeByRole: Record<Role,string> = { PATIENT:'/patient', CLINICIAN:'/clinician', FOLLOWUP_STAFF:'/followup', ADMIN:'/admin' }
 
 export const useSessionStore = defineStore('session', () => {
   const token = ref<string|null>(null); const user = ref<User|null>(null)

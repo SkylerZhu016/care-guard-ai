@@ -1,24 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import type { Visit } from '../types'
-import { isHypertensionTeachingCase, isSupportedSymptom, reasonLabel, SYMPTOM_CATALOG, taskPresentation } from './presentation'
+import { reasonLabel, taskPresentation } from './presentation'
 
 describe('presentation safety boundary', () => {
-  it('exposes only the four symptoms with configured teaching rules', () => {
-    expect(SYMPTOM_CATALOG.map(item=>item.code)).toEqual(['CHEST_PAIN','DYSPNEA','SYNCOPE','ALTERED_CONSCIOUSNESS'])
-    expect(isSupportedSymptom('HEADACHE')).toBe(false)
+  it('describes unsupported symptoms as requiring human review', () => {
+    expect(reasonLabel('UNSUPPORTED_SYMPTOMS_REQUIRE_REVIEW')).toContain('人工复核')
   })
 
-  it('describes no configured red flag as requiring human review', () => {
-    expect(reasonLabel('NO_CONFIGURED_RED_FLAG')).toContain('仍需人工审核')
-  })
-
-  it('does not treat a generic chest-pain case as hypertension teaching', () => {
-    const visit={chiefComplaint:'合成胸痛',freeText:'',symptoms:[{code:'CHEST_PAIN',name:'胸痛',severity:3}]} as Visit
-    expect(isHypertensionTeachingCase(visit)).toBe(false)
-    expect(isHypertensionTeachingCase({...visit,freeText:'高血压教学病例'})).toBe(true)
+  it('distinguishes supported no-match from no corresponding rule', () => {
+    expect(reasonLabel('SUPPORTED_NO_RULE_MATCH_REQUIRES_REVIEW')).toContain('未覆盖')
+    expect(reasonLabel('UNSUPPORTED_SYMPTOMS_REQUIRE_REVIEW')).not.toBe(reasonLabel('SUPPORTED_NO_RULE_MATCH_REQUIRES_REVIEW'))
   })
 
   it('uses human-readable task labels', () => {
-    expect(taskPresentation('BP_RECORD').label).toBe('教学血压记录')
+    expect(taskPresentation('BP_RECORD').label).toBe('血压记录')
   })
 })

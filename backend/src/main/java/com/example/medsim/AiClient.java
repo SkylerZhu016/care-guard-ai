@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClient;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
@@ -29,14 +30,24 @@ class AiClient {
     }
 
     AiJobStatus analyze(String runId, Visit visit, List<SymptomEntity> symptoms, RuleOutcome rule) {
-        Map<String, Object> body = Map.of(
-            "runId", runId, "visitId", visit.id.toString(), "ageBand", "ADULT",
-            "chiefComplaint", visit.chiefComplaint, "freeText", visit.freeText,
-            "symptoms", symptoms.stream().map(value -> Map.of(
-                "codeSystem", value.codeSystem, "code", value.code, "name", value.name,
-                "severity", value.severity, "onset", value.onset == null ? "" : value.onset)).toList(),
-            "ruleUrgency", rule.urgency().name(), "ruleReasonCodes", rule.reasonCodes()
-        );
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("runId", runId); body.put("visitId", visit.id.toString()); body.put("ageBand", "UNKNOWN");
+        body.put("chiefComplaint", visit.chiefComplaint); body.put("freeText", visit.freeText);
+        body.put("symptoms", symptoms.stream().map(value -> {
+            Map<String,Object> report = new LinkedHashMap<>();
+            report.put("codeSystem", value.codeSystem); report.put("code", value.code); report.put("name", value.name);
+            report.put("supportLevel", value.supportLevel == null ? SupportLevel.RECORD_ONLY.name() : value.supportLevel.name());
+            report.put("source", value.reportSource == null ? "LEGACY" : value.reportSource);
+            report.put("onsetRange", value.onsetRange == null ? "UNKNOWN" : value.onsetRange);
+            report.put("course", value.course == null ? "UNKNOWN" : value.course);
+            report.put("currentStatus", value.currentStatus == null ? "UNKNOWN" : value.currentStatus);
+            report.put("activityImpact", value.activityImpact == null ? "UNKNOWN" : value.activityImpact);
+            report.put("answers", parseAnswers(value.answersJson));
+            return report;
+        }).toList());
+        if (rule.urgency() != null) body.put("ruleUrgency", rule.urgency().name());
+        body.put("ruleReasonCodes", rule.reasonCodes());
+        body.put("coverageStatus", rule.coverageStatus().name()); body.put("assessmentStatus", rule.assessmentStatus().name());
         final String requestJson;
         try { requestJson = mapper.writeValueAsString(body); }
         catch (JsonProcessingException ex) { throw new IllegalStateException("AI_REQUEST_SERIALIZATION_FAILED", ex); }
@@ -51,6 +62,12 @@ class AiClient {
             try { Thread.sleep(200); } catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new IllegalStateException("AI_WAIT_INTERRUPTED"); }
         }
         throw new IllegalStateException("AI_TIMEOUT");
+    }
+
+    private Object parseAnswers(String value) {
+        if (value == null || value.isBlank()) return List.of();
+        try { return mapper.readTree(value); }
+        catch (JsonProcessingException ignored) { return List.of(); }
     }
 }
 

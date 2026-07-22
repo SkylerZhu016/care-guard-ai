@@ -11,7 +11,7 @@ import java.util.*;
 
 @Service
 class PlatformService {
-    private static final Set<String> VALID_TEMPLATES = Set.of("HYPERTENSION_TEACHING_V1");
+    private static final Set<String> VALID_TEMPLATES = Set.of("GENERAL_FOLLOWUP_V1");
     private final VisitRepository visits; private final SymptomRepository symptoms; private final TriageRepository triage;
     private final AgentRunRepository runs; private final CitationRepository citations; private final FollowupPlanRepository plans;
     private final FollowupTaskRepository tasks; private final SafetyAlertRepository alerts; private final AuditRepository audits;
@@ -30,7 +30,7 @@ class PlatformService {
     @Transactional
     VisitView createVisit(AuthPrincipal actor, VisitInput input) {
         var visit = new Visit(); visit.id=UUID.randomUUID(); visit.ownerId=actor.id(); visit.chiefComplaint=privacy.sanitize(input.chiefComplaint()); visit.freeText=privacy.sanitize(input.freeText());
-        visits.save(visit); replaceSymptoms(visit.id, input.symptoms()); audit(actor.id(), "VISIT_CREATED", "VISIT", visit.id, "SUCCESS", Map.of("synthetic", true));
+        visits.save(visit); replaceSymptoms(visit.id, input.symptoms()); audit(actor.id(), "VISIT_CREATED", "VISIT", visit.id, "SUCCESS", Map.of("fixture", true));
         return view(visit);
     }
 
@@ -56,11 +56,13 @@ class PlatformService {
         var outcome = rules.evaluate(inputs);
         transition(visit, VisitStatus.SUBMITTED); visit.idempotencyKey=idempotencyKey; visit.submittedAt=OffsetDateTime.now(); visits.save(visit);
         var result = new TriageResult(); result.id=UUID.randomUUID(); result.visitId=visit.id; result.ruleUrgency=outcome.urgency();
-        result.ruleReasonCodes=String.join(",", outcome.reasonCodes()); triage.save(result);
+        result.ruleReasonCodes=String.join(",", outcome.reasonCodes()); result.coverageStatus=outcome.coverageStatus(); result.assessmentStatus=outcome.assessmentStatus(); triage.save(result);
         transition(visit, VisitStatus.PROCESSING); visits.save(visit);
         runAi(visit, symptomEntities, outcome, result, actor.id());
         transition(visit, VisitStatus.PENDING_REVIEW); visits.save(visit);
-        audit(actor.id(), "VISIT_SUBMITTED", "VISIT", visit.id, "SUCCESS", Map.of("ruleUrgency", outcome.urgency().name()));
+        var submitMetadata=new LinkedHashMap<String,Object>(); submitMetadata.put("ruleUrgency", outcome.urgency()==null?"MANUAL_REVIEW":outcome.urgency().name());
+        submitMetadata.put("coverageStatus", outcome.coverageStatus().name());
+        audit(actor.id(), "VISIT_SUBMITTED", "VISIT", visit.id, "SUCCESS", submitMetadata);
         return view(visit);
     }
 
@@ -73,7 +75,7 @@ class PlatformService {
     @Transactional(readOnly = true)
     VisitView getVisit(AuthPrincipal actor, UUID id) {
         var visit=visits.findById(id).orElseThrow(ApiException::notFound);
-        if (actor.role()==Role.SIMULATED_PATIENT && !visit.ownerId.equals(actor.id())) throw ApiException.notFound();
+        if (actor.role()==Role.PATIENT && !visit.ownerId.equals(actor.id())) throw ApiException.notFound();
         if (actor.role()==Role.FOLLOWUP_STAFF) throw ApiException.forbidden();
         return view(visit);
     }
@@ -84,7 +86,8 @@ class PlatformService {
         var visit=visits.findById(result.visitId).orElseThrow(ApiException::notFound);
         if (visit.status!=VisitStatus.PENDING_REVIEW) throw ApiException.conflict("VISIT_INVALID_TRANSITION", "病例不在待审核状态");
         Urgency requested=input.finalUrgency()==null ? (result.aiUrgency==null?result.ruleUrgency:result.aiUrgency) : input.finalUrgency();
-        if (input.decision()!=ReviewDecision.REJECT && requested.ordinal()<result.ruleUrgency.ordinal()) throw ApiException.conflict("TRIAGE_RULE_DOWNGRADE_FORBIDDEN", "最终等级不能低于规则等级");
+        if (input.decision()!=ReviewDecision.REJECT && requested==null) throw new ApiException(HttpStatus.BAD_REQUEST,"TRIAGE_FINAL_URGENCY_REQUIRED","当前规则未自动分级，请由医务人员填写最终等级");
+        if (input.decision()!=ReviewDecision.REJECT && result.ruleUrgency!=null && requested.ordinal()<result.ruleUrgency.ordinal()) throw ApiException.conflict("TRIAGE_RULE_DOWNGRADE_FORBIDDEN", "最终等级不能低于规则等级");
         result.finalUrgency=input.decision()==ReviewDecision.REJECT?null:requested; result.reviewDecision=input.decision(); result.reviewReason=privacy.sanitize(input.reason()); result.reviewerId=actor.id(); result.reviewedAt=OffsetDateTime.now();
         triage.save(result);
         if (input.decision()==ReviewDecision.REJECT) transition(visit, VisitStatus.REJECTED); else transition(visit, VisitStatus.REVIEWED);
@@ -123,7 +126,7 @@ class PlatformService {
 
     @Transactional(readOnly = true)
     List<TaskView> assignedTasks(AuthPrincipal actor) {
-        if (actor.role()==Role.SIMULATED_PATIENT) {
+        if (actor.role()==Role.PATIENT) {
             return plans.findByOwnerId(actor.id()).stream().flatMap(plan->tasks.findByPlanId(plan.id).stream()).map(this::taskView).toList();
         }
         return tasks.findByAssigneeIdOrderByDueAtAsc(actor.id()).stream().map(this::taskView).toList();
@@ -155,7 +158,7 @@ class PlatformService {
             var job=ai.analyze(runId, visit, symptomEntities, outcome); run.status=job.status(); run.durationMs=job.durationMs();
             if(job.result()!=null) {
                 var result=job.result();
-                if (result.proposedUrgency().ordinal()<outcome.urgency().ordinal()) throw new IllegalStateException("AI_RULE_DOWNGRADE");
+                if (outcome.urgency()!=null && result.proposedUrgency()!=null && result.proposedUrgency().ordinal()<outcome.urgency().ordinal()) throw new IllegalStateException("AI_RULE_DOWNGRADE");
                 if (result.citations()==null || result.citations().isEmpty() || result.citations().stream().anyMatch(c->!knowledge.isActiveChunk(c.chunkId()))) throw new IllegalStateException("AI_INVALID_CITATION");
                 run.provider=result.provider(); run.modelName=result.model(); run.outputHash=result.outputHash(); run.safetyDecision=result.safety().decision();
                 run.safetyReasonCodes=String.join(",", result.safety().reasonCodes());
@@ -174,14 +177,14 @@ class PlatformService {
 
     private void createAlert(AgentRun run, Visit visit, List<String> reasons, String category) {
         var alert=new SafetyAlert(); alert.id=UUID.randomUUID(); alert.runId=run.runId; alert.visitId=visit.id; alert.category=category; alert.severity="HIGH";
-        alert.reasonCodes=String.join(",", reasons); alert.redactedSummary="合成病例的受控 AI 运行需要人工复核"; alerts.save(alert);
+        alert.reasonCodes=String.join(",", reasons); alert.redactedSummary="自动信息整理未完成，需要人工复核"; alerts.save(alert);
     }
     private void transition(Visit visit, VisitStatus target) { if(!rules.canTransition(visit.status,target)) throw ApiException.conflict("VISIT_INVALID_TRANSITION", "不允许的病例状态迁移"); visit.status=target; }
     private Visit ownedDraft(AuthPrincipal actor, UUID id) { var v=visits.findById(id).orElseThrow(ApiException::notFound); if(!v.ownerId.equals(actor.id())) throw ApiException.notFound(); if(v.status!=VisitStatus.DRAFT) throw ApiException.conflict("VISIT_NOT_EDITABLE", "只有草稿可编辑"); return v; }
-    private void replaceSymptoms(UUID visitId, List<SymptomInput> input) { symptoms.deleteByVisitId(visitId); for(var item:input){ var s=new SymptomEntity(); s.id=UUID.randomUUID(); s.visitId=visitId; s.code=item.code(); s.name=privacy.sanitize(item.name()); s.severity=item.severity(); s.onset=privacy.sanitize(item.onset()); symptoms.save(s); } }
+    private void replaceSymptoms(UUID visitId, List<SymptomInput> input) { symptoms.deleteByVisitId(visitId); for(var item:input){ var s=new SymptomEntity(); s.id=UUID.randomUUID(); s.visitId=visitId; s.code=item.code(); s.name=privacy.sanitize(item.name()); s.legacySeverity=item.severity(); s.onset=privacy.sanitize(item.onset()); s.catalogVersion="legacy-v1"; s.supportLevel=Set.of("CHEST_PAIN","DYSPNEA","SYNCOPE","ALTERED_CONSCIOUSNESS").contains(item.code())?SupportLevel.RULE_SUPPORTED:SupportLevel.RECORD_ONLY; s.reportSource="LEGACY"; symptoms.save(s); } }
     private void createTask(FollowupPlan plan, UUID assignee, String code, String title, int dueDays) { var t=new FollowupTask(); t.id=UUID.randomUUID(); t.planId=plan.id; t.assigneeId=assignee; t.taskCode=code; t.title=title; t.dueAt=OffsetDateTime.now().plusDays(dueDays); tasks.save(t); }
     private List<String> split(String value) { return value==null||value.isBlank()?List.of():Arrays.stream(value.split(",")).filter(s->!s.isBlank()).toList(); }
-    private SymptomInput symptomInput(SymptomEntity s){ return new SymptomInput(s.code,s.name,s.severity,s.onset); }
+    private SymptomInput symptomInput(SymptomEntity s){ return new SymptomInput(s.code,s.name,s.legacySeverity==null?0:s.legacySeverity,s.onset); }
     private VisitView view(Visit v){ var tr=triage.findByVisitId(v.id).map(this::triageView).orElse(null); return new VisitView(v.id,v.ownerId,v.status,v.chiefComplaint,v.freeText,symptoms.findByVisitId(v.id).stream().map(this::symptomInput).toList(),tr,runs.findByVisitIdOrderByCreatedAtDesc(v.id).stream().map(this::runView).toList(),v.createdAt,v.submittedAt); }
     private TriageView triageView(TriageResult t){ return new TriageView(t.id,t.ruleUrgency,t.aiUrgency,t.finalUrgency,split(t.ruleReasonCodes),t.aiSummary,t.reviewDecision,t.reviewReason); }
     private AgentRunView runView(AgentRun r){ return new AgentRunView(r.runId,r.status,r.provider,r.modelName,r.safetyDecision,split(r.safetyReasonCodes),split(r.agentTrace),r.durationMs,r.errorCode,citations.findByAgentRunId(r.id).stream().map(c->new CitationView(c.guidelineId,c.chunkId,c.claimKey,c.title,c.section,c.quote,c.sourceUrl,c.licenseNote)).toList()); }

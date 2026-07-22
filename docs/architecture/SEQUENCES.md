@@ -2,23 +2,22 @@
 
 ```mermaid
 sequenceDiagram
-  actor P as 模拟患者
+  actor P as 患者
   participant FE as Vue
   participant BE as Spring Boot
+  participant DB as PostgreSQL
   participant AI as FastAPI
   actor C as 医务人员
-  actor S as 随访人员
-  P->>FE: 提交合成预问诊
-  FE->>BE: POST /visits/{id}/submit
-  BE->>BE: 规则筛查与持久化
-  BE->>AI: 受控分析（可失败）
-  AI-->>BE: 草案/引用/安全决定
-  BE->>BE: schema、引用、单调性复核
-  BE-->>C: PENDING_REVIEW
-  C->>BE: 审核并激活计划
-  BE-->>S: 生成教学随访任务
-  S->>BE: 完成任务
+  P->>FE: 选择症状并回答事实问题
+  FE->>BE: POST/PUT /api/v2/visits
+  BE->>DB: 保存 INTAKE_V2 草稿
+  P->>FE: 确认提交
+  FE->>BE: POST /api/v2/visits/{id}/submit
+  BE->>DB: 保存健康资料快照与事实规则结果
+  BE->>AI: 事实答案 + 覆盖状态 + 可空规则等级
+  AI-->>BE: 摘要 / 引用 / 安全决定
+  BE->>DB: 校验引用并写入 PENDING_REVIEW
+  C->>BE: 人工终审并决定随访
 ```
 
-AI 超时或不可用时，后端记录 `FAILED` 运行并保留规则结果，病例仍进入 `PENDING_REVIEW`，不伪造成功结果。
-
+无规则、AI 失败或无证据都不会生成安全结论；记录保持 `REQUIRES_MANUAL_REVIEW`。

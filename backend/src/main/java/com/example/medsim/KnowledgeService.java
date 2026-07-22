@@ -162,8 +162,8 @@ class KnowledgeService {
 
     private void ingestSafetyBaseline() {
         String title = "Adult symptom red-flag teaching baseline";
-        String sourceUrl = "https://example.org/medsim/synthetic-red-flag-demo";
-        String license = "Project-authored synthetic safety baseline; not a clinical guideline and not a substitute for qualified review.";
+        String sourceUrl = "https://example.org/medsim/internal-fixture";
+        String license = "Internal test fixture; not a clinical guideline and not a substitute for qualified review.";
         List<CorpusChunk> chunks = List.of(
             new CorpusChunk("chunk-red-flag-chest-pain-001", "Chest pain with danger signs",
                 "CHEST_PAIN DYSPNEA SYNCOPE EMERGENCY",

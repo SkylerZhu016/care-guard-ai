@@ -1,8 +1,10 @@
 # 数据库设计
 
-- PostgreSQL 16 是开发、测试和 Compose 的唯一关系数据库，不使用 H2 等替代实现。
-- Flyway `V1__baseline.sql` 建立用户、就诊、分诊结果、AI 运行、引用、随访、告警和审计表。
-- 唯一约束：用户名、`agent_runs.run_id`、`visits.idempotency_key`。
-- 队列索引：`visits(status, submitted_at)`；任务索引：`followup_tasks(status, due_at)`；审计索引：`audit_logs(target_type, target_id, created_at)`。
-- 原子边界：提交+规则结果、审核+最终等级、激活计划+任务快照、AI 结果+引用+告警。
-- 历史记录只追加；用户停用代替删除；演示环境重置使用显式 profile。
+- PostgreSQL 16 是开发、测试和 Compose 的唯一业务数据库，不使用 H2。
+- Flyway V1–V3 是已发布历史迁移，不修改；V4 完成患者角色和 v2 问诊迁移。
+- `visits.intake_version` 区分 `INTAKE_V1` 与 `INTAKE_V2`，`profile_snapshot` 保存提交时资料。
+- `symptoms.legacy_severity` 只服务历史只读；新问诊写入目录版本、支持级别、来源、事实字段和 JSONB 答案。
+- `triage_results.rule_urgency` 可空；`coverage_status` 为 `FULL/PARTIAL/NONE`，`assessment_status` 为规则已评估或需要人工复核。
+- `patient_profiles.owner_id` 唯一；`visit_supplements` 只追加。
+- 唯一约束覆盖用户名、运行 ID、问诊幂等键和每问诊一个随访计划。
+- pgvector 使用 HNSW cosine 索引；知识版本、来源 URL、哈希和对象键可审计。

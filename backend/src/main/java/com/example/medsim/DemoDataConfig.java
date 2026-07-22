@@ -10,9 +10,9 @@ class DemoDataConfig {
     @Bean
     CommandLineRunner seedDemoUsers(UserRepository users, PasswordEncoder encoder) {
         return args -> {
-            seed(users, encoder, "patient", "模拟患者", Role.SIMULATED_PATIENT);
-            seed(users, encoder, "clinician", "模拟医务人员", Role.CLINICIAN);
-            seed(users, encoder, "followup", "模拟随访人员", Role.FOLLOWUP_STAFF);
+            seed(users, encoder, "patient", "患者用户", Role.PATIENT);
+            seed(users, encoder, "clinician", "医务人员", Role.CLINICIAN);
+            seed(users, encoder, "followup", "随访人员", Role.FOLLOWUP_STAFF);
             seed(users, encoder, "admin", "系统管理员", Role.ADMIN);
         };
     }

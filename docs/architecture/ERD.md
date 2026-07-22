@@ -2,15 +2,16 @@
 
 ```mermaid
 erDiagram
+  USER ||--o| PATIENT_PROFILE : owns
   USER ||--o{ VISIT : creates
-  VISIT ||--|| TRIAGE_RESULT : has
+  VISIT ||--o{ SYMPTOM_REPORT : contains
+  VISIT ||--o| TRIAGE_RESULT : has
+  VISIT ||--o{ VISIT_SUPPLEMENT : receives
   VISIT ||--o{ AGENT_RUN : analyzed_by
   AGENT_RUN ||--o{ CITATION : supports
-  VISIT ||--o{ FOLLOWUP_PLAN : yields
-  FOLLOWUP_PLAN ||--o{ FOLLOWUP_TASK : snapshots
+  VISIT ||--o| FOLLOWUP_PLAN : may_yield
+  FOLLOWUP_PLAN ||--o{ FOLLOWUP_TASK : creates
   USER ||--o{ AUDIT_LOG : acts
-  AGENT_RUN ||--o{ SAFETY_ALERT : raises
 ```
 
-完整 DDL 位于 `backend/src/main/resources/db/migration/V1__baseline.sql`。主键使用 UUID 字符串，业务聚合包含乐观锁版本；用户、运行 ID 和幂等键具有唯一约束。
-
+V4 增加患者资料、资料快照、补充信息、事实型症状字段、覆盖状态和可空规则等级。历史数字列仅以 `legacy_severity` 只读保留。

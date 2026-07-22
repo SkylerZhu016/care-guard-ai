@@ -20,4 +20,6 @@ interface FollowupPlanRepository extends JpaRepository<FollowupPlan, UUID> { Lis
 interface FollowupTaskRepository extends JpaRepository<FollowupTask, UUID> { List<FollowupTask> findByPlanId(UUID planId); List<FollowupTask> findByAssigneeIdOrderByDueAtAsc(UUID assigneeId); }
 interface SafetyAlertRepository extends JpaRepository<SafetyAlert, UUID> { List<SafetyAlert> findAllByOrderByCreatedAtDesc(); }
 interface AuditRepository extends JpaRepository<AuditLog, UUID> { List<AuditLog> findTop100ByOrderByCreatedAtDesc(); }
+interface PatientProfileRepository extends JpaRepository<PatientProfile, UUID> { Optional<PatientProfile> findByOwnerId(UUID ownerId); }
+interface VisitSupplementRepository extends JpaRepository<VisitSupplement, UUID> { List<VisitSupplement> findByVisitIdOrderByCreatedAtAsc(UUID visitId); }
 

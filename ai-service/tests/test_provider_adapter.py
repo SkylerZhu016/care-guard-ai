@@ -12,8 +12,9 @@ from app.schemas import AnalysisRequest
 def request():
     return AnalysisRequest.model_validate({
         "runId": "run-adapter-001", "visitId": "visit-adapter-001", "ageBand": "ADULT",
-        "chiefComplaint": "合成轻度疲劳", "symptoms": [{"code": "FATIGUE", "severity": 2}],
-        "freeText": "仅为教学模拟", "ruleUrgency": "ROUTINE", "ruleReasonCodes": ["NO_CONFIGURED_RED_FLAG"],
+        "chiefComplaint": "感到乏力", "symptoms": [{"code": "FATIGUE", "name": "乏力", "supportLevel": "RECORD_ONLY"}],
+        "freeText": "希望补充信息", "ruleUrgency": None, "ruleReasonCodes": ["UNSUPPORTED_SYMPTOMS_REQUIRE_REVIEW"],
+        "coverageStatus": "NONE", "assessmentStatus": "REQUIRES_MANUAL_REVIEW",
     })
 
 
@@ -21,7 +22,7 @@ def test_openai_compatible_uses_separate_generation_and_critic_calls(monkeypatch
     monkeypatch.setattr(providers, "settings", SimpleNamespace(base_url="https://provider.example/v1", api_key="test-only", model="model-test"))
     calls = []
     responses = [
-        {"caseSummary": "合成病例摘要", "proposedUrgency": "ROUTINE", "rationale": ["规则优先"], "missingQuestions": [], "evidence": []},
+        {"caseSummary": "信息摘要", "proposedUrgency": None, "rationale": ["等待人工复核"], "missingQuestions": [], "evidence": []},
         {"violations": [], "review": "独立安全复核通过"},
     ]
 
@@ -42,7 +43,7 @@ def test_openai_compatible_uses_separate_generation_and_critic_calls(monkeypatch
     assert len(calls) == 2
     assert calls[0]["url"] == "https://provider.example/v1/chat/completions"
     assert calls[0]["headers"]["Authorization"] == "Bearer test-only"
-    assert "只整理教学模拟病例" in calls[0]["payload"]["messages"][0]["content"]
+    assert "只整理患者填写的事实" in calls[0]["payload"]["messages"][0]["content"]
     assert "独立安全审查角色" in calls[1]["payload"]["messages"][0]["content"]
     assert critic["violations"] == []
 

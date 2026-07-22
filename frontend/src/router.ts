@@ -10,7 +10,7 @@ const AdminView = () => import('./views/AdminView.vue')
 
 export const router = createRouter({ history:createWebHistory(), routes:[
   {path:'/',redirect:'/login'}, {path:'/login',component:LoginView},
-  {path:'/patient',component:PatientView,meta:{role:'SIMULATED_PATIENT'}},
+  {path:'/patient',component:PatientView,meta:{role:'PATIENT'}},
   {path:'/clinician',component:ClinicianView,meta:{role:'CLINICIAN'}},
   {path:'/followup',component:FollowupView,meta:{role:'FOLLOWUP_STAFF'}},
   {path:'/admin',component:AdminView,meta:{role:'ADMIN'}}
