@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-知识库已由“2 个手写来源、3 个教学分块”升级为可复现的官方网络语料快照。截至 2026-07-22，本地快照包含 21 个成功来源、150 个分块，来源机构为 WHO、CDC、NIH/NHLBI 和 NHS，覆盖高血压、胸痛、呼吸困难、晕厥、头痛、卒中、心肌梗死、心力衰竭、心律失常及心血管风险预防。
+知识库已由“2 个手写来源、3 个内置分块”升级为可复现的官方网络语料快照。截至 2026-07-22，本地快照包含 21 个成功来源、150 个分块，来源机构为 WHO、CDC、NIH/NHLBI 和 NHS，覆盖高血压、胸痛、呼吸困难、晕厥、头痛、卒中、心肌梗死、心力衰竭、心律失常及心血管风险预防。
 
 完整工程链路为：固定官方来源白名单 → 检查 robots.txt → 限速、重试并抓取正文 → 清理页面模板和重复段落 → 稳定分块 → 生成带 SHA-256 的 JSON 快照 → 后端校验哈希 → Markdown 原文上传 MinIO → 来源、版本和抓取证据写入 PostgreSQL → 64 维确定性 hashing embedding 写入 pgvector → HNSW cosine 检索 → Agent 引用白名单校验。
 
@@ -12,7 +12,7 @@
 D:\Anaconda\envs\ML3.9\python.exe data-pipeline\crawl_official_medical_sources.py
 ```
 
-采集器当前只使用虚拟环境中已有的 `requests`、`beautifulsoup4` 和 `lxml`，没有新增 Python 依赖。`requests` 连续失败时会调用系统现有 `curl.exe` 完成同一白名单 URL 的抓取，并在 `retrievalMethod` 中明确记录 `curl-fallback`，不会静默换来源或生成合成正文。
+采集器当前只使用虚拟环境中已有的 `requests`、`beautifulsoup4` 和 `lxml`，没有新增 Python 依赖。`requests` 连续失败时会调用系统现有 `curl.exe` 完成同一白名单 URL 的抓取，并在 `retrievalMethod` 中明确记录 `curl-fallback`，不会静默换来源或生成虚构正文。
 
 ## 语料与审计文件
 

@@ -13,7 +13,7 @@ sourcePolicy:
   robotsTxtRequired: true
   patientOrForumDataAllowed: false
   unrestrictedLinkFollowing: false
-  failureFallbackToSyntheticContent: false
+  failureFallbackToFixtureContent: false
 provenanceFields:
   - sourceUrl
   - finalUrl
@@ -24,4 +24,3 @@ provenanceFields:
   - contentSha256
   - retrievalMethod
   - licenseNote
-

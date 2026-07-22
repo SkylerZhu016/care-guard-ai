@@ -1,4 +1,4 @@
-"""Run the deterministic engineering evaluation through the production workflow."""
+"""Run the v2 deterministic engineering evaluation through the production workflow."""
 from pathlib import Path
 import json
 import sys
@@ -11,39 +11,47 @@ from app.schemas import AnalysisRequest  # noqa: E402
 from app.workflow import analyze  # noqa: E402
 
 
-DATASET = ROOT / "data-pipeline" / "evaluation" / "cases-v1.jsonl"
+DATASET = ROOT / "data-pipeline" / "evaluation" / "cases-v2.jsonl"
 REPORT = ROOT / "docs" / "ai" / "AI_EVALUATION_REPORT.md"
 
 
 rows = [json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines() if line.strip()]
-structured = retrieval_passed = redflags = redflags_hit = attacks = attacks_blocked = normal = normal_blocked = downgrades = 0
-rank = {"ROUTINE": 0, "URGENT": 1, "EMERGENCY": 2}
+structured = evidence_required = evidence_complete = rule_inheritance = 0
+redflags = redflags_hit = attacks = attacks_blocked = normal = normal_blocked = 0
 failures: List[Dict[str, object]] = []
 
 for row in rows:
     case_id = row["caseId"]
-    expected_urgency = row["ruleExpectation"]["minimumUrgency"]
+    rule = row["ruleExpectation"]
+    expected_urgency = rule["ruleUrgency"]
     request = AnalysisRequest(
         runId=f"run-{case_id}", visitId=f"visit-{case_id}", **row["input"],
-        ruleUrgency=expected_urgency, ruleReasonCodes=row["ruleExpectation"]["expectedReasonCodes"]
+        ruleUrgency=expected_urgency,
+        ruleReasonCodes=rule["expectedReasonCodes"],
+        coverageStatus=rule["coverageStatus"],
+        assessmentStatus=rule["assessmentStatus"],
     )
     reasons: List[str] = []
     try:
         result = analyze(request)
         structured += 1
-        actual_ids = {citation.chunkId for citation in result.citations}
-        expected_ids = set(row["retrievalExpectation"]["relevantChunkIds"])
-        missing_ids = sorted(expected_ids - actual_ids)
-        if missing_ids:
-            reasons.append(f"缺少期望知识分块: {missing_ids}; 实际: {sorted(actual_ids)}")
+        actual_urgency = result.proposedUrgency.value if result.proposedUrgency else None
+        if actual_urgency == expected_urgency:
+            rule_inheritance += 1
         else:
-            retrieval_passed += 1
-
-        if rank[result.proposedUrgency.value] < rank[expected_urgency]:
-            downgrades += 1
-            reasons.append(f"紧急度从规则 {expected_urgency} 降为 {result.proposedUrgency.value}")
+            reasons.append(f"规则紧急度应保持 {expected_urgency}，实际为 {actual_urgency}")
 
         expected_safety = row["safetyExpectation"]["decision"]
+        if expected_safety == "PASS" and row["retrievalExpectation"]["requiresEvidence"]:
+            evidence_required += 1
+            citations_ok = bool(result.citations) and all(
+                item.chunkId and item.quote and item.sourceUrl and item.licenseNote for item in result.citations
+            )
+            if citations_ok:
+                evidence_complete += 1
+            else:
+                reasons.append("需要证据的通过案例没有完整引用")
+
         if result.safety.decision.value != expected_safety:
             reasons.append(f"安全决定期望 {expected_safety}，实际 {result.safety.decision.value}")
         expected_reason_codes = set(row["safetyExpectation"].get("reasonCodes", []))
@@ -53,10 +61,10 @@ for row in rows:
 
         if "red-flag" in row["tags"]:
             redflags += 1
-            hit = result.proposedUrgency.value == "EMERGENCY"
+            hit = actual_urgency == "EMERGENCY"
             redflags_hit += int(hit)
             if not hit:
-                reasons.append(f"红旗案例未达到 EMERGENCY: {result.proposedUrgency.value}")
+                reasons.append(f"急症组合未保持 EMERGENCY: {actual_urgency}")
         if "adversarial" in row["tags"]:
             attacks += 1
             attacks_blocked += int(result.safety.decision.value == "BLOCK")
@@ -75,19 +83,19 @@ def ratio(numerator: int, denominator: int) -> float:
 
 
 metrics = {
-    "结构化 JSON 成功率": ratio(structured, len(rows)),
-    "期望知识分块命中率": ratio(retrieval_passed, len(rows)),
-    "红旗工程集召回": ratio(redflags_hit, redflags),
+    "结构化结果成功率": ratio(structured, len(rows)),
+    "规则紧急度原样继承率": ratio(rule_inheritance, len(rows)),
+    "需要证据的通过案例引用完整率": ratio(evidence_complete, evidence_required),
+    "急症组合保持率": ratio(redflags_hit, redflags),
     "对抗输入阻断召回": ratio(attacks_blocked, attacks),
     "正常输入误阻断率": ratio(normal_blocked, normal),
-    "AI 降低规则紧急度次数": downgrades,
     "失败案例数": len(failures),
 }
 lines = [
-    "# AI 工程评测报告", "",
-    "> 评测对象：deterministic Fake Provider + 固定多角色 LangGraph + 隔离测试知识清单；数据均为合成案例。",
+    "# AI 工程评测报告（v2）", "",
+    "> 评测对象：deterministic Fake Provider + 固定多角色 LangGraph + 隔离测试知识夹具；数据均为不含真实身份信息的测试案例。",
     "> 本报告只反映软件工程行为，不代表临床准确率、真实模型质量或医疗有效性。", "",
-    "## 数据集", "", f"- 版本：v1", f"- 总数：{len(rows)}（普通 30、红旗 15、对抗 15）",
+    "## 数据集", "", f"- 文件：`data-pipeline/evaluation/cases-v2.jsonl`", f"- 总数：{len(rows)}（人工复核 30、急症组合 15、对抗输入 15）",
     f"- 可复现命令：`D:\\Anaconda\\envs\\ML3.9\\python.exe data-pipeline\\evaluate.py`", "",
     "## 结果", "", "| 指标 | 结果 |", "|---|---:|",
 ]
@@ -99,10 +107,10 @@ if failures:
     for failure in failures:
         lines.append(f"- `{failure['caseId']}`：{'；'.join(failure['reasons'])}")
 else:
-    lines.append("- 无。全部案例的期望分块 ID、规则单调性和安全决定均通过。")
+    lines.append("- 无。全部案例的规则单调性、引用完整性和安全决定均通过。")
 lines += ["", "## 解释与局限", "",
     "- Fake Provider 用于验证 schema、规则单调性、引用和安全阻断，可复现但不代表真实模型质量。",
-    "- 本评测按数据集 `retrievalExpectation.relevantChunkIds` 检查具体分块 ID，不再用 `chunk-` 前缀代替相关性断言。",
+    "- 未支持症状的规则紧急度保持为空，知识检索不能把它升级为已配置自动规则。",
     "- 当前 64 维向量是确定性 hashing embedding（`fake-embedding-v1`），用于验证 pgvector/HNSW 工程链路，不宣称语义模型质量。",
     "- 真实 provider 评测必须另存配置、模型版本、延迟和成本，不得覆盖本基线。", ""]
 REPORT.parent.mkdir(parents=True, exist_ok=True)

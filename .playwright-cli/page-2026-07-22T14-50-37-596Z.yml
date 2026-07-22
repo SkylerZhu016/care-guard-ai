@@ -1,0 +1,73 @@
+- generic [ref=e3]:
+  - link "跳到主要内容" [ref=e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e5]:
+    - button "返回角色工作台" [ref=e6] [cursor=pointer]:
+      - generic [ref=e11]:
+        - strong [ref=e12]: 守望基层医疗
+        - generic [ref=e13]: 预问诊与随访信息服务
+    - generic [ref=e89]:
+      - generic [ref=e93]:
+        - generic [ref=e94]: 患者
+        - strong [ref=e95]: 患者用户
+      - button "退出当前账号" [ref=e96] [cursor=pointer]
+  - note [ref=e100]:
+    - strong [ref=e101]: 安全提示：
+    - text: 系统可记录常见不适；确定性自动规则仅覆盖部分胸痛、呼吸困难、晕厥与意识异常组合。未覆盖内容会转交人工复核。
+  - main [ref=e14]:
+    - generic [ref=e103]:
+      - navigation "患者功能区" [ref=e104]:
+        - generic [ref=e105]:
+          - generic [ref=e106]: 患者工作区
+          - strong [ref=e107]: 我的健康事务
+        - button "新建预问诊" [ref=e108] [cursor=pointer]
+        - button "问诊记录" [ref=e113] [cursor=pointer]
+        - button "随访任务" [ref=e117] [cursor=pointer]
+        - button "健康资料" [ref=e123] [cursor=pointer]
+        - generic [ref=e127]: 系统整理信息而非诊断或处方；自动结果必须人工审核。
+      - main [ref=e128]:
+        - generic [ref=e129]:
+          - generic [ref=e130]:
+            - text: 新建预问诊
+            - heading "先把情况说清楚" [level=1] [ref=e131]
+            - paragraph [ref=e132]: 按实际情况填写；不知道或说不清时可直接选择对应选项。
+          - generic [ref=e133]: 草稿会自动保存在本机
+        - navigation "预问诊四个阶段" [ref=e137]:
+          - button "1 哪里不舒服" [ref=e138] [cursor=pointer]:
+            - generic [ref=e139]: "1"
+            - text: 哪里不舒服
+          - button "2 具体情况" [ref=e140] [cursor=pointer]:
+            - generic [ref=e141]: "2"
+            - text: 具体情况
+          - button "3 特别注意" [active] [ref=e142] [cursor=pointer]:
+            - generic [ref=e143]: "3"
+            - text: 特别注意
+          - button "4 检查提交" [ref=e144] [cursor=pointer]:
+            - generic [ref=e145]: "4"
+            - text: 检查提交
+        - article [ref=e146]:
+          - region [ref=e381]:
+            - generic [ref=e383]:
+              - text: 阶段 3 / 4
+              - heading "需要特别注意的表现" [level=2] [ref=e384]
+              - paragraph [ref=e385]: 系统会集中核对已经填写的胸口不适、呼吸困难、真正失去意识和反应异常。
+            - alert [ref=e386]:
+              - generic [ref=e391]:
+                - strong [ref=e392]: 你填写的情况需要优先人工审核
+                - paragraph [ref=e393]: 如症状正在发生或快速加重，请及时联系当地急救或尽快线下就医。你可以直接提交，不必继续补全非必要项目。
+            - generic [ref=e394]:
+              - heading "本次已记录" [level=3] [ref=e395]
+              - list [ref=e396]:
+                - listitem [ref=e397]:
+                  - strong [ref=e398]: 胸痛
+                  - generic [ref=e399]: 当前状态说不清
+                - listitem [ref=e400]:
+                  - strong [ref=e401]: 呼吸困难
+                  - generic [ref=e402]: 当前状态说不清
+          - generic [ref=e214]:
+            - button "上一步" [ref=e304] [cursor=pointer]
+            - button "保存退出" [ref=e215] [cursor=pointer]
+            - button "下一步" [ref=e217] [cursor=pointer]
+  - contentinfo [ref=e86]:
+    - strong [ref=e87]: 信息整理服务
+    - generic [ref=e88]: 不构成诊断、处方或医疗建议 · 自动结果必须人工审核 · 敏感字段写库前脱敏

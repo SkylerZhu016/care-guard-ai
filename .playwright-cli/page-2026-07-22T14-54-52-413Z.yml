@@ -1,0 +1,112 @@
+- generic [ref=e3]:
+  - link "跳到主要内容" [ref=e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e5]:
+    - button "返回角色工作台" [ref=e6] [cursor=pointer]:
+      - strong [ref=e12]: 守望基层医疗
+    - generic [ref=e89]:
+      - strong [ref=e817]: 医务人员
+      - button "退出当前账号" [ref=e818] [cursor=pointer]
+  - note [ref=e822]:
+    - strong [ref=e823]: 安全提示：
+    - text: 系统可记录常见不适；确定性自动规则仅覆盖部分胸痛、呼吸困难、晕厥与意识异常组合。未覆盖内容会转交人工复核。
+  - main [ref=e14]:
+    - generic [ref=e824]:
+      - generic [ref=e825]:
+        - generic [ref=e826]:
+          - text: 人工审核工作区
+          - heading "预问诊安全终审" [level=1] [ref=e827]
+          - paragraph [ref=e828]: 按患者原话、事实答案、规则与覆盖、AI 摘要和引用分层核对。
+        - generic [ref=e829]:
+          - strong [ref=e830]: "2"
+          - generic [ref=e831]: 待人工审核
+      - generic "审核工作流" [ref=e832]:
+        - generic [ref=e833]: 1 患者信息
+        - generic [ref=e834]: 2 规则与证据
+        - generic [ref=e835]: 3 人工终审
+        - generic [ref=e836]: 4 随访决策
+      - generic [ref=e837]:
+        - complementary [ref=e838]:
+          - generic [ref=e839]:
+            - heading "待处理队列" [level=2] [ref=e843]
+            - generic [ref=e844]: 按提交时间
+          - 'button "Fixture: headache today 7/22 22:41 REQUIRES_MANUAL_REVIEW" [ref=e845] [cursor=pointer]':
+            - generic [ref=e846]:
+              - strong [ref=e847]: "Fixture: headache today"
+              - generic [ref=e848]: 7/22 22:41
+            - generic [ref=e849]: REQUIRES_MANUAL_REVIEW
+          - button "主要不适为胸痛、呼吸困难 7/22 22:52 急症红旗" [ref=e850] [cursor=pointer]:
+            - generic [ref=e851]:
+              - strong [ref=e852]: 主要不适为胸痛、呼吸困难
+              - generic [ref=e853]: 7/22 22:52
+            - generic [ref=e854]: 急症红旗
+        - article [ref=e855]:
+          - generic [ref=e856]:
+            - generic [ref=e857]:
+              - text: 记录 d1b4007a
+              - 'heading "Fixture: headache today" [level=2] [ref=e858]'
+              - paragraph [ref=e859]: Requires manual review
+            - generic [ref=e860]: 待人工审核
+          - generic [ref=e861]:
+            - generic [ref=e862]:
+              - generic [ref=e863]: "01"
+              - generic [ref=e864]:
+                - heading "患者原话与事实答案" [level=3] [ref=e865]
+                - paragraph [ref=e866]: 旧版记录保留原始值；新版记录不包含数字严重度。
+            - generic [ref=e868]:
+              - generic [ref=e869]: 头痛
+              - strong [ref=e870]: 事实型记录
+              - generic [ref=e871]: 开始：今天
+              - generic [ref=e872]: 过程：间歇
+              - generic [ref=e873]: 现在：仍存在
+              - generic [ref=e874]: 活动影响：需要停下休息
+            - generic [ref=e875]:
+              - strong [ref=e876]: 提交时健康资料快照
+              - text: 年龄段：ADULT慢病：hypertension过敏：NONE长期用药：UNKNOWN
+          - generic [ref=e877]:
+            - generic [ref=e878]:
+              - generic [ref=e879]: "02"
+              - generic [ref=e880]:
+                - heading "规则、覆盖状态与 AI 证据" [level=3] [ref=e881]
+                - paragraph [ref=e882]: 知识检索不能把未支持症状变成确定性自动规则。
+            - generic [ref=e883]:
+              - generic [ref=e884]:
+                - generic [ref=e885]:
+                  - heading "确定性规则" [level=4] [ref=e886]
+                  - generic [ref=e887]: REQUIRES_MANUAL_REVIEW
+                - paragraph [ref=e888]:
+                  - strong [ref=e889]: 覆盖：
+                  - text: 无对应确定性规则
+                - paragraph [ref=e890]:
+                  - strong [ref=e891]: 评估：
+                  - text: 必须人工评估
+                - list [ref=e892]:
+                  - listitem [ref=e893]: 部分不适仅作记录，等待人工复核 (UNSUPPORTED_SYMPTOMS_REQUIRE_REVIEW)
+              - generic [ref=e894]:
+                - generic [ref=e895]:
+                  - heading "AI 信息整理" [level=4] [ref=e896]
+                  - generic [ref=e897]: 分析完成
+                - paragraph [ref=e898]: "患者主诉：Fixture: headache today；已记录情况：头痛（开始：TODAY，状态：PRESENT，活动影响：NEEDS_REST）。"
+                - text: fake / fake-v1
+            - group [ref=e899]:
+              - generic "查看 4 条引用证据" [ref=e900] [cursor=pointer]
+          - generic [ref=e901]:
+            - generic [ref=e902]:
+              - generic [ref=e903]: "03"
+              - generic [ref=e904]:
+                - heading "人工终审" [level=3] [ref=e905]
+                - paragraph [ref=e906]: 存在规则紧急度时，系统会阻止降低；无自动等级时由医务人员判断。
+            - generic [ref=e907]:
+              - generic [ref=e909] [cursor=pointer]:
+                - generic:
+                  - combobox [ref=e911]
+                  - generic [ref=e912]: 接受整理结果
+              - generic [ref=e918] [cursor=pointer]:
+                - generic:
+                  - combobox [ref=e920]
+                  - generic [ref=e921]: 常规
+              - textbox "人工审核理由（必填）" [ref=e928]: 已核对患者原话、事实答案、规则结果、覆盖状态与引用证据
+            - button [ref=e929] [cursor=pointer]
+  - contentinfo [ref=e86]:
+    - strong [ref=e87]: 信息整理服务
+    - generic [ref=e88]: 不构成诊断、处方或医疗建议 · 自动结果必须人工审核 · 敏感字段写库前脱敏

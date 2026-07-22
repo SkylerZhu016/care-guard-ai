@@ -29,7 +29,7 @@ from bs4 import BeautifulSoup, Tag
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CORPUS = ROOT / "backend" / "src" / "main" / "resources" / "knowledge" / "official-corpus.json"
 DEFAULT_REPORT = ROOT / "data-pipeline" / "corpus" / "crawl-report.json"
-USER_AGENT = "MedsimTeachingCorpusBot/1.0 (+local engineering training project; respectful snapshot builder)"
+USER_AGENT = "MedsimMedicalCorpusBot/1.0 (+local engineering project; respectful snapshot builder)"
 SPACE = re.compile(r"\s+")
 
 
@@ -46,7 +46,7 @@ class Source:
 
 WHO_LICENSE = (
     "World Health Organization public web page. Reuse remains subject to the WHO page's "
-    "copyright and licensing terms; this corpus stores a dated teaching/research snapshot with attribution."
+    "copyright and licensing terms; this corpus stores a dated engineering snapshot with attribution."
 )
 CDC_LICENSE = (
     "U.S. Centers for Disease Control and Prevention public web page. CDC-authored material is generally "

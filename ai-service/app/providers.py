@@ -20,8 +20,16 @@ class DeterministicFakeProvider:
     def generate(self, request: AnalysisRequest, evidence: List[Dict[str, str]]) -> Dict:
         canonical = json.dumps(request.model_dump(mode="json"), ensure_ascii=False, sort_keys=True)
         proposed = request.ruleUrgency
+        labels = {
+            "JUST_NOW": "刚刚", "TODAY": "今天", "ONE_TO_THREE_DAYS": "1–3 天", "MORE_THAN_THREE_DAYS": "3 天以上",
+            "CONTINUOUS": "持续", "INTERMITTENT": "间歇", "RELIEVED": "已经缓解",
+            "PRESENT": "仍存在", "NOT_PRESENT": "目前没有", "NO_IMPACT": "不影响",
+            "NEEDS_REST": "需要停下休息", "UNABLE_NORMAL_ACTIVITY": "无法正常活动", "UNKNOWN": "不知道/说不清",
+        }
         summary = "；".join(
-            f"{symptom.name or symptom.code}（开始：{symptom.onsetRange}，状态：{symptom.currentStatus}，活动影响：{symptom.activityImpact}）"
+            f"{symptom.name or symptom.code}（开始：{labels.get(symptom.onsetRange, symptom.onsetRange)}，"
+            f"状态：{labels.get(symptom.currentStatus, symptom.currentStatus)}，"
+            f"活动影响：{labels.get(symptom.activityImpact, symptom.activityImpact)}）"
             for symptom in request.symptoms
         )
         return {

@@ -115,9 +115,9 @@ class PlatformService {
         var visit=visits.findById(plan.visitId).orElseThrow(ApiException::notFound);
         plan.status=PlanStatus.ACTIVE; plan.activatedAt=OffsetDateTime.now(); plans.save(plan);
         var assignee=users.findFirstByRole(Role.FOLLOWUP_STAFF).orElseThrow();
-        createTask(plan, assignee.id, "BP_RECORD", "记录合成血压数据", 7);
+        createTask(plan, assignee.id, "BP_RECORD", "记录血压数据", 7);
         createTask(plan, assignee.id, "SYMPTOM_CHECK", "完成结构化症状复核", 7);
-        createTask(plan, assignee.id, "ADHERENCE_CHECK", "记录教学计划执行情况", 14);
+        createTask(plan, assignee.id, "ADHERENCE_CHECK", "记录随访计划执行情况", 14);
         createTask(plan, assignee.id, "CLINICIAN_REVIEW", "第 4 周医务人员复核", 28);
         transition(visit, VisitStatus.FOLLOWUP_ACTIVE); visits.save(visit);
         audit(actor.id(), "FOLLOWUP_PLAN_ACTIVATED", "FOLLOWUP_PLAN", plan.id, "SUCCESS", Map.of("taskCount", 4));

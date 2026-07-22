@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-22T09:51:55Z",
+  "generatedAt": "2026-07-22T15:41:35Z",
   "generator": "data-pipeline/crawl_official_medical_sources.py",
   "documentCount": 21,
   "chunkCount": 150,
@@ -11,12 +11,12 @@
       "publisher": "World Health Organization",
       "sourceUrl": "https://www.who.int/news-room/fact-sheets/detail/hypertension",
       "finalUrl": "https://www.who.int/news-room/fact-sheets/detail/hypertension",
-      "licenseNote": "World Health Organization public web page. Reuse remains subject to the WHO page's copyright and licensing terms; this corpus stores a dated teaching/research snapshot with attribution.",
+      "licenseNote": "World Health Organization public web page. Reuse remains subject to the WHO page's copyright and licensing terms; this corpus stores a dated engineering snapshot with attribution.",
       "language": "en",
-      "versionId": "who-hypertension-94b441005558",
-      "versionLabel": "web-snapshot-94b441005558",
-      "fetchedAt": "2026-07-22T09:51:39Z",
-      "contentSha256": "94b441005558538ca67ea3e3a66cb655227fbff89d61aab2fa6b44ea73f04061",
+      "versionId": "who-hypertension-3a4b5e67982c",
+      "versionLabel": "web-snapshot-3a4b5e67982c",
+      "fetchedAt": "2026-07-22T15:41:03Z",
+      "contentSha256": "3a4b5e67982cdcb62e8d21b3139970bd8003c815540707f5823b11a0f5eed0d3",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
       "httpStatus": 200,
@@ -28,73 +28,73 @@
         "HEADACHE",
         "CARDIOVASCULAR"
       ],
-      "markdown": "# Hypertension\n\nPublisher: World Health Organization\nSource: https://www.who.int/news-room/fact-sheets/detail/hypertension\n\nWorld Health Organization public web page. Reuse remains subject to the WHO page's copyright and licensing terms; this corpus stores a dated teaching/research snapshot with attribution.\n\n## Key facts\n\nAn estimated 1.4 billion adults aged 30–79 years worldwide had hypertension in 2024; this represents 33% of the popluation in this age range.\n\nTwo-thirds of adults aged 30–79 years who have hypertension live in low- and middle-income countries.\n\nAn estimated 600 million adults with hypertension (44%) are unaware that they have the condition.\n\nApproximately 630 million adults with hypertension (44%) are diagnosed and treated.\n\nApproximately 320 million adults with hypertension (23%) have it under control.\n\nHypertension is a major cause of premature death worldwide.\n\nOne of the global targets for noncommunicable diseases is to reduce the prevalence of uncontrolled hypertension by 25% between 2010 and 2025.\n\n## Overview\n\nHypertension (high blood pressure) is when the pressure in your blood vessels is too high (140/90 mmHg or higher). It is common but can be serious if not treated.\n\nPeople with high blood pressure may not feel symptoms. The only way to know is to get your blood pressure checked.\n\nThings that increase the risk of having high blood pressure include:\n\nbeing overweight or obese\n\nnot being physically active\n\ndrinking too much alcohol\n\nLifestyle changes like eating a healthier diet, quitting tobacco and being more active can help lower blood pressure. Some people may still need to take medicines.\n\nBlood pressure is written as two numbers. The first (systolic) number represents the pressure in blood vessels when the heart contracts or beats. The second (diastolic) number represents the pressure in the vessels when the heart rests between beats. Hypertension is diagnosed if, when it is measured on two different days, the systolic blood pressure readings on both days is ≥140 mmHg and/or the diastolic blood pressure readings on both days is ≥90 mmHg.\n\n## Risk factors\n\nModifiable risk factors include unhealthy diets (excessive salt consumption, a diet high in saturated fat and trans fats, low intake of fruits and vegetables), physical inactivity, consumption of tobacco and alcohol, and being overweight or obese. In addition, there are environmental risk factors for hypertension and associated diseases, where air pollution is the most significant. Non-modifiable risk factors include a family history of hypertension, age over 65 years and co-existing diseases such as diabetes or kidney disease.\n\n## Symptoms\n\nMost people with hypertension don’t feel any symptoms. Very high blood pressures can cause headaches, blurred vision, chest pain and other symptoms.\n\nChecking your blood pressure is the best way to know if you have high blood pressure. If hypertension isn’t treated, it can cause other health conditions like kidney disease, heart disease and stroke.\n\nPeople with very high blood pressure (usually 180/120 or higher) can experience symptoms including:\n\nblurred vision or other vision changes\n\nIf you are experiencing any of these symptoms and a high blood pressure, seek care immediately.\n\nThe only way to detect hypertension is to have a health professional measure blood pressure. Having blood pressure measured is quick and painless. Although individuals can measure their own blood pressure using automated devices, an evaluation by a health professional is important for assessment of risk and associated conditions.\n\n## Treatment\n\nLifestyle changes can help lower high blood pressure. These include:\n\neating a healthy, low-salt diet\n\nIf you have high blood pressure, your doctor may recommend one or more medicines. Your recommended blood pressure goal may depend on what other health conditions you have.\n\nBlood pressure goal is less than 130/80 if you have:\n\ncardiovascular disease (heart disease or stroke)\n\ndiabetes (high blood sugar)\n\nhigh risk for cardiovascular disease.\n\nFor most people, the goal is to have a blood pressure less than 140/90.\n\nThere are several common blood pressure medicines:\n\nACE inhibitors including enalapril and lisinopril relax blood vessels and prevent kidney damage.\n\nAngiotensin-2 receptor blockers (ARBs) including losartan and telmisartan relax blood vessels and prevent kidney damage.\n\nCalcium channel blockers including amlodipine and felodipine relax blood vessels.\n\nDiuretics including hydrochlorothiazide and chlorthalidone eliminate extra water from the body, lowering blood pressure.\n\n## Prevention\n\nLifestyle changes can help lower high blood pressure and can help anyone with hypertension. Many who make these changes will still need to take medicine.\n\nThese lifestyle changes can help prevent and lower high blood pressure.\n\nEat more vegetables and fruits.\n\nBe more physically active, which can include walking, running, swimming, dancing or activities that build strength, like lifting weights. Get at least 150 minutes per week of moderate-intensity aerobic activity or 75 minutes per week of vigorous aerobic activity. Do strength building exercises 2 or more days each week.\n\nGet at least 150 minutes per week of moderate-intensity aerobic activity or 75 minutes per week of vigorous aerobic activity.\n\nDo strength building exercises 2 or more days each week.\n\nLose weight if you’re overweight or obese.\n\nTake medicines as prescribed by your health care professional.\n\nKeep appointments with your health care professional.\n\neat too much salty food (try to stay under 2 grams per day)\n\neat foods high in saturated or trans fats\n\ndrink too much alcohol (1 drink daily max for women, 2 for men)\n\nmiss or share medication.\n\nReducing hypertension prevents heart attack, stroke and kidney damage, as well as other health problems.\n\nReduce the risks of hypertension by:\n\nreducing and managing stress\n\nregularly checking blood pressure\n\ntreating high blood pressure\n\nmanaging other medical conditions\n\nreducing exposure to polluted air.\n\n## Complications of uncontrolled hypertension\n\nAmong other complications, hypertension can cause serious damage to the heart. Excessive pressure can harden arteries, decreasing the flow of blood and oxygen to the heart. This elevated pressure and reduced blood flow can cause:\n\nchest pain, also called angina;\n\nheart attack, which occurs when the blood supply to the heart is blocked and heart muscle cells die from lack of oxygen. The longer the blood flow is blocked, the greater the damage to the heart;\n\nheart failure, which occurs when the heart cannot pump enough blood and oxygen to other vital body organs; and\n\nirregular heart beat which can lead to a sudden death.\n\nHypertension can also burst or block arteries that supply blood and oxygen to the brain, causing a stroke.\n\nIn addition, hypertension can cause kidney damage, leading to kidney failure.\n\n## Prevalence of hypertension\n\nThe prevalence of hypertension varies across regions and country income groups. The WHO Eastern Mediterranean Region has the highest prevalence of hypertension (38%) while the WHO Western Pacific Region has the lowest prevalence of hypertension (29%).\n\nThe number of adults with hypertension increased from 650 million in 1990 to 1.4 billion in 2024, with the increase seen largely in low- and middle-income countries. This increase is due mainly to a rise in the number of older adults in those countries.\n\n## WHO response\n\nThe World Health Organization (WHO) supports countries to reduce hypertension as a public health problem.\n\nIn 2021, WHO released a new guideline for on the pharmacological treatment of hypertension in adults. The publication provides evidence-based recommendations for the initiation of treatment of hypertension, and recommended intervals for follow-up. The document also includes target blood pressure to be achieved for control, and information on who, in the health-care system, can initiate treatment.\n\nTo support governments in strengthening the prevention and control of cardiovascular disease, WHO and the United States Centers for Disease Control and Prevention (U.S. CDC) launched the Global Hearts Initiative in September 2016, which includes the HEARTS technical package. The six modules of the HEARTS technical package (Healthy-lifestyle counselling, Evidence-based treatment protocols, Access to essential medicines and technology, Risk-based management, Team-based care, and Systems for monitoring) provide a strategic approach to improve cardiovascular health in countries across the world.\n\nIn September 2017, WHO began a partnership with Resolve to Save Lives, an initiative of Vital Strategies, to support national governments to implement the Global Hearts Initiative. Other partners contributing to the Global Hearts Initiative are the CDC Foundation, the Global Health Advocacy Incubator, the Johns Hopkins Bloomberg School of Public Health, the Pan American Health Organization (PAHO) and the U.S. CDC. Since implementation of the programme in 2017, in more than 40 low- and middle-income countries, 13.5 million people have been put on protocol-based hypertension treatment through person-centred models of care. These programmes demonstrate the feasibility and effectiveness of standardized hypertension control programmes.\n",
+      "markdown": "# Hypertension\n\nPublisher: World Health Organization\nSource: https://www.who.int/news-room/fact-sheets/detail/hypertension\n\nWorld Health Organization public web page. Reuse remains subject to the WHO page's copyright and licensing terms; this corpus stores a dated engineering snapshot with attribution.\n\n## Key facts\n\nAn estimated 1.4 billion adults aged 30–79 years worldwide had hypertension in 2024; this represents 33% of the popluation in this age range.\n\nTwo-thirds of adults aged 30–79 years who have hypertension live in low- and middle-income countries.\n\nAn estimated 600 million adults with hypertension (44%) are unaware that they have the condition.\n\nApproximately 630 million adults with hypertension (44%) are diagnosed and treated.\n\nApproximately 320 million adults with hypertension (23%) have it under control.\n\nHypertension is a major cause of premature death worldwide.\n\nOne of the global targets for noncommunicable diseases is to reduce the prevalence of uncontrolled hypertension by 25% between 2010 and 2025.\n\n## Overview\n\nHypertension (high blood pressure) is when the pressure in your blood vessels is too high (140/90 mmHg or higher). It is common but can be serious if not treated.\n\nPeople with high blood pressure may not feel symptoms. The only way to know is to get your blood pressure checked.\n\nThings that increase the risk of having high blood pressure include:\n\nbeing overweight or obese\n\nnot being physically active\n\ndrinking too much alcohol\n\nLifestyle changes like eating a healthier diet, quitting tobacco and being more active can help lower blood pressure. Some people may still need to take medicines.\n\nBlood pressure is written as two numbers. The first (systolic) number represents the pressure in blood vessels when the heart contracts or beats. The second (diastolic) number represents the pressure in the vessels when the heart rests between beats. Hypertension is diagnosed if, when it is measured on two different days, the systolic blood pressure readings on both days is ≥140 mmHg and/or the diastolic blood pressure readings on both days is ≥90 mmHg.\n\n## Risk factors\n\nModifiable risk factors include unhealthy diets (excessive salt consumption, a diet high in saturated fat and trans fats, low intake of fruits and vegetables), physical inactivity, consumption of tobacco and alcohol, and being overweight or obese. In addition, there are environmental risk factors for hypertension and associated diseases, where air pollution is the most significant. Non-modifiable risk factors include a family history of hypertension, age over 65 years and co-existing diseases such as diabetes or kidney disease.\n\n## Symptoms\n\nMost people with hypertension don’t feel any symptoms. Very high blood pressures can cause headaches, blurred vision, chest pain and other symptoms.\n\nChecking your blood pressure is the best way to know if you have high blood pressure. If hypertension isn’t treated, it can cause other health conditions like kidney disease, heart disease and stroke.\n\nPeople with very high blood pressure (usually 180/120 or higher) can experience symptoms including:\n\nblurred vision or other vision changes\n\nIf you are experiencing any of these symptoms and a high blood pressure, seek care immediately.\n\nThe only way to detect hypertension is to have a health professional measure blood pressure. Having blood pressure measured is quick and painless. Although individuals can measure their own blood pressure using automated devices, an evaluation by a health professional is important for assessment of risk and associated conditions.\n\n## Treatment\n\nLifestyle changes can help lower high blood pressure. These include:\n\neating a healthy, low-salt diet\n\nIf you have high blood pressure, your doctor may recommend one or more medicines. Your recommended blood pressure goal may depend on what other health conditions you have.\n\nBlood pressure goal is less than 130/80 if you have:\n\ncardiovascular disease (heart disease or stroke)\n\ndiabetes (high blood sugar)\n\nhigh risk for cardiovascular disease.\n\nFor most people, the goal is to have a blood pressure less than 140/90.\n\nThere are several common blood pressure medicines:\n\nACE inhibitors including enalapril and lisinopril relax blood vessels and prevent kidney damage.\n\nAngiotensin-2 receptor blockers (ARBs) including losartan and telmisartan relax blood vessels and prevent kidney damage.\n\nCalcium channel blockers including amlodipine and felodipine relax blood vessels.\n\nDiuretics including hydrochlorothiazide and chlorthalidone eliminate extra water from the body, lowering blood pressure.\n\n## Prevention\n\nLifestyle changes can help lower high blood pressure and can help anyone with hypertension. Many who make these changes will still need to take medicine.\n\nThese lifestyle changes can help prevent and lower high blood pressure.\n\nEat more vegetables and fruits.\n\nBe more physically active, which can include walking, running, swimming, dancing or activities that build strength, like lifting weights. Get at least 150 minutes per week of moderate-intensity aerobic activity or 75 minutes per week of vigorous aerobic activity. Do strength building exercises 2 or more days each week.\n\nGet at least 150 minutes per week of moderate-intensity aerobic activity or 75 minutes per week of vigorous aerobic activity.\n\nDo strength building exercises 2 or more days each week.\n\nLose weight if you’re overweight or obese.\n\nTake medicines as prescribed by your health care professional.\n\nKeep appointments with your health care professional.\n\neat too much salty food (try to stay under 2 grams per day)\n\neat foods high in saturated or trans fats\n\ndrink too much alcohol (1 drink daily max for women, 2 for men)\n\nmiss or share medication.\n\nReducing hypertension prevents heart attack, stroke and kidney damage, as well as other health problems.\n\nReduce the risks of hypertension by:\n\nreducing and managing stress\n\nregularly checking blood pressure\n\ntreating high blood pressure\n\nmanaging other medical conditions\n\nreducing exposure to polluted air.\n\n## Complications of uncontrolled hypertension\n\nAmong other complications, hypertension can cause serious damage to the heart. Excessive pressure can harden arteries, decreasing the flow of blood and oxygen to the heart. This elevated pressure and reduced blood flow can cause:\n\nchest pain, also called angina;\n\nheart attack, which occurs when the blood supply to the heart is blocked and heart muscle cells die from lack of oxygen. The longer the blood flow is blocked, the greater the damage to the heart;\n\nheart failure, which occurs when the heart cannot pump enough blood and oxygen to other vital body organs; and\n\nirregular heart beat which can lead to a sudden death.\n\nHypertension can also burst or block arteries that supply blood and oxygen to the brain, causing a stroke.\n\nIn addition, hypertension can cause kidney damage, leading to kidney failure.\n\n## Prevalence of hypertension\n\nThe prevalence of hypertension varies across regions and country income groups. The WHO Eastern Mediterranean Region has the highest prevalence of hypertension (38%) while the WHO Western Pacific Region has the lowest prevalence of hypertension (29%).\n\nThe number of adults with hypertension increased from 650 million in 1990 to 1.4 billion in 2024, with the increase seen largely in low- and middle-income countries. This increase is due mainly to a rise in the number of older adults in those countries.\n\n## WHO response\n\nThe World Health Organization (WHO) supports countries to reduce hypertension as a public health problem.\n\nIn 2021, WHO released a new guideline for on the pharmacological treatment of hypertension in adults. The publication provides evidence-based recommendations for the initiation of treatment of hypertension, and recommended intervals for follow-up. The document also includes target blood pressure to be achieved for control, and information on who, in the health-care system, can initiate treatment.\n\nTo support governments in strengthening the prevention and control of cardiovascular disease, WHO and the United States Centers for Disease Control and Prevention (U.S. CDC) launched the Global Hearts Initiative in September 2016, which includes the HEARTS technical package. The six modules of the HEARTS technical package (Healthy-lifestyle counselling, Evidence-based treatment protocols, Access to essential medicines and technology, Risk-based management, Team-based care, and Systems for monitoring) provide a strategic approach to improve cardiovascular health in countries across the world.\n\nIn September 2017, WHO began a partnership with Resolve to Save Lives, an initiative of Vital Strategies, to support national governments to implement the Global Hearts Initiative. Other partners contributing to the Global Hearts Initiative are the CDC Foundation, the Global Health Advocacy Incubator, the Johns Hopkins Bloomberg School of Public Health, the Pan American Health Organization (PAHO) and the U.S. CDC. Since implementation of the programme in 2017, in more than 40 low- and middle-income countries, 13.5 million people have been put on protocol-based hypertension treatment through person-centred models of care. These programmes demonstrate the feasibility and effectiveness of standardized hypertension control programmes.\n",
       "chunks": [
         {
           "section": "Key facts",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "An estimated 1.4 billion adults aged 30–79 years worldwide had hypertension in 2024; this represents 33% of the popluation in this age range.\n\nTwo-thirds of adults aged 30–79 years who have hypertension live in low- and middle-income countries.\n\nAn estimated 600 million adults with hypertension (44%) are unaware that they have the condition.\n\nApproximately 630 million adults with hypertension (44%) are diagnosed and treated.\n\nApproximately 320 million adults with hypertension (23%) have it under control.\n\nHypertension is a major cause of premature death worldwide.\n\nOne of the global targets for noncommunicable diseases is to reduce the prevalence of uncontrolled hypertension by 25% between 2010 and 2025.",
-          "chunkId": "chunk-who-hypertension-94b4410055-001"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-001"
         },
         {
           "section": "Overview",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "Hypertension (high blood pressure) is when the pressure in your blood vessels is too high (140/90 mmHg or higher). It is common but can be serious if not treated.\n\nPeople with high blood pressure may not feel symptoms. The only way to know is to get your blood pressure checked.\n\nThings that increase the risk of having high blood pressure include:\n\nbeing overweight or obese\n\nnot being physically active\n\ndrinking too much alcohol\n\nLifestyle changes like eating a healthier diet, quitting tobacco and being more active can help lower blood pressure. Some people may still need to take medicines.\n\nBlood pressure is written as two numbers. The first (systolic) number represents the pressure in blood vessels when the heart contracts or beats. The second (diastolic) number represents the pressure in the vessels when the heart rests between beats. Hypertension is diagnosed if, when it is measured on two different days, the systolic blood pressure readings on both days is ≥140 mmHg and/or the diastolic blood pressure readings on both days is ≥90 mmHg.",
-          "chunkId": "chunk-who-hypertension-94b4410055-002"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-002"
         },
         {
           "section": "Risk factors",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "Modifiable risk factors include unhealthy diets (excessive salt consumption, a diet high in saturated fat and trans fats, low intake of fruits and vegetables), physical inactivity, consumption of tobacco and alcohol, and being overweight or obese. In addition, there are environmental risk factors for hypertension and associated diseases, where air pollution is the most significant. Non-modifiable risk factors include a family history of hypertension, age over 65 years and co-existing diseases such as diabetes or kidney disease.",
-          "chunkId": "chunk-who-hypertension-94b4410055-003"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-003"
         },
         {
           "section": "Symptoms",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "Most people with hypertension don’t feel any symptoms. Very high blood pressures can cause headaches, blurred vision, chest pain and other symptoms.\n\nChecking your blood pressure is the best way to know if you have high blood pressure. If hypertension isn’t treated, it can cause other health conditions like kidney disease, heart disease and stroke.\n\nPeople with very high blood pressure (usually 180/120 or higher) can experience symptoms including:\n\nblurred vision or other vision changes\n\nIf you are experiencing any of these symptoms and a high blood pressure, seek care immediately.\n\nThe only way to detect hypertension is to have a health professional measure blood pressure. Having blood pressure measured is quick and painless. Although individuals can measure their own blood pressure using automated devices, an evaluation by a health professional is important for assessment of risk and associated conditions.",
-          "chunkId": "chunk-who-hypertension-94b4410055-004"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-004"
         },
         {
           "section": "Treatment",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "Lifestyle changes can help lower high blood pressure. These include:\n\neating a healthy, low-salt diet\n\nIf you have high blood pressure, your doctor may recommend one or more medicines. Your recommended blood pressure goal may depend on what other health conditions you have.\n\nBlood pressure goal is less than 130/80 if you have:\n\ncardiovascular disease (heart disease or stroke)\n\ndiabetes (high blood sugar)\n\nhigh risk for cardiovascular disease.\n\nFor most people, the goal is to have a blood pressure less than 140/90.\n\nThere are several common blood pressure medicines:\n\nACE inhibitors including enalapril and lisinopril relax blood vessels and prevent kidney damage.\n\nAngiotensin-2 receptor blockers (ARBs) including losartan and telmisartan relax blood vessels and prevent kidney damage.\n\nCalcium channel blockers including amlodipine and felodipine relax blood vessels.\n\nDiuretics including hydrochlorothiazide and chlorthalidone eliminate extra water from the body, lowering blood pressure.",
-          "chunkId": "chunk-who-hypertension-94b4410055-005"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-005"
         },
         {
           "section": "Prevention",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "Lifestyle changes can help lower high blood pressure and can help anyone with hypertension. Many who make these changes will still need to take medicine.\n\nThese lifestyle changes can help prevent and lower high blood pressure.\n\nEat more vegetables and fruits.\n\nBe more physically active, which can include walking, running, swimming, dancing or activities that build strength, like lifting weights. Get at least 150 minutes per week of moderate-intensity aerobic activity or 75 minutes per week of vigorous aerobic activity. Do strength building exercises 2 or more days each week.\n\nGet at least 150 minutes per week of moderate-intensity aerobic activity or 75 minutes per week of vigorous aerobic activity.\n\nDo strength building exercises 2 or more days each week.\n\nLose weight if you’re overweight or obese.\n\nTake medicines as prescribed by your health care professional.\n\nKeep appointments with your health care professional.\n\neat too much salty food (try to stay under 2 grams per day)\n\neat foods high in saturated or trans fats\n\ndrink too much alcohol (1 drink daily max for women, 2 for men)\n\nmiss or share medication.",
-          "chunkId": "chunk-who-hypertension-94b4410055-006"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-006"
         },
         {
           "section": "Prevention",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "miss or share medication.\n\nReducing hypertension prevents heart attack, stroke and kidney damage, as well as other health problems.\n\nReduce the risks of hypertension by:\n\nreducing and managing stress\n\nregularly checking blood pressure\n\ntreating high blood pressure\n\nmanaging other medical conditions\n\nreducing exposure to polluted air.",
-          "chunkId": "chunk-who-hypertension-94b4410055-007"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-007"
         },
         {
           "section": "Complications of uncontrolled hypertension",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "Among other complications, hypertension can cause serious damage to the heart. Excessive pressure can harden arteries, decreasing the flow of blood and oxygen to the heart. This elevated pressure and reduced blood flow can cause:\n\nchest pain, also called angina;\n\nheart attack, which occurs when the blood supply to the heart is blocked and heart muscle cells die from lack of oxygen. The longer the blood flow is blocked, the greater the damage to the heart;\n\nheart failure, which occurs when the heart cannot pump enough blood and oxygen to other vital body organs; and\n\nirregular heart beat which can lead to a sudden death.\n\nHypertension can also burst or block arteries that supply blood and oxygen to the brain, causing a stroke.\n\nIn addition, hypertension can cause kidney damage, leading to kidney failure.",
-          "chunkId": "chunk-who-hypertension-94b4410055-008"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-008"
         },
         {
           "section": "Prevalence of hypertension",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "The prevalence of hypertension varies across regions and country income groups. The WHO Eastern Mediterranean Region has the highest prevalence of hypertension (38%) while the WHO Western Pacific Region has the lowest prevalence of hypertension (29%).\n\nThe number of adults with hypertension increased from 650 million in 1990 to 1.4 billion in 2024, with the increase seen largely in low- and middle-income countries. This increase is due mainly to a rise in the number of older adults in those countries.",
-          "chunkId": "chunk-who-hypertension-94b4410055-009"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-009"
         },
         {
           "section": "WHO response",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "The World Health Organization (WHO) supports countries to reduce hypertension as a public health problem.\n\nIn 2021, WHO released a new guideline for on the pharmacological treatment of hypertension in adults. The publication provides evidence-based recommendations for the initiation of treatment of hypertension, and recommended intervals for follow-up. The document also includes target blood pressure to be achieved for control, and information on who, in the health-care system, can initiate treatment.\n\nTo support governments in strengthening the prevention and control of cardiovascular disease, WHO and the United States Centers for Disease Control and Prevention (U.S. CDC) launched the Global Hearts Initiative in September 2016, which includes the HEARTS technical package. The six modules of the HEARTS technical package (Healthy-lifestyle counselling, Evidence-based treatment protocols, Access to essential medicines and technology, Risk-based management, Team-based care, and Systems for monitoring) provide a strategic approach to improve cardiovascular health in countries across the world.",
-          "chunkId": "chunk-who-hypertension-94b4410055-010"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-010"
         },
         {
           "section": "WHO response",
           "topics": "HYPERTENSION BP_RECORD HEADACHE CARDIOVASCULAR",
           "content": "To support governments in strengthening the prevention and control of cardiovascular disease, WHO and the United States Centers for Disease Control and Prevention (U.S. CDC) launched the Global Hearts Initiative in September 2016, which includes the HEARTS technical package. The six modules of the HEARTS technical package (Healthy-lifestyle counselling, Evidence-based treatment protocols, Access to essential medicines and technology, Risk-based management, Team-based care, and Systems for monitoring) provide a strategic approach to improve cardiovascular health in countries across the world.\n\nIn September 2017, WHO began a partnership with Resolve to Save Lives, an initiative of Vital Strategies, to support national governments to implement the Global Hearts Initiative. Other partners contributing to the Global Hearts Initiative are the CDC Foundation, the Global Health Advocacy Incubator, the Johns Hopkins Bloomberg School of Public Health, the Pan American Health Organization (PAHO) and the U.S. CDC. Since implementation of the programme in 2017, in more than 40 low- and middle-income countries, 13.5 million people have been put on protocol-based hypertension treatment through person-centred models of care. These programmes demonstrate the feasibility and effectiveness of standardized hypertension control programmes.",
-          "chunkId": "chunk-who-hypertension-94b4410055-011"
+          "chunkId": "chunk-who-hypertension-3a4b5e6798-011"
         }
       ]
     },
@@ -104,12 +104,12 @@
       "publisher": "World Health Organization",
       "sourceUrl": "https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-(cvds)",
       "finalUrl": "https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-(cvds)",
-      "licenseNote": "World Health Organization public web page. Reuse remains subject to the WHO page's copyright and licensing terms; this corpus stores a dated teaching/research snapshot with attribution.",
+      "licenseNote": "World Health Organization public web page. Reuse remains subject to the WHO page's copyright and licensing terms; this corpus stores a dated engineering snapshot with attribution.",
       "language": "en",
-      "versionId": "who-cardiovascular-diseases-aaf02101e461",
-      "versionLabel": "web-snapshot-aaf02101e461",
-      "fetchedAt": "2026-07-22T09:51:39Z",
-      "contentSha256": "aaf02101e461aeeffa93567a4e049575660ead439edb5ed21e52e968648f1716",
+      "versionId": "who-cardiovascular-diseases-b81d0647a619",
+      "versionLabel": "web-snapshot-b81d0647a619",
+      "fetchedAt": "2026-07-22T15:41:04Z",
+      "contentSha256": "b81d0647a619c83ce8614bb9ad821ac3a12ec6938bf340b2130bc51c5b269cce",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
       "httpStatus": 200,
@@ -121,73 +121,73 @@
         "DYSPNEA",
         "STROKE"
       ],
-      "markdown": "# Cardiovascular diseases (CVDs)\n\nPublisher: World Health Organization\nSource: https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-(cvds)\n\nWorld Health Organization public web page. Reuse remains subject to the WHO page's copyright and licensing terms; this corpus stores a dated teaching/research snapshot with attribution.\n\n## Key facts\n\nCardiovascular diseases (CVDs) are the leading cause of death globally.\n\nAn estimated 19.8 million people died from CVDs in 2022, representing approximately 32% of all global deaths. Of these deaths, 85% were due to heart attack and stroke.\n\nOver three quarters of CVD deaths take place in low- and middle-income countries.\n\nOut of the 18 million premature deaths (under the age of 70) due to noncommunicable diseases in 2021, at least 38% were caused by CVDs.\n\nMost cardiovascular diseases can be prevented by addressing behavioural and environmental risk factors such as tobacco use, unhealthy diet (including excess salt, sugar, and fats) and obesity, physical inactivity, harmful use of alcohol and air pollution.\n\nIt is important to detect cardiovascular disease as early as possible so that management with counselling and medicines can begin.\n\n## Overview\n\nCardiovascular diseases (CVDs) are a group of disorders of the heart and blood vessels. They include:\n\ncoronary heart disease – a disease of the blood vessels supplying the heart muscle;\n\ncerebrovascular disease – a disease of the blood vessels supplying the brain;\n\nperipheral arterial disease – a disease of blood vessels supplying the arms and legs;\n\nrheumatic heart disease – damage to the heart muscle and heart valves from rheumatic fever, caused by streptococcal bacteria;\n\ncongenital heart disease – birth defects that affect the normal development and functioning of the heart caused by malformations of the heart structure from birth; and\n\ndeep vein thrombosis and pulmonary embolism – blood clots in the leg veins, which can dislodge and move to the heart and lungs.\n\nHeart attacks and strokes are usually acute events and are mainly caused by a blockage that prevents blood from flowing to the heart or brain. The most common reason for this is a build-up of fatty deposits on the inner walls of the blood vessels that supply the heart or brain. Strokes can be caused by bleeding from a blood vessel in the brain or from blood clots.\n\n## Risk factors for cardiovascular disease\n\nThe most important behavioural risk factors of heart disease and stroke are unhealthy diet, physical inactivity, tobacco use and harmful use of alcohol. Amongst environmental risk factors, air pollution is an important factor. The effects of behavioural risk factors may show up in individuals as raised blood pressure, raised blood glucose, raised blood lipids, and overweight and obesity. These “intermediate risks factors” can be measured in primary care facilities and indicate an increased risk of heart attack, stroke, heart failure and other complications.\n\nCessation of tobacco use, reduction of salt in the diet, eating more fruit and vegetables, regular physical activity and avoiding harmful use of alcohol have been shown to reduce the risk of cardiovascular disease. Health policies that create conducive environments for making healthy choices affordable and available, as well as improving air quality and reducing pollution, are essential for motivating people to adopt and sustain healthy behaviours.\n\nThere are also a number of underlying determinants of CVDs. These are a reflection of the major forces driving social, economic and cultural change – globalization, urbanization and population ageing. Other determinants of CVDs include poverty, stress and hereditary factors.\n\nIn addition, drug treatment of hypertension, diabetes and high blood lipids are necessary to reduce cardiovascular risk and prevent heart attacks and strokes among people with these conditions.\n\n## Symptoms of heart attacks and strokes\n\nOften, there are no symptoms of the underlying disease of the blood vessels. A heart attack or stroke may be the first sign of underlying disease. Symptoms of a heart attack include:\n\npain or discomfort in the centre of the chest; and/or\n\npain or discomfort in the arms, the left shoulder, elbows, jaw, or back.\n\nIn addition the person may experience difficulty in breathing or shortness of breath; nausea or vomiting; light-headedness or faintness; a cold sweat; and turning pale. Women are more likely than men to have shortness of breath, nausea, vomiting, and back or jaw pain.\n\nThe most common symptom of a stroke is sudden weakness of the face, arm, or leg, most often on one side of the body. Other symptoms include sudden onset of:\n\nnumbness of the face, arm, or leg, especially on one side of the body;\n\nconfusion, difficulty speaking or understanding speech;\n\ndifficulty seeing with one or both eyes;\n\ndifficulty walking, dizziness and/or loss of balance or coordination;\n\nsevere headache with no known cause; and/or\n\nfainting or unconsciousness.\n\nPeople experiencing these symptoms should seek medical care immediately.\n\n## Characteristics of rheumatic heart disease\n\nRheumatic heart disease is caused by damage to the heart valves and heart muscle from the inflammation and scarring caused by rheumatic fever. Rheumatic fever is caused by an abnormal response of the body to infection with streptococcal bacteria, which usually begins as a sore throat or tonsillitis in children.\n\nRheumatic fever mostly affects children in developing countries, especially where poverty is widespread. Globally, about 2% of deaths from cardiovascular diseases are related to rheumatic heart disease.\n\n## Symptoms of rheumatic heart disease\n\nSymptoms of rheumatic heart disease include: shortness of breath, fatigue, irregular heartbeats, chest pain and fainting.\n\nSymptoms of rheumatic fever include: fever, pain and swelling of the joints, nausea, stomach cramps and vomiting.\n\n## Why cardiovascular diseases are a development issue in low- and middle-income countries\n\nApproximately 80% of the world's deaths from CVDs occur in low- and middle-income countries. People living in low- and middle-income countries often do not have the benefit of primary health care programmes for early detection and treatment of people with risk factors for CVDs. People in low- and middle-income countries who suffer from CVDs and other noncommunicable diseases have less access to effective and equitable health care services which respond to their needs. As a result, for many people in these countries detection is often late in the course of the disease and people die at a younger age from CVDs and other noncommunicable diseases, often in their most productive years.\n\nThe poorest people in low- and middle-income countries are most affected. At the household level, evidence is emerging that CVDs and other noncommunicable diseases contribute to poverty due to catastrophic health spending and high out-of-pocket expenditure. At the macro-economic level, CVDs place a heavy burden on the economies of low- and middle-income countries.\n\n## How the burden of cardiovascular diseases can be reduced\n\nThe key to cardiovascular disease reduction lies in the inclusion of cardiovascular disease management interventions in universal health coverage packages, although in a high number of countries health systems require significant investment and reorientation to effectively manage CVDs.\n\nEvidence from 18 countries has shown that hypertension programmes can be implemented efficiently and cost-effectively at the primary care level which will ultimately result in reduced coronary heart disease and stroke. Patients with cardiovascular disease should have access to appropriate technology and medication. Basic medicines that should be available include:\n\nangiotensin-converting enzyme inhibitors\n\nAn acute event such as a heart attack or stroke should be promptly managed.\n\nSometimes, surgical operations are required to treat CVDs. They include:\n\nballoon angioplasty (where a small balloon-like device is threaded through an artery to open the blockage);\n\nvalve repair and replacement;\n\nheart transplantation; and\n\nartificial heart operations.\n\nMedical devices are required to treat some CVDs. Such devices include pacemakers, prosthetic valves, and patches for closing holes in the heart.\n\n## WHO response\n\nWHO works to drive and support the implementation of effective actions for the prevention, management, and control of CVDs and their associated risk factors, especially in low- and middle-income countries. To this end, WHO:\n\ndevelops evidence-based guidelines and tools for the prevention and management of major noncommunicable diseases, including CVDs;\n\ndevelops norms and standards for cardiovascular risk assessment, hypertension diagnosis, and CVD care;\n\nraises awareness about the growing global burden of CVDs; and\n\nconducts global surveillance on CVDs and their key risk factors.\n\nIn 2016, to further scale up action, WHO launched the Global HEARTS Initiative, aiming to support countries in strengthening CVD prevention and control through primary health care, particularly in low- and middle-income countries.\n\nIn 2013, WHO Member States agreed on global mechanisms to reduce the avoidable NCD burden including a \"Global action plan for the prevention and control of NCDs 2013-2020\". This Plan has the aim of reducing the number of premature deaths from NCDs by 25% by 2025 through nine voluntary global targets. Two of the targets directly focus on preventing and controlling CVDs.\n\nTarget 6: Reduce global prevalence of raised blood pressure by 25% between 2010 and 2025.\n\nTarget 8: At least 50% of eligible people should receive drug therapy and counselling (including glycaemic control) to prevent heart attacks and strokes by 2025.\n\nIn addition, target 9 states that there should be 80% availability of the affordable basic technologies and essential medicines, including generics, required to treat major NCDs in both public and private facilities.\n\nAchieving these targets will require significant investment in and strengthening of health systems.\n\nWHO is also working on increasing the normative guidance available for the management of acute coronary syndrome and stroke.\n",
+      "markdown": "# Cardiovascular diseases (CVDs)\n\nPublisher: World Health Organization\nSource: https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-(cvds)\n\nWorld Health Organization public web page. Reuse remains subject to the WHO page's copyright and licensing terms; this corpus stores a dated engineering snapshot with attribution.\n\n## Key facts\n\nCardiovascular diseases (CVDs) are the leading cause of death globally.\n\nAn estimated 19.8 million people died from CVDs in 2022, representing approximately 32% of all global deaths. Of these deaths, 85% were due to heart attack and stroke.\n\nOver three quarters of CVD deaths take place in low- and middle-income countries.\n\nOut of the 18 million premature deaths (under the age of 70) due to noncommunicable diseases in 2021, at least 38% were caused by CVDs.\n\nMost cardiovascular diseases can be prevented by addressing behavioural and environmental risk factors such as tobacco use, unhealthy diet (including excess salt, sugar, and fats) and obesity, physical inactivity, harmful use of alcohol and air pollution.\n\nIt is important to detect cardiovascular disease as early as possible so that management with counselling and medicines can begin.\n\n## Overview\n\nCardiovascular diseases (CVDs) are a group of disorders of the heart and blood vessels. They include:\n\ncoronary heart disease – a disease of the blood vessels supplying the heart muscle;\n\ncerebrovascular disease – a disease of the blood vessels supplying the brain;\n\nperipheral arterial disease – a disease of blood vessels supplying the arms and legs;\n\nrheumatic heart disease – damage to the heart muscle and heart valves from rheumatic fever, caused by streptococcal bacteria;\n\ncongenital heart disease – birth defects that affect the normal development and functioning of the heart caused by malformations of the heart structure from birth; and\n\ndeep vein thrombosis and pulmonary embolism – blood clots in the leg veins, which can dislodge and move to the heart and lungs.\n\nHeart attacks and strokes are usually acute events and are mainly caused by a blockage that prevents blood from flowing to the heart or brain. The most common reason for this is a build-up of fatty deposits on the inner walls of the blood vessels that supply the heart or brain. Strokes can be caused by bleeding from a blood vessel in the brain or from blood clots.\n\n## Risk factors for cardiovascular disease\n\nThe most important behavioural risk factors of heart disease and stroke are unhealthy diet, physical inactivity, tobacco use and harmful use of alcohol. Amongst environmental risk factors, air pollution is an important factor. The effects of behavioural risk factors may show up in individuals as raised blood pressure, raised blood glucose, raised blood lipids, and overweight and obesity. These “intermediate risks factors” can be measured in primary care facilities and indicate an increased risk of heart attack, stroke, heart failure and other complications.\n\nCessation of tobacco use, reduction of salt in the diet, eating more fruit and vegetables, regular physical activity and avoiding harmful use of alcohol have been shown to reduce the risk of cardiovascular disease. Health policies that create conducive environments for making healthy choices affordable and available, as well as improving air quality and reducing pollution, are essential for motivating people to adopt and sustain healthy behaviours.\n\nThere are also a number of underlying determinants of CVDs. These are a reflection of the major forces driving social, economic and cultural change – globalization, urbanization and population ageing. Other determinants of CVDs include poverty, stress and hereditary factors.\n\nIn addition, drug treatment of hypertension, diabetes and high blood lipids are necessary to reduce cardiovascular risk and prevent heart attacks and strokes among people with these conditions.\n\n## Symptoms of heart attacks and strokes\n\nOften, there are no symptoms of the underlying disease of the blood vessels. A heart attack or stroke may be the first sign of underlying disease. Symptoms of a heart attack include:\n\npain or discomfort in the centre of the chest; and/or\n\npain or discomfort in the arms, the left shoulder, elbows, jaw, or back.\n\nIn addition the person may experience difficulty in breathing or shortness of breath; nausea or vomiting; light-headedness or faintness; a cold sweat; and turning pale. Women are more likely than men to have shortness of breath, nausea, vomiting, and back or jaw pain.\n\nThe most common symptom of a stroke is sudden weakness of the face, arm, or leg, most often on one side of the body. Other symptoms include sudden onset of:\n\nnumbness of the face, arm, or leg, especially on one side of the body;\n\nconfusion, difficulty speaking or understanding speech;\n\ndifficulty seeing with one or both eyes;\n\ndifficulty walking, dizziness and/or loss of balance or coordination;\n\nsevere headache with no known cause; and/or\n\nfainting or unconsciousness.\n\nPeople experiencing these symptoms should seek medical care immediately.\n\n## Characteristics of rheumatic heart disease\n\nRheumatic heart disease is caused by damage to the heart valves and heart muscle from the inflammation and scarring caused by rheumatic fever. Rheumatic fever is caused by an abnormal response of the body to infection with streptococcal bacteria, which usually begins as a sore throat or tonsillitis in children.\n\nRheumatic fever mostly affects children in developing countries, especially where poverty is widespread. Globally, about 2% of deaths from cardiovascular diseases are related to rheumatic heart disease.\n\n## Symptoms of rheumatic heart disease\n\nSymptoms of rheumatic heart disease include: shortness of breath, fatigue, irregular heartbeats, chest pain and fainting.\n\nSymptoms of rheumatic fever include: fever, pain and swelling of the joints, nausea, stomach cramps and vomiting.\n\n## Why cardiovascular diseases are a development issue in low- and middle-income countries\n\nApproximately 80% of the world's deaths from CVDs occur in low- and middle-income countries. People living in low- and middle-income countries often do not have the benefit of primary health care programmes for early detection and treatment of people with risk factors for CVDs. People in low- and middle-income countries who suffer from CVDs and other noncommunicable diseases have less access to effective and equitable health care services which respond to their needs. As a result, for many people in these countries detection is often late in the course of the disease and people die at a younger age from CVDs and other noncommunicable diseases, often in their most productive years.\n\nThe poorest people in low- and middle-income countries are most affected. At the household level, evidence is emerging that CVDs and other noncommunicable diseases contribute to poverty due to catastrophic health spending and high out-of-pocket expenditure. At the macro-economic level, CVDs place a heavy burden on the economies of low- and middle-income countries.\n\n## How the burden of cardiovascular diseases can be reduced\n\nThe key to cardiovascular disease reduction lies in the inclusion of cardiovascular disease management interventions in universal health coverage packages, although in a high number of countries health systems require significant investment and reorientation to effectively manage CVDs.\n\nEvidence from 18 countries has shown that hypertension programmes can be implemented efficiently and cost-effectively at the primary care level which will ultimately result in reduced coronary heart disease and stroke. Patients with cardiovascular disease should have access to appropriate technology and medication. Basic medicines that should be available include:\n\nangiotensin-converting enzyme inhibitors\n\nAn acute event such as a heart attack or stroke should be promptly managed.\n\nSometimes, surgical operations are required to treat CVDs. They include:\n\nballoon angioplasty (where a small balloon-like device is threaded through an artery to open the blockage);\n\nvalve repair and replacement;\n\nheart transplantation; and\n\nartificial heart operations.\n\nMedical devices are required to treat some CVDs. Such devices include pacemakers, prosthetic valves, and patches for closing holes in the heart.\n\n## WHO response\n\nWHO works to drive and support the implementation of effective actions for the prevention, management, and control of CVDs and their associated risk factors, especially in low- and middle-income countries. To this end, WHO:\n\ndevelops evidence-based guidelines and tools for the prevention and management of major noncommunicable diseases, including CVDs;\n\ndevelops norms and standards for cardiovascular risk assessment, hypertension diagnosis, and CVD care;\n\nraises awareness about the growing global burden of CVDs; and\n\nconducts global surveillance on CVDs and their key risk factors.\n\nIn 2016, to further scale up action, WHO launched the Global HEARTS Initiative, aiming to support countries in strengthening CVD prevention and control through primary health care, particularly in low- and middle-income countries.\n\nIn 2013, WHO Member States agreed on global mechanisms to reduce the avoidable NCD burden including a \"Global action plan for the prevention and control of NCDs 2013-2020\". This Plan has the aim of reducing the number of premature deaths from NCDs by 25% by 2025 through nine voluntary global targets. Two of the targets directly focus on preventing and controlling CVDs.\n\nTarget 6: Reduce global prevalence of raised blood pressure by 25% between 2010 and 2025.\n\nTarget 8: At least 50% of eligible people should receive drug therapy and counselling (including glycaemic control) to prevent heart attacks and strokes by 2025.\n\nIn addition, target 9 states that there should be 80% availability of the affordable basic technologies and essential medicines, including generics, required to treat major NCDs in both public and private facilities.\n\nAchieving these targets will require significant investment in and strengthening of health systems.\n\nWHO is also working on increasing the normative guidance available for the management of acute coronary syndrome and stroke.\n",
       "chunks": [
         {
           "section": "Key facts",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "Cardiovascular diseases (CVDs) are the leading cause of death globally.\n\nAn estimated 19.8 million people died from CVDs in 2022, representing approximately 32% of all global deaths. Of these deaths, 85% were due to heart attack and stroke.\n\nOver three quarters of CVD deaths take place in low- and middle-income countries.\n\nOut of the 18 million premature deaths (under the age of 70) due to noncommunicable diseases in 2021, at least 38% were caused by CVDs.\n\nMost cardiovascular diseases can be prevented by addressing behavioural and environmental risk factors such as tobacco use, unhealthy diet (including excess salt, sugar, and fats) and obesity, physical inactivity, harmful use of alcohol and air pollution.\n\nIt is important to detect cardiovascular disease as early as possible so that management with counselling and medicines can begin.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-001"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-001"
         },
         {
           "section": "Overview",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "Cardiovascular diseases (CVDs) are a group of disorders of the heart and blood vessels. They include:\n\ncoronary heart disease – a disease of the blood vessels supplying the heart muscle;\n\ncerebrovascular disease – a disease of the blood vessels supplying the brain;\n\nperipheral arterial disease – a disease of blood vessels supplying the arms and legs;\n\nrheumatic heart disease – damage to the heart muscle and heart valves from rheumatic fever, caused by streptococcal bacteria;\n\ncongenital heart disease – birth defects that affect the normal development and functioning of the heart caused by malformations of the heart structure from birth; and\n\ndeep vein thrombosis and pulmonary embolism – blood clots in the leg veins, which can dislodge and move to the heart and lungs.\n\nHeart attacks and strokes are usually acute events and are mainly caused by a blockage that prevents blood from flowing to the heart or brain. The most common reason for this is a build-up of fatty deposits on the inner walls of the blood vessels that supply the heart or brain. Strokes can be caused by bleeding from a blood vessel in the brain or from blood clots.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-002"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-002"
         },
         {
           "section": "Risk factors for cardiovascular disease",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "The most important behavioural risk factors of heart disease and stroke are unhealthy diet, physical inactivity, tobacco use and harmful use of alcohol. Amongst environmental risk factors, air pollution is an important factor. The effects of behavioural risk factors may show up in individuals as raised blood pressure, raised blood glucose, raised blood lipids, and overweight and obesity. These “intermediate risks factors” can be measured in primary care facilities and indicate an increased risk of heart attack, stroke, heart failure and other complications.\n\nCessation of tobacco use, reduction of salt in the diet, eating more fruit and vegetables, regular physical activity and avoiding harmful use of alcohol have been shown to reduce the risk of cardiovascular disease. Health policies that create conducive environments for making healthy choices affordable and available, as well as improving air quality and reducing pollution, are essential for motivating people to adopt and sustain healthy behaviours.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-003"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-003"
         },
         {
           "section": "Risk factors for cardiovascular disease",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "Cessation of tobacco use, reduction of salt in the diet, eating more fruit and vegetables, regular physical activity and avoiding harmful use of alcohol have been shown to reduce the risk of cardiovascular disease. Health policies that create conducive environments for making healthy choices affordable and available, as well as improving air quality and reducing pollution, are essential for motivating people to adopt and sustain healthy behaviours.\n\nThere are also a number of underlying determinants of CVDs. These are a reflection of the major forces driving social, economic and cultural change – globalization, urbanization and population ageing. Other determinants of CVDs include poverty, stress and hereditary factors.\n\nIn addition, drug treatment of hypertension, diabetes and high blood lipids are necessary to reduce cardiovascular risk and prevent heart attacks and strokes among people with these conditions.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-004"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-004"
         },
         {
           "section": "Symptoms of heart attacks and strokes",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "Often, there are no symptoms of the underlying disease of the blood vessels. A heart attack or stroke may be the first sign of underlying disease. Symptoms of a heart attack include:\n\npain or discomfort in the centre of the chest; and/or\n\npain or discomfort in the arms, the left shoulder, elbows, jaw, or back.\n\nIn addition the person may experience difficulty in breathing or shortness of breath; nausea or vomiting; light-headedness or faintness; a cold sweat; and turning pale. Women are more likely than men to have shortness of breath, nausea, vomiting, and back or jaw pain.\n\nThe most common symptom of a stroke is sudden weakness of the face, arm, or leg, most often on one side of the body. Other symptoms include sudden onset of:\n\nnumbness of the face, arm, or leg, especially on one side of the body;\n\nconfusion, difficulty speaking or understanding speech;\n\ndifficulty seeing with one or both eyes;\n\ndifficulty walking, dizziness and/or loss of balance or coordination;\n\nsevere headache with no known cause; and/or\n\nfainting or unconsciousness.\n\nPeople experiencing these symptoms should seek medical care immediately.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-005"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-005"
         },
         {
           "section": "Characteristics of rheumatic heart disease",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "Rheumatic heart disease is caused by damage to the heart valves and heart muscle from the inflammation and scarring caused by rheumatic fever. Rheumatic fever is caused by an abnormal response of the body to infection with streptococcal bacteria, which usually begins as a sore throat or tonsillitis in children.\n\nRheumatic fever mostly affects children in developing countries, especially where poverty is widespread. Globally, about 2% of deaths from cardiovascular diseases are related to rheumatic heart disease.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-006"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-006"
         },
         {
           "section": "Symptoms of rheumatic heart disease",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "Symptoms of rheumatic heart disease include: shortness of breath, fatigue, irregular heartbeats, chest pain and fainting.\n\nSymptoms of rheumatic fever include: fever, pain and swelling of the joints, nausea, stomach cramps and vomiting.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-007"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-007"
         },
         {
           "section": "Why cardiovascular diseases are a development issue in low- and middle-income countries",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "Approximately 80% of the world's deaths from CVDs occur in low- and middle-income countries. People living in low- and middle-income countries often do not have the benefit of primary health care programmes for early detection and treatment of people with risk factors for CVDs. People in low- and middle-income countries who suffer from CVDs and other noncommunicable diseases have less access to effective and equitable health care services which respond to their needs. As a result, for many people in these countries detection is often late in the course of the disease and people die at a younger age from CVDs and other noncommunicable diseases, often in their most productive years.\n\nThe poorest people in low- and middle-income countries are most affected. At the household level, evidence is emerging that CVDs and other noncommunicable diseases contribute to poverty due to catastrophic health spending and high out-of-pocket expenditure. At the macro-economic level, CVDs place a heavy burden on the economies of low- and middle-income countries.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-008"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-008"
         },
         {
           "section": "How the burden of cardiovascular diseases can be reduced",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "The key to cardiovascular disease reduction lies in the inclusion of cardiovascular disease management interventions in universal health coverage packages, although in a high number of countries health systems require significant investment and reorientation to effectively manage CVDs.\n\nEvidence from 18 countries has shown that hypertension programmes can be implemented efficiently and cost-effectively at the primary care level which will ultimately result in reduced coronary heart disease and stroke. Patients with cardiovascular disease should have access to appropriate technology and medication. Basic medicines that should be available include:\n\nangiotensin-converting enzyme inhibitors\n\nAn acute event such as a heart attack or stroke should be promptly managed.\n\nSometimes, surgical operations are required to treat CVDs. They include:\n\nballoon angioplasty (where a small balloon-like device is threaded through an artery to open the blockage);\n\nvalve repair and replacement;\n\nheart transplantation; and\n\nartificial heart operations.\n\nMedical devices are required to treat some CVDs. Such devices include pacemakers, prosthetic valves, and patches for closing holes in the heart.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-009"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-009"
         },
         {
           "section": "WHO response",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "WHO works to drive and support the implementation of effective actions for the prevention, management, and control of CVDs and their associated risk factors, especially in low- and middle-income countries. To this end, WHO:\n\ndevelops evidence-based guidelines and tools for the prevention and management of major noncommunicable diseases, including CVDs;\n\ndevelops norms and standards for cardiovascular risk assessment, hypertension diagnosis, and CVD care;\n\nraises awareness about the growing global burden of CVDs; and\n\nconducts global surveillance on CVDs and their key risk factors.\n\nIn 2016, to further scale up action, WHO launched the Global HEARTS Initiative, aiming to support countries in strengthening CVD prevention and control through primary health care, particularly in low- and middle-income countries.\n\nIn 2013, WHO Member States agreed on global mechanisms to reduce the avoidable NCD burden including a \"Global action plan for the prevention and control of NCDs 2013-2020\". This Plan has the aim of reducing the number of premature deaths from NCDs by 25% by 2025 through nine voluntary global targets. Two of the targets directly focus on preventing and controlling CVDs.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-010"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-010"
         },
         {
           "section": "WHO response",
           "topics": "CARDIOVASCULAR CHEST_PAIN DYSPNEA STROKE",
           "content": "In 2013, WHO Member States agreed on global mechanisms to reduce the avoidable NCD burden including a \"Global action plan for the prevention and control of NCDs 2013-2020\". This Plan has the aim of reducing the number of premature deaths from NCDs by 25% by 2025 through nine voluntary global targets. Two of the targets directly focus on preventing and controlling CVDs.\n\nTarget 6: Reduce global prevalence of raised blood pressure by 25% between 2010 and 2025.\n\nTarget 8: At least 50% of eligible people should receive drug therapy and counselling (including glycaemic control) to prevent heart attacks and strokes by 2025.\n\nIn addition, target 9 states that there should be 80% availability of the affordable basic technologies and essential medicines, including generics, required to treat major NCDs in both public and private facilities.\n\nAchieving these targets will require significant investment in and strengthening of health systems.\n\nWHO is also working on increasing the normative guidance available for the management of acute coronary syndrome and stroke.",
-          "chunkId": "chunk-who-cardiovascular-diseases-aaf02101e4-011"
+          "chunkId": "chunk-who-cardiovascular-diseases-b81d0647a6-011"
         }
       ]
     },
@@ -201,7 +201,7 @@
       "language": "en",
       "versionId": "cdc-high-blood-pressure-6e1041abbcc1",
       "versionLabel": "web-snapshot-6e1041abbcc1",
-      "fetchedAt": "2026-07-22T09:51:40Z",
+      "fetchedAt": "2026-07-22T15:41:06Z",
       "contentSha256": "6e1041abbcc180cf5d991d3ebadd21864a8e52a66a4f0d7a68a7e129a74f145f",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -281,7 +281,7 @@
       "language": "en",
       "versionId": "cdc-stroke-1de99fdbb94e",
       "versionLabel": "web-snapshot-1de99fdbb94e",
-      "fetchedAt": "2026-07-22T09:51:41Z",
+      "fetchedAt": "2026-07-22T15:41:07Z",
       "contentSha256": "1de99fdbb94e07e9d49bf09fae182a4d604f818bca813f22193174e7397345ee",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -368,7 +368,7 @@
       "language": "en",
       "versionId": "cdc-stroke-signs-94659c6fd177",
       "versionLabel": "web-snapshot-94659c6fd177",
-      "fetchedAt": "2026-07-22T09:51:42Z",
+      "fetchedAt": "2026-07-22T15:41:09Z",
       "contentSha256": "94659c6fd1777c5d8bb0f64e60f53d88a8a0a56be4f6e19e938a7231e8eb4eb0",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -431,7 +431,7 @@
       "language": "en",
       "versionId": "cdc-heart-disease-e26c4512bd75",
       "versionLabel": "web-snapshot-e26c4512bd75",
-      "fetchedAt": "2026-07-22T09:51:43Z",
+      "fetchedAt": "2026-07-22T15:41:10Z",
       "contentSha256": "e26c4512bd751d0063b81b885a2649abb42e5af02373d6c408ad4e561e0c71c2",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -493,7 +493,7 @@
       "language": "en",
       "versionId": "cdc-heart-attack-ce939af6172d",
       "versionLabel": "web-snapshot-ce939af6172d",
-      "fetchedAt": "2026-07-22T09:51:43Z",
+      "fetchedAt": "2026-07-22T15:41:12Z",
       "contentSha256": "ce939af6172d68f5b2449a27d748d78416aed8e99de9bb6557c43e9d3c1cf3c6",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -569,7 +569,7 @@
       "language": "en",
       "versionId": "cdc-heart-facts-5c14ca240660",
       "versionLabel": "web-snapshot-5c14ca240660",
-      "fetchedAt": "2026-07-22T09:51:44Z",
+      "fetchedAt": "2026-07-22T15:41:14Z",
       "contentSha256": "5c14ca240660219aeb7d31bbbbaf4341e1b9893b98ec0c14c77e5e21746c2346",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -637,13 +637,13 @@
       "language": "en",
       "versionId": "nhlbi-high-blood-pressure-9c608f6854d7",
       "versionLabel": "web-snapshot-9c608f6854d7",
-      "fetchedAt": "2026-07-22T09:51:45Z",
+      "fetchedAt": "2026-07-22T15:41:16Z",
       "contentSha256": "9c608f6854d7671c6ed6c4c833462be10e33300558e87ea50fc090e29e4adab4",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
       "httpStatus": 200,
-      "etag": "\"1784702836-gzip\"",
-      "lastModified": "Wed, 22 Jul 2026 06:47:16 GMT",
+      "etag": "\"1784731290-gzip\"",
+      "lastModified": "Wed, 22 Jul 2026 14:41:30 GMT",
       "topics": [
         "HYPERTENSION",
         "BP_RECORD",
@@ -693,13 +693,13 @@
       "language": "en",
       "versionId": "nhlbi-heart-attack-4a6f346e35c2",
       "versionLabel": "web-snapshot-4a6f346e35c2",
-      "fetchedAt": "2026-07-22T09:51:46Z",
+      "fetchedAt": "2026-07-22T15:41:18Z",
       "contentSha256": "4a6f346e35c27f03bca99b6627a1975fd2cca3bdb6f1d8f479e1130aaaed1815",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
       "httpStatus": 200,
-      "etag": "\"1784704313-gzip\"",
-      "lastModified": "Wed, 22 Jul 2026 07:11:53 GMT",
+      "etag": "\"1784734878-gzip\"",
+      "lastModified": "Wed, 22 Jul 2026 15:41:18 GMT",
       "topics": [
         "HEART_ATTACK",
         "CHEST_PAIN",
@@ -732,13 +732,13 @@
       "language": "en",
       "versionId": "nhlbi-stroke-f04d9bbf8729",
       "versionLabel": "web-snapshot-f04d9bbf8729",
-      "fetchedAt": "2026-07-22T09:51:46Z",
+      "fetchedAt": "2026-07-22T15:41:19Z",
       "contentSha256": "f04d9bbf872915105eac531dbb852012da13627e17058f61bafb228dc287994b",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
       "httpStatus": 200,
-      "etag": "\"1784709697-gzip\"",
-      "lastModified": "Wed, 22 Jul 2026 08:41:37 GMT",
+      "etag": "\"1784728992-gzip\"",
+      "lastModified": "Wed, 22 Jul 2026 14:03:12 GMT",
       "topics": [
         "STROKE",
         "ALTERED_CONSCIOUSNESS",
@@ -770,13 +770,13 @@
       "language": "en",
       "versionId": "nhlbi-arrhythmias-6e42346cac37",
       "versionLabel": "web-snapshot-6e42346cac37",
-      "fetchedAt": "2026-07-22T09:51:47Z",
+      "fetchedAt": "2026-07-22T15:41:21Z",
       "contentSha256": "6e42346cac3743ed1a32eae3d7dde002fae6dac3bb4aa2028bd4315d8eb74fdc",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
       "httpStatus": 200,
-      "etag": "\"1784707893-gzip\"",
-      "lastModified": "Wed, 22 Jul 2026 08:11:33 GMT",
+      "etag": "\"1784734881-gzip\"",
+      "lastModified": "Wed, 22 Jul 2026 15:41:21 GMT",
       "topics": [
         "ARRHYTHMIA",
         "PALPITATIONS",
@@ -809,13 +809,13 @@
       "language": "en",
       "versionId": "nhlbi-heart-failure-63eb19f4ba71",
       "versionLabel": "web-snapshot-63eb19f4ba71",
-      "fetchedAt": "2026-07-22T09:51:47Z",
+      "fetchedAt": "2026-07-22T15:41:23Z",
       "contentSha256": "63eb19f4ba71319a3b3e1b6b65be83945acf5e0294bda82088271a36a787ad53",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
       "httpStatus": 200,
-      "etag": "\"1784706369-gzip\"",
-      "lastModified": "Wed, 22 Jul 2026 07:46:09 GMT",
+      "etag": "\"1784734883-gzip\"",
+      "lastModified": "Wed, 22 Jul 2026 15:41:23 GMT",
       "topics": [
         "HEART_FAILURE",
         "DYSPNEA",
@@ -860,13 +860,13 @@
       "language": "en",
       "versionId": "nhlbi-atherosclerosis-27bacccaa976",
       "versionLabel": "web-snapshot-27bacccaa976",
-      "fetchedAt": "2026-07-22T09:51:48Z",
+      "fetchedAt": "2026-07-22T15:41:24Z",
       "contentSha256": "27bacccaa976e6c4a863bfaa3980bedc8c6a9583118f14f298b045565992691f",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
       "httpStatus": 200,
-      "etag": "\"1784706185-gzip\"",
-      "lastModified": "Wed, 22 Jul 2026 07:43:05 GMT",
+      "etag": "\"1784724785-gzip\"",
+      "lastModified": "Wed, 22 Jul 2026 12:53:05 GMT",
       "topics": [
         "ATHEROSCLEROSIS",
         "CARDIOVASCULAR",
@@ -923,7 +923,7 @@
       "language": "en",
       "versionId": "nhs-chest-pain-1f4efba05e03",
       "versionLabel": "web-snapshot-1f4efba05e03",
-      "fetchedAt": "2026-07-22T09:51:50Z",
+      "fetchedAt": "2026-07-22T15:41:27Z",
       "contentSha256": "1f4efba05e03c66081ae0271cb8fcb7e8b9b10f7bdda692e80eadad758f561b1",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -979,7 +979,7 @@
       "language": "en",
       "versionId": "nhs-shortness-of-breath-1a1d33a368bb",
       "versionLabel": "web-snapshot-1a1d33a368bb",
-      "fetchedAt": "2026-07-22T09:51:50Z",
+      "fetchedAt": "2026-07-22T15:41:28Z",
       "contentSha256": "1a1d33a368bb674992570768224a8902a5211f6b66744771107924d8787c6437",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -1047,7 +1047,7 @@
       "language": "en",
       "versionId": "nhs-fainting-b0cc11c61267",
       "versionLabel": "web-snapshot-b0cc11c61267",
-      "fetchedAt": "2026-07-22T09:51:51Z",
+      "fetchedAt": "2026-07-22T15:41:29Z",
       "contentSha256": "b0cc11c61267e7d42c7269e25a488dc90d9f7a93aa8f500baab0c393e8820b3a",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -1115,7 +1115,7 @@
       "language": "en",
       "versionId": "nhs-headaches-f0c9fc776ab1",
       "versionLabel": "web-snapshot-f0c9fc776ab1",
-      "fetchedAt": "2026-07-22T09:51:53Z",
+      "fetchedAt": "2026-07-22T15:41:31Z",
       "contentSha256": "f0c9fc776ab101f36463a35ed0abb04fbcdc66ea1798e64af6a34e9d2d0c2efb",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -1189,7 +1189,7 @@
       "language": "en",
       "versionId": "nhs-high-blood-pressure-c55e0d26feab",
       "versionLabel": "web-snapshot-c55e0d26feab",
-      "fetchedAt": "2026-07-22T09:51:54Z",
+      "fetchedAt": "2026-07-22T15:41:33Z",
       "contentSha256": "c55e0d26feab05dbe66743ba941a2d198566313cf990d9cedb31b88938895d34",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -1317,7 +1317,7 @@
       "language": "en",
       "versionId": "nhs-stroke-715bc97070c0",
       "versionLabel": "web-snapshot-715bc97070c0",
-      "fetchedAt": "2026-07-22T09:51:54Z",
+      "fetchedAt": "2026-07-22T15:41:34Z",
       "contentSha256": "715bc97070c0243deda42fd584df4ffe0df459a70e0167a9cfbfb1296582a836",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",
@@ -1367,7 +1367,7 @@
       "language": "en",
       "versionId": "nhs-heart-attack-13c8df0010d3",
       "versionLabel": "web-snapshot-13c8df0010d3",
-      "fetchedAt": "2026-07-22T09:51:55Z",
+      "fetchedAt": "2026-07-22T15:41:35Z",
       "contentSha256": "13c8df0010d3160a0de9072f07cadd0844a2e6b3e8a94f3ed4f2b681dfb6e527",
       "retrievalMethod": "requests",
       "sourceStatus": "FETCHED",

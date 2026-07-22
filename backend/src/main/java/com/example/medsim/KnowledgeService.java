@@ -161,24 +161,24 @@ class KnowledgeService {
     }
 
     private void ingestSafetyBaseline() {
-        String title = "Adult symptom red-flag teaching baseline";
-        String sourceUrl = "https://example.org/medsim/internal-fixture";
-        String license = "Internal test fixture; not a clinical guideline and not a substitute for qualified review.";
+        String title = "Adult symptom red-flag controlled baseline";
+        String sourceUrl = "https://example.org/medsim/controlled-baseline";
+        String license = "Controlled safety baseline; not a clinical guideline and not a substitute for qualified review.";
         List<CorpusChunk> chunks = List.of(
             new CorpusChunk("chunk-red-flag-chest-pain-001", "Chest pain with danger signs",
                 "CHEST_PAIN DYSPNEA SYNCOPE EMERGENCY",
-                "In the teaching simulation, chest pain with breathing difficulty, fainting, or altered consciousness requires immediate qualified emergency assessment."),
+                "Chest pain with breathing difficulty, fainting, or altered consciousness requires immediate qualified emergency assessment."),
             new CorpusChunk("chunk-red-flag-consciousness-001", "Altered consciousness",
                 "ALTERED_CONSCIOUSNESS SYNCOPE EMERGENCY",
                 "New altered consciousness or fainting is a high-priority red flag for qualified assessment; the automated system must not conclude that it is low risk."),
-            new CorpusChunk("chunk-routine-followup-001", "Routine hypertension follow-up baseline",
-                "HEADACHE FATIGUE ROUTINE BP_RECORD ADHERENCE_CHECK HYPERTENSION",
-                "Teaching cases without configured red flags may be scheduled for routine qualified review using structured blood-pressure and adherence records; automation does not replace professional judgment.")
+            new CorpusChunk("chunk-manual-review-001", "Manual review outside configured rules",
+                "HEADACHE FATIGUE MANUAL_REVIEW UNCONFIGURED_RULE",
+                "Symptoms outside configured deterministic rules require qualified manual review; automation must not label them routine or low risk.")
         );
         StringBuilder markdown = new StringBuilder("# ").append(title).append("\n\nSource: ").append(sourceUrl).append("\n\n").append(license).append("\n");
         for (CorpusChunk chunk : chunks) markdown.append("\n## ").append(chunk.section()).append("\n\n").append(chunk.content()).append("\n");
         byte[] bytes = markdown.toString().getBytes(StandardCharsets.UTF_8);
-        ingestDocument("project-red-flags", title, "Medsim teaching project", sourceUrl, license,
+        ingestDocument("project-red-flags", title, "Medsim controlled baseline", sourceUrl, license,
             "project-safety-baseline-v3", "controlled-baseline-v3", "en", "2026-07-22T00:00:00Z",
             sha256(bytes), "bundled-safety-baseline", "CONTROLLED_BASELINE", 0, "", "", bytes, chunks);
     }

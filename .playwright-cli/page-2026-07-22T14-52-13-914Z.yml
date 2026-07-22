@@ -1,0 +1,218 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link "跳到主要内容" [ref=e4] [cursor=pointer]:
+      - /url: "#main-content"
+    - banner [ref=e5]:
+      - button "返回角色工作台" [ref=e6] [cursor=pointer]:
+        - generic [ref=e11]:
+          - strong [ref=e12]: 守望基层医疗
+          - generic [ref=e13]: 预问诊与随访信息服务
+      - generic [ref=e89]:
+        - generic [ref=e93]:
+          - generic [ref=e94]: 患者
+          - strong [ref=e95]: 患者用户
+        - button "退出当前账号" [ref=e96] [cursor=pointer]
+    - note [ref=e100]:
+      - strong [ref=e101]: 安全提示：
+      - text: 系统可记录常见不适；确定性自动规则仅覆盖部分胸痛、呼吸困难、晕厥与意识异常组合。未覆盖内容会转交人工复核。
+    - main [ref=e14]:
+      - generic [ref=e103]:
+        - navigation "患者功能区" [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]: 患者工作区
+            - strong [ref=e107]: 我的健康事务
+          - button "新建预问诊" [ref=e108] [cursor=pointer]
+          - button "问诊记录" [ref=e113] [cursor=pointer]
+          - button "随访任务" [ref=e117] [cursor=pointer]
+          - button "健康资料" [ref=e123] [cursor=pointer]
+          - generic [ref=e127]: 系统整理信息而非诊断或处方；自动结果必须人工审核。
+        - main [ref=e128]:
+          - generic [ref=e457]:
+            - text: 问诊记录
+            - heading "查看处理进度" [level=1] [ref=e458]
+            - paragraph [ref=e459]: 患者端只显示提交、审核与随访状态；提交后可追加补充信息。
+          - generic [ref=e460]:
+            - article [ref=e461]:
+              - generic [ref=e462]:
+                - generic [ref=e463]:
+                  - text: 7/22 22:51
+                  - heading "主要不适为胸痛、呼吸困难" [level=2] [ref=e464]
+                - generic [ref=e465]: 等待人工审核
+              - paragraph [ref=e466]: 胸痛、呼吸困难
+              - button "补充信息" [ref=e468] [cursor=pointer]
+            - article [ref=e470]:
+              - generic [ref=e471]:
+                - generic [ref=e472]:
+                  - text: 7/22 22:41
+                  - 'heading "Fixture: headache today" [level=2] [ref=e473]'
+                - generic [ref=e474]: 等待人工审核
+              - paragraph [ref=e475]: 头痛
+              - generic [ref=e476]:
+                - strong [ref=e477]: 已补充 1 条信息
+                - paragraph [ref=e478]: "7/22 22:41 · Additional fixture detail: nausea this afternoon"
+              - button "补充信息" [ref=e480] [cursor=pointer]
+            - article [ref=e482]:
+              - generic [ref=e483]:
+                - generic [ref=e484]:
+                  - text: 7/22 22:41
+                  - 'heading "Fixture: chest discomfort with dyspnea" [level=2] [ref=e485]'
+                - generic [ref=e486]: 随访中
+              - paragraph [ref=e487]: 胸痛、呼吸困难
+              - button "补充信息" [ref=e489] [cursor=pointer]
+            - article [ref=e491]:
+              - generic [ref=e492]:
+                - generic [ref=e493]:
+                  - text: 7/22 18:16
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e494]'
+                - generic [ref=e495]: 随访中
+              - paragraph [ref=e496]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e498] [cursor=pointer]
+            - article [ref=e500]:
+              - generic [ref=e501]:
+                - generic [ref=e502]:
+                  - text: 7/22 18:11
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e503]'
+                - generic [ref=e504]: 随访中
+              - paragraph [ref=e505]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e507] [cursor=pointer]
+            - article [ref=e509]:
+              - generic [ref=e510]:
+                - generic [ref=e511]:
+                  - text: 7/22 17:21
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e512]'
+                - generic [ref=e513]: 随访中
+              - paragraph [ref=e514]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e516] [cursor=pointer]
+            - article [ref=e518]:
+              - generic [ref=e519]:
+                - generic [ref=e520]:
+                  - text: 7/22 17:00
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e521]'
+                - generic [ref=e522]: 随访中
+              - paragraph [ref=e523]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e525] [cursor=pointer]
+            - article [ref=e527]:
+              - generic [ref=e528]:
+                - generic [ref=e529]:
+                  - text: 7/22 16:39
+                  - heading "测试胸痛伴呼吸困难" [level=2] [ref=e530]
+                - generic [ref=e531]: 已完成审核
+              - paragraph [ref=e532]: 胸痛、呼吸困难
+              - button "补充信息" [ref=e534] [cursor=pointer]
+            - article [ref=e536]:
+              - generic [ref=e537]:
+                - generic [ref=e538]:
+                  - text: 7/22 15:39
+                  - heading "测试胸痛伴呼吸困难" [level=2] [ref=e539]
+                - generic [ref=e540]: 随访中
+              - paragraph [ref=e541]: 胸痛、呼吸困难
+              - button "补充信息" [ref=e543] [cursor=pointer]
+            - article [ref=e545]:
+              - generic [ref=e546]:
+                - generic [ref=e547]:
+                  - text: 7/22 15:08
+                  - heading "测试胸痛伴呼吸困难" [level=2] [ref=e548]
+                - generic [ref=e549]: 随访中
+              - paragraph [ref=e550]: 胸痛、呼吸困难
+              - button "补充信息" [ref=e552] [cursor=pointer]
+            - article [ref=e554]:
+              - generic [ref=e555]:
+                - generic [ref=e556]:
+                  - text: 7/22 15:03
+                  - heading "??????" [level=2] [ref=e557]
+                - generic [ref=e558]: 已完成审核
+              - paragraph [ref=e559]: "??"
+              - button "补充信息" [ref=e561] [cursor=pointer]
+            - article [ref=e563]:
+              - generic [ref=e564]:
+                - generic [ref=e565]:
+                  - text: 7/22 15:03
+                  - heading "????????" [level=2] [ref=e566]
+                - generic [ref=e567]: 草稿
+              - paragraph [ref=e568]: "??"
+              - button "继续填写" [ref=e570] [cursor=pointer]
+            - article [ref=e575]:
+              - generic [ref=e576]:
+                - generic [ref=e577]:
+                  - text: 7/22 15:03
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e578]'
+                - generic [ref=e579]: 随访中
+              - paragraph [ref=e580]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e582] [cursor=pointer]
+            - article [ref=e584]:
+              - generic [ref=e585]:
+                - generic [ref=e586]:
+                  - text: 7/22 14:20
+                  - heading "测试胸痛伴呼吸困难" [level=2] [ref=e587]
+                - generic [ref=e588]: 随访中
+              - paragraph [ref=e589]: 胸痛、呼吸困难
+              - button "补充信息" [ref=e591] [cursor=pointer]
+            - article [ref=e593]:
+              - generic [ref=e594]:
+                - generic [ref=e595]:
+                  - text: 7/22 14:20
+                  - heading "测试胸痛伴呼吸困难" [level=2] [ref=e596]
+                - generic [ref=e597]: 随访中
+              - paragraph [ref=e598]: 胸痛、呼吸困难
+              - button "补充信息" [ref=e600] [cursor=pointer]
+            - article [ref=e602]:
+              - generic [ref=e603]:
+                - generic [ref=e604]:
+                  - text: 7/22 14:19
+                  - heading "测试胸痛伴呼吸困难" [level=2] [ref=e605]
+                - generic [ref=e606]: 随访中
+              - paragraph [ref=e607]: 胸痛、呼吸困难
+              - button "补充信息" [ref=e609] [cursor=pointer]
+            - article [ref=e611]:
+              - generic [ref=e612]:
+                - generic [ref=e613]:
+                  - text: 7/22 14:08
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e614]'
+                - generic [ref=e615]: 随访中
+              - paragraph [ref=e616]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e618] [cursor=pointer]
+            - article [ref=e620]:
+              - generic [ref=e621]:
+                - generic [ref=e622]:
+                  - text: 7/22 14:07
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e623]'
+                - generic [ref=e624]: 随访中
+              - paragraph [ref=e625]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e627] [cursor=pointer]
+            - article [ref=e629]:
+              - generic [ref=e630]:
+                - generic [ref=e631]:
+                  - text: 7/22 13:54
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e632]'
+                - generic [ref=e633]: 随访中
+              - paragraph [ref=e634]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e636] [cursor=pointer]
+            - article [ref=e638]:
+              - generic [ref=e639]:
+                - generic [ref=e640]:
+                  - text: 7/22 13:41
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e641]'
+                - generic [ref=e642]: 随访中
+              - paragraph [ref=e643]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e645] [cursor=pointer]
+            - article [ref=e647]:
+              - generic [ref=e648]:
+                - generic [ref=e649]:
+                  - text: 7/22 13:39
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e650]'
+                - generic [ref=e651]: 随访中
+              - paragraph [ref=e652]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e654] [cursor=pointer]
+            - article [ref=e656]:
+              - generic [ref=e657]:
+                - generic [ref=e658]:
+                  - text: 7/22 13:36
+                  - 'heading "Synthetic case: chest pain with dyspnea" [level=2] [ref=e659]'
+                - generic [ref=e660]: 随访中
+              - paragraph [ref=e661]: Chest pain、Dyspnea
+              - button "补充信息" [ref=e663] [cursor=pointer]
+    - contentinfo [ref=e86]:
+      - strong [ref=e87]: 信息整理服务
+      - generic [ref=e88]: 不构成诊断、处方或医疗建议 · 自动结果必须人工审核 · 敏感字段写库前脱敏
+  - alert [ref=e665]:
+    - paragraph [ref=e669]: 已提交，正在进入人工审核

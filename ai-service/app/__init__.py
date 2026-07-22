@@ -1,2 +1,2 @@
-"""Controlled AI service for the MedSim teaching platform."""
+"""Controlled AI service for the medical intake and follow-up platform."""
 
