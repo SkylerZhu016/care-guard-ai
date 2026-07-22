@@ -1,0 +1,30 @@
+import type { Alert, Audit, Run, Task, Urgency, User, Visit } from './types'
+
+export class ApiError extends Error { constructor(public status: number, public code: string, message: string) { super(message) } }
+
+export class ApiClient {
+  constructor(private token: () => string | null) {}
+  private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+    const headers = new Headers(init.headers)
+    if (init.body) headers.set('Content-Type', 'application/json')
+    const token = this.token(); if (token) headers.set('Authorization', `Bearer ${token}`)
+    const response = await fetch(`/api/v1${path}`, { ...init, headers })
+    if (!response.ok) { const error = await response.json().catch(() => ({})); throw new ApiError(response.status, error.code || 'NETWORK_ERROR', error.message || '请求失败') }
+    return response.json()
+  }
+  login(username: string, password: string) { return this.request<{accessToken:string;user:User}>('/auth/login', { method:'POST', body:JSON.stringify({username,password}) }) }
+  me() { return this.request<User>('/me') }
+  myVisits() { return this.request<Visit[]>('/visits/mine') }
+  createVisit(body: unknown) { return this.request<Visit>('/visits', { method:'POST', body:JSON.stringify(body) }) }
+  submitVisit(id: string) { return this.request<Visit>(`/visits/${id}/submit`, { method:'POST', headers:{'Idempotency-Key':crypto.randomUUID()} }) }
+  queue() { return this.request<Visit[]>('/clinician/visits') }
+  review(id:string, decision:string, reason:string, finalUrgency:Urgency) { return this.request<Visit>(`/triage-results/${id}/review`, {method:'POST',body:JSON.stringify({decision,reason,finalUrgency})}) }
+  createPlan(visitId:string) { return this.request<{id:string}>(`/followup-plans`,{method:'POST',body:JSON.stringify({visitId,templateCode:'HYPERTENSION_TEACHING_V1'})}) }
+  activatePlan(id:string) { return this.request(`/followup-plans/${id}/activate`,{method:'POST'}) }
+  myTasks() { return this.request<Task[]>('/followup-tasks/mine') }
+  updateTask(id:string,status:string,resultSummary:string) { return this.request<Task>(`/followup-tasks/${id}`,{method:'PATCH',body:JSON.stringify({status,resultSummary})}) }
+  alerts() { return this.request<Alert[]>('/admin/safety-alerts') }
+  audits() { return this.request<Audit[]>('/admin/audit-logs') }
+  runs() { return this.request<Run[]>('/admin/agent-runs') }
+}
+

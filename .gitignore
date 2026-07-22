@@ -1,0 +1,36 @@
+# secrets
+.env
+.env.*
+!.env.example
+deepseek_api.txt
+*.key
+secrets/
+
+# Python (all Python commands use D:\Anaconda\envs\ML3.9)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+
+# Java
+backend/target/
+*.log
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+frontend/src/**/*.js
+
+# IDE / OS / local QA
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.tmp/
+artifacts/

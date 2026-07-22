@@ -1,0 +1,638 @@
+openapi: 3.1.0
+info:
+  title: 基层医疗安全型预问诊与随访平台 API
+  version: 1.0.0
+servers:
+- url: http://localhost:18088
+  description: 本地 Compose 统一入口
+paths:
+  /api/v1/visits/{id}/intake:
+    put:
+      tags:
+      - platform-controller
+      operationId: update
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisitInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VisitView"
+  /api/v1/visits:
+    post:
+      tags:
+      - platform-controller
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisitInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VisitView"
+  /api/v1/visits/{id}/submit:
+    post:
+      tags:
+      - platform-controller
+      operationId: submit
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VisitView"
+  /api/v1/triage-results/{id}/review:
+    post:
+      tags:
+      - platform-controller
+      operationId: review
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VisitView"
+  /api/v1/followup-plans:
+    post:
+      tags:
+      - platform-controller
+      operationId: createPlan
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PlanView"
+  /api/v1/followup-plans/{id}/activate:
+    post:
+      tags:
+      - platform-controller
+      operationId: activate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PlanView"
+  /api/v1/auth/login:
+    post:
+      tags:
+      - auth-controller
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+  /api/v1/followup-tasks/{id}:
+    patch:
+      tags:
+      - platform-controller
+      operationId: updateTask
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TaskView"
+  /api/v1/visits/{id}:
+    get:
+      tags:
+      - platform-controller
+      operationId: visit
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VisitView"
+  /api/v1/visits/mine:
+    get:
+      tags:
+      - platform-controller
+      operationId: mine
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VisitView"
+  /api/v1/me:
+    get:
+      tags:
+      - auth-controller
+      operationId: me
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserView"
+  /api/v1/followup-tasks/mine:
+    get:
+      tags:
+      - platform-controller
+      operationId: tasks
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskView"
+  /api/v1/clinician/visits:
+    get:
+      tags:
+      - platform-controller
+      operationId: queue
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VisitView"
+  /api/v1/admin/safety-alerts:
+    get:
+      tags:
+      - platform-controller
+      operationId: alerts
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlertView"
+  /api/v1/admin/audit-logs:
+    get:
+      tags:
+      - platform-controller
+      operationId: audits
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditView"
+  /api/v1/admin/agent-runs:
+    get:
+      tags:
+      - platform-controller
+      operationId: runs
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentRunView"
+components:
+  schemas:
+    SymptomInput:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        severity:
+          type: integer
+          format: int32
+          maximum: 10
+          minimum: 0
+        onset:
+          type: string
+      required:
+      - code
+      - name
+    VisitInput:
+      type: object
+      properties:
+        chiefComplaint:
+          type: string
+          maxLength: 500
+          minLength: 0
+        freeText:
+          type: string
+          maxLength: 2000
+          minLength: 0
+        symptoms:
+          type: array
+          items:
+            $ref: "#/components/schemas/SymptomInput"
+          minItems: 1
+      required:
+      - chiefComplaint
+      - symptoms
+    AgentRunView:
+      type: object
+      properties:
+        runId:
+          type: string
+        status:
+          type: string
+        provider:
+          type: string
+        model:
+          type: string
+        safetyDecision:
+          type: string
+        safetyReasons:
+          type: array
+          items:
+            type: string
+        durationMs:
+          type: integer
+          format: int64
+        errorCode:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/CitationView"
+    CitationView:
+      type: object
+      properties:
+        guidelineId:
+          type: string
+        chunkId:
+          type: string
+        claimKey:
+          type: string
+        title:
+          type: string
+        section:
+          type: string
+        quote:
+          type: string
+    TriageView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ruleUrgency:
+          type: string
+          enum:
+          - ROUTINE
+          - URGENT
+          - EMERGENCY
+        aiUrgency:
+          type: string
+          enum:
+          - ROUTINE
+          - URGENT
+          - EMERGENCY
+        finalUrgency:
+          type: string
+          enum:
+          - ROUTINE
+          - URGENT
+          - EMERGENCY
+        ruleReasons:
+          type: array
+          items:
+            type: string
+        aiSummary:
+          type: string
+        reviewDecision:
+          type: string
+        reviewReason:
+          type: string
+    VisitView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - SUBMITTED
+          - PROCESSING
+          - PENDING_REVIEW
+          - REVIEWED
+          - FOLLOWUP_ACTIVE
+          - CLOSED
+          - REJECTED
+        chiefComplaint:
+          type: string
+        freeText:
+          type: string
+        symptoms:
+          type: array
+          items:
+            $ref: "#/components/schemas/SymptomInput"
+        triage:
+          $ref: "#/components/schemas/TriageView"
+        runs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentRunView"
+        createdAt:
+          type: string
+          format: date-time
+        submittedAt:
+          type: string
+          format: date-time
+    ReviewInput:
+      type: object
+      properties:
+        decision:
+          type: string
+          minLength: 1
+        reason:
+          type: string
+          maxLength: 1000
+          minLength: 0
+        finalUrgency:
+          type: string
+          enum:
+          - ROUTINE
+          - URGENT
+          - EMERGENCY
+      required:
+      - decision
+      - reason
+    PlanInput:
+      type: object
+      properties:
+        visitId:
+          type: string
+          format: uuid
+        templateCode:
+          type: string
+      required:
+      - visitId
+    PlanView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        visitId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - ACTIVE
+          - PAUSED
+          - COMPLETED
+          - CANCELLED
+        templateCode:
+          type: string
+        activatedAt:
+          type: string
+          format: date-time
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskView"
+    TaskView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        planId:
+          type: string
+          format: uuid
+        taskCode:
+          type: string
+        title:
+          type: string
+        dueAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - PENDING
+          - IN_PROGRESS
+          - COMPLETED
+          - OVERDUE
+          - CANCELLED
+        resultSummary:
+          type: string
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+      required:
+      - password
+      - username
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+        expiresIn:
+          type: integer
+          format: int64
+        user:
+          $ref: "#/components/schemas/UserView"
+    UserView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        displayName:
+          type: string
+        role:
+          type: string
+          enum:
+          - SIMULATED_PATIENT
+          - CLINICIAN
+          - FOLLOWUP_STAFF
+          - ADMIN
+    TaskUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - PENDING
+          - IN_PROGRESS
+          - COMPLETED
+          - OVERDUE
+          - CANCELLED
+        resultSummary:
+          type: string
+          maxLength: 1000
+          minLength: 0
+      required:
+      - status
+    AlertView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        runId:
+          type: string
+        visitId:
+          type: string
+          format: uuid
+        category:
+          type: string
+        severity:
+          type: string
+        reasonCodes:
+          type: array
+          items:
+            type: string
+        redactedSummary:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    AuditView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        targetType:
+          type: string
+        targetId:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+        result:
+          type: string
+        metadata:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+

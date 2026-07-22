@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:55432/medsim_test
+    username: medsim_app
+    password: change-me-local-only
+  jpa:
+    hibernate:
+      ddl-auto: validate
+app:
+  ai-job-timeout-seconds: 1
+

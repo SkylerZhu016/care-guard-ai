@@ -1,0 +1,27 @@
+manifestVersion: 1
+documents:
+  - sourceId: who-hearts-demo-reference
+    title: HEARTS Technical Package for Cardiovascular Disease Management in Primary Health Care
+    publisher: World Health Organization
+    version: "2020"
+    publicationDate: "2020-01-01"
+    language: en
+    sourceUrl: https://www.who.int/publications/i/item/9789240001367
+    licenseNote: "公开访问；许可与再利用须以 WHO 发布页为准。本项目仅登记元数据，未复制全文。"
+    topics: [hypertension, primary-care, follow-up]
+    applicablePopulation: adult-teaching-simulation
+    localFile: ""
+    sha256: ""
+  - sourceId: synthetic-red-flag-demo
+    title: 成人急症红旗识别教学摘录
+    publisher: 项目教学团队
+    version: "demo-v1"
+    publicationDate: "2026-07-22"
+    language: zh-CN
+    sourceUrl: https://example.org/medsim/synthetic-red-flag-demo
+    licenseNote: "项目自制合成教学材料，不宣称临床指南；必须由具备资质的指导人员复核后方可替换为正式来源。"
+    topics: [chest-pain, dyspnea, red-flags]
+    applicablePopulation: adult-teaching-simulation
+    localFile: ""
+    sha256: ""
+
