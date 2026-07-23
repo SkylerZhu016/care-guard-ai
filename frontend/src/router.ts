@@ -13,7 +13,8 @@ export const router = createRouter({ history:createWebHistory(), routes:[
   {path:'/patient',component:PatientView,meta:{role:'PATIENT'}},
   {path:'/clinician',component:ClinicianView,meta:{role:'CLINICIAN'}},
   {path:'/followup',component:FollowupView,meta:{role:'FOLLOWUP_STAFF'}},
-  {path:'/admin',component:AdminView,meta:{role:'ADMIN'}}
+  {path:'/admin',component:AdminView,meta:{role:'ADMIN'}},
+  {path:'/:pathMatch(.*)*',redirect:'/login'}
 ]})
 
 router.beforeEach(to => {

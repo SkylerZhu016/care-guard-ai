@@ -371,9 +371,13 @@ class IntakeV2Service {
             if (tag == null || tag.code() == null || tag.displayName() == null) continue;
             String code = tag.code().strip().toUpperCase(Locale.ROOT);
             if (code.length() > 60 || !seen.add(code)) continue;
+            var definition = catalog.find(code).orElse(null);
+            if (definition == null) continue;
             String source = "user_selected".equals(tag.source()) ? "user_selected" : "ai_extracted";
             String status = "removed".equals(tag.confirmationStatus()) ? "removed" : "confirmed";
-            result.add(new ComplaintTagView(code, privacy.sanitize(tag.displayName()), privacy.sanitize(tag.category()), source,
+            String displayName = definition.supportLevel() == SupportLevel.CUSTOM
+                ? privacy.sanitize(tag.displayName()) : definition.name();
+            result.add(new ComplaintTagView(code, displayName, definition.category(), source,
                 clamp(tag.confidence()), privacy.sanitize(tag.evidenceText()), status));
         }
         return List.copyOf(result);

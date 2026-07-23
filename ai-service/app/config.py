@@ -16,6 +16,7 @@ class Settings:
     knowledge_base_version: str = "pgvector-kb-v3"
     rule_set_version: str = "red-flags-v1"
     max_output_tokens: int = int(os.getenv("AI_MAX_OUTPUT_TOKENS", "1800"))
+    request_timeout_seconds: float = float(os.getenv("AI_REQUEST_TIMEOUT_SECONDS", "20"))
     rag_top_k: int = int(os.getenv("RAG_TOP_K", "6"))
 
 

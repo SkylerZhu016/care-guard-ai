@@ -64,6 +64,7 @@ AI_MODEL=<模型名称>
 AI_BASE_URL=<OpenAI兼容接口根地址>
 AI_API_KEY=<仅保存在本地环境>
 AI_MAX_OUTPUT_TOKENS=1800
+AI_REQUEST_TIMEOUT_SECONDS=20
 ```
 
 启动：
@@ -76,9 +77,9 @@ Windows 与 WSL/LibreOffice 之间传递路径时，Windows 使用 `D:\工程实
 
 ## 5. 已验证结果
 
-- 前端：Vitest 6 个测试文件、14 项测试通过；Vue TypeScript 校验通过；Vite 生产构建通过。
-- Java：PostgreSQL/pgvector 集成环境执行 17 项测试，全部通过；V10 在测试库从 V9 成功迁移。
-- Python：指定 `D:\Anaconda\envs\ML3.9\python.exe` 执行 16 项测试，全部通过，覆盖率 87.08%。
+- 前端：Vitest 6 个测试文件、18 项测试通过；Vue TypeScript 校验通过；Vite 生产构建通过。
+- Java：PostgreSQL/pgvector 集成环境执行 18 项测试，全部通过；V10 在测试库从 V9 成功迁移。
+- Python：指定 `D:\Anaconda\envs\ML3.9\python.exe` 执行 18 项测试，全部通过，覆盖率 87.23%。
 - 真实 Provider 联网验收：通过本地临时环境注入 DeepSeek OpenAI 兼容配置，主诉结构化与完整医务工作流均成功，安全状态为 `PASS`；密钥未写入仓库或 `.env`。
 - 本轮目录分类复验：在 Windows UTF-8 管道下临时注入同一 DeepSeek 配置，真实 Provider 能按口语语义将“我肚子有点不舒服”映射为 `ABDOMINAL_PAIN`、将“我的脚发麻”映射为 `LIMB_WEAKNESS_NUMBNESS`。模型无需等待医学标签原词，但仍只能返回服务端目录代码；密钥未写入仓库或 `.env`。
 - 新增契约测试验证：AI 标签不会覆盖手选症状、患者确认版本可保存、症状表不被 AI 标签暗中改写。

@@ -48,6 +48,6 @@ $env:MAVEN_OPTS='-Dmaven.repo.local=H:\Maven\repository'
 & 'D:\Anaconda\envs\ML3.9\python.exe' -m pytest ai-service\tests -q
 ```
 
-真实大模型使用 OpenAI 兼容接口，通过 `.env` 设置 `AI_PROVIDER=openai-compatible`、`AI_MODEL`、`AI_BASE_URL`、`AI_API_KEY` 和可选的 `AI_MAX_OUTPUT_TOKENS`。密钥不得写入仓库；未配置或调用失败时系统保留原始主诉并转人工复核。默认 `fake` Provider 用于离线开发和确定性测试。
+真实大模型使用 OpenAI 兼容接口，通过运行环境设置 `AI_PROVIDER=openai-compatible`、`AI_MODEL`、`AI_BASE_URL`、`AI_API_KEY`，以及可选的 `AI_MAX_OUTPUT_TOKENS` 和 `AI_REQUEST_TIMEOUT_SECONDS`。密钥不得写入仓库；未配置或调用失败时系统保留原始主诉并转人工复核。默认 `fake` Provider 仅用于离线开发和确定性测试。
 
 详细契约见 [OpenAPI](docs/api/openapi.yaml)、[SRS](docs/requirements/SRS.md)、[开发指导书](docs/PROJECT_DEVELOPMENT_GUIDE.md) 和 [RAG 实现说明](docs/ai/RAG_IMPLEMENTATION.md)。`期末任务.docx` 是原始任务书，禁止修改、转换或重导出。

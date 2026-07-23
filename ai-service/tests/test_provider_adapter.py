@@ -65,9 +65,38 @@ def test_openai_compatible_extracts_json_from_model_chatter():
     assert result["extractedTags"][0]["code"] == "ABDOMINAL_PAIN"
 
 
+def test_openai_compatible_extracts_first_valid_nested_json_among_multiple_blocks():
+    content = '说明 {不是 JSON}；正式结果：{"selectedTagCodes":["ABDOMINAL_PAIN"],"tagEvidence":{"ABDOMINAL_PAIN":"肚子不舒服"}}；附加：{"ignored":true}'
+    result = OpenAICompatibleProvider._extract_json_object(content)
+    assert result["selectedTagCodes"] == ["ABDOMINAL_PAIN"]
+    assert result["tagEvidence"]["ABDOMINAL_PAIN"] == "肚子不舒服"
+
+
 def test_openai_compatible_rejects_content_without_json():
     with pytest.raises(RuntimeError, match="AI_INVALID_JSON_OBJECT"):
         OpenAICompatibleProvider._extract_json_object("好的，但这次没有提供结构化内容。")
+
+
+def test_openai_compatible_maps_http_and_response_shape_errors(monkeypatch):
+    monkeypatch.setattr(providers, "settings", SimpleNamespace(
+        base_url="https://provider.example/v1", api_key="test-only",
+        model="model-test", request_timeout_seconds=9))
+
+    def unavailable(*args, **kwargs):
+        request_value = httpx.Request("POST", "https://provider.example/v1/chat/completions")
+        return httpx.Response(503, request=request_value)
+
+    monkeypatch.setattr(providers.httpx, "post", unavailable)
+    with pytest.raises(RuntimeError, match="AI_PROVIDER_HTTP_ERROR"):
+        OpenAICompatibleProvider().generate(request(), [])
+
+    class InvalidResponse:
+        def raise_for_status(self): return None
+        def json(self): return {"unexpected": []}
+
+    monkeypatch.setattr(providers.httpx, "post", lambda *args, **kwargs: InvalidResponse())
+    with pytest.raises(RuntimeError, match="AI_INVALID_PROVIDER_RESPONSE"):
+        OpenAICompatibleProvider().generate(request(), [])
 
 
 def test_complaint_provider_maps_selected_codes_to_server_catalog(monkeypatch):

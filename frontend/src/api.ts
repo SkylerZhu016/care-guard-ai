@@ -3,15 +3,25 @@ import type { Alert, Audit, ComplaintAnalysis, ComplaintFacts, ComplaintTag, Gui
 export class ApiError extends Error { constructor(public status: number, public code: string, message: string) { super(message) } }
 
 export class ApiClient {
-  constructor(private token: () => string | null) {}
-  private async request<T>(path: string, init: RequestInit = {}, version='v1'): Promise<T> {
+  constructor(private token: () => string | null, private requestTimeoutMs=30_000) {}
+  private async request<T>(path: string, init: RequestInit = {}, version='v1', timeoutMs=this.requestTimeoutMs): Promise<T> {
     const headers = new Headers(init.headers)
     if (init.body) headers.set('Content-Type', 'application/json')
     const token = this.token(); if (token) headers.set('Authorization', `Bearer ${token}`)
-    const response = await fetch(`/api/${version}${path}`, { ...init, headers })
-    if (!response.ok) { const error = await response.json().catch(() => ({})); throw new ApiError(response.status, error.code || 'NETWORK_ERROR', error.message || '请求失败') }
-    const text = await response.text()
-    return (text ? JSON.parse(text) : undefined) as T
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      const response = await fetch(`/api/${version}${path}`, { ...init, headers, signal:init.signal || controller.signal })
+      if (!response.ok) { const error = await response.json().catch(() => ({})); throw new ApiError(response.status, error.code || 'NETWORK_ERROR', error.message || '请求失败') }
+      const text = await response.text()
+      return (text ? JSON.parse(text) : undefined) as T
+    } catch (error) {
+      if (error instanceof ApiError) throw error
+      if (controller.signal.aborted) throw new ApiError(0, 'REQUEST_TIMEOUT', '请求超时，请稍后重试')
+      throw new ApiError(0, 'NETWORK_ERROR', '网络连接失败，请检查网络后重试')
+    } finally {
+      window.clearTimeout(timeout)
+    }
   }
   login(username: string, password: string) { return this.request<{accessToken:string;user:User}>('/auth/login', { method:'POST', body:JSON.stringify({username,password}) }) }
   me() { return this.request<User>('/me') }
@@ -21,7 +31,7 @@ export class ApiClient {
   myVisits() { return this.request<Visit[]>('/visits/mine',{},'v2') }
   createVisit(body: unknown) { return this.request<Visit>('/visits', { method:'POST', body:JSON.stringify(body) },'v2') }
   updateVisit(id:string, body:unknown) { return this.request<Visit>(`/visits/${id}`, { method:'PUT', body:JSON.stringify(body) },'v2') }
-  submitVisit(id: string) { return this.request<Visit>(`/visits/${id}/submit`, { method:'POST', headers:{'Idempotency-Key':crypto.randomUUID()} },'v2') }
+  submitVisit(id: string) { return this.request<Visit>(`/visits/${id}/submit`, { method:'POST', headers:{'Idempotency-Key':`intake-v2-submit-${id}`} },'v2') }
   analyzeComplaint(id:string) { return this.request<ComplaintAnalysis>(`/visits/${id}/analyze-complaint`,{method:'POST'},'v2') }
   confirmComplaint(id:string,body:{normalizedSummary:string;tags:ComplaintTag[];structuredFacts:ComplaintFacts;riskSignals:string[];missingQuestions:string[];uncertainties:string[]}) { return this.request<ComplaintAnalysis>(`/visits/${id}/complaint-structure`,{method:'PUT',body:JSON.stringify(body)},'v2') }
   supplementVisit(id:string,content:string) { return this.request<VisitSupplement>(`/visits/${id}/supplements`,{method:'POST',body:JSON.stringify({content})},'v2') }
@@ -35,6 +45,6 @@ export class ApiClient {
   audits() { return this.request<Audit[]>('/admin/audit-logs') }
   runs() { return this.request<Run[]>('/admin/agent-runs') }
   guidelines() { return this.request<Guideline[]>('/admin/guidelines') }
-  reindexGuidelines() { return this.request<void>('/admin/guidelines/reindex',{method:'POST'}) }
+  reindexGuidelines() { return this.request<void>('/admin/guidelines/reindex',{method:'POST'},'v1',Math.max(this.requestTimeoutMs,120_000)) }
 }
 

@@ -10,5 +10,9 @@ describe('role route guard', () => {
     useSessionStore().establish('token',{id:'1',username:'patient',displayName:'患者用户',role:'PATIENT'})
     await router.push('/clinician'); expect(router.currentRoute.value.path).toBe('/patient')
   })
+  it('redirects unknown routes instead of rendering a blank page', async () => {
+    await router.push('/unknown-page')
+    expect(router.currentRoute.value.path).toBe('/login')
+  })
 })
 

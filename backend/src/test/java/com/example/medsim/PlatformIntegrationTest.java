@@ -117,6 +117,11 @@ class PlatformIntegrationTest {
                     {"normalizedSummary":"患者确认：今天头痛并伴恶心。","tags":[{"code":"NAUSEA_VOMITING","displayName":"恶心或呕吐","category":"消化系统","source":"ai_extracted","confidence":0.91,"evidenceText":"恶心","confirmationStatus":"confirmed"}],"structuredFacts":{"duration":"今天","onset":"","location":"头部","character":"","aggravatingFactors":[],"relievingFactors":[],"associatedSymptoms":["恶心"],"activityImpact":""},"riskSignals":[],"missingQuestions":["目前是否仍存在？"],"uncertainties":["病因不确定"]}
                     """))
             .andExpect(status().isOk()).andExpect(jsonPath("$.tags[0].confirmationStatus").value("confirmed"));
+        mvc.perform(put("/api/v2/visits/{id}/complaint-structure", id).header("Authorization", bearer(patient))
+                .contentType(MediaType.APPLICATION_JSON).content("""
+                    {"normalizedSummary":"目录外标签应被丢弃。","tags":[{"code":"INVENTED_TAG","displayName":"虚构标签","category":"其他","source":"ai_extracted","confidence":0.91,"evidenceText":"无","confirmationStatus":"confirmed"}],"structuredFacts":{"duration":"","onset":"","location":"","character":"","aggravatingFactors":[],"relievingFactors":[],"associatedSymptoms":[],"activityImpact":""},"riskSignals":[],"missingQuestions":[],"uncertainties":[]}
+                    """))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.tags").isEmpty());
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM symptoms WHERE visit_id=?", Integer.class, UUID.fromString(id))).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT confirmed_json IS NOT NULL FROM visit_complaint_analyses WHERE visit_id=?", Boolean.class, UUID.fromString(id))).isTrue();
     }

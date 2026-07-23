@@ -1,3 +1,4 @@
+import hmac
 from uuid import uuid4
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from redis import Redis
@@ -12,7 +13,7 @@ app = FastAPI(title="MedSim Controlled AI Service", version="1.0.0", docs_url="/
 
 
 def internal_auth(x_internal_token: str = Header(default="")) -> None:
-    if x_internal_token != settings.internal_token:
+    if not hmac.compare_digest(x_internal_token, settings.internal_token):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="INVALID_INTERNAL_TOKEN")
 
 

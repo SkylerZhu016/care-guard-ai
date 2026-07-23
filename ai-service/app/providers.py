@@ -1,6 +1,5 @@
 import hashlib
 import json
-import re
 from typing import Dict, List
 import httpx
 
@@ -238,14 +237,20 @@ riskSignals、missingQuestions、uncertainties（均为字符串数组）。
     def _call(self, payload: Dict) -> Dict:
         try:
             response = httpx.post(f"{settings.base_url.rstrip('/')}/chat/completions",
-                headers={"Authorization": f"Bearer {settings.api_key}"}, json=payload, timeout=20)
+                headers={"Authorization": f"Bearer {settings.api_key}"}, json=payload,
+                timeout=getattr(settings, "request_timeout_seconds", 20))
             response.raise_for_status()
-            content=response.json()["choices"][0]["message"]["content"]
-            result=self._extract_json_object(content)
-            if not isinstance(result,dict): raise RuntimeError("AI_INVALID_JSON_OBJECT")
-            return result
         except httpx.TimeoutException as exc:
             raise ProviderTimeoutError("AI_TIMEOUT") from exc
+        except httpx.HTTPStatusError as exc:
+            raise RuntimeError("AI_PROVIDER_HTTP_ERROR") from exc
+        except httpx.RequestError as exc:
+            raise RuntimeError("AI_PROVIDER_REQUEST_ERROR") from exc
+        try:
+            content=response.json()["choices"][0]["message"]["content"]
+        except (ValueError, KeyError, IndexError, TypeError) as exc:
+            raise RuntimeError("AI_INVALID_PROVIDER_RESPONSE") from exc
+        return self._extract_json_object(content)
 
     @staticmethod
     def _extract_json_object(content: str) -> Dict:
@@ -257,12 +262,12 @@ riskSignals、missingQuestions、uncertainties（均为字符串数组）。
                 return result
         except json.JSONDecodeError:
             pass
-        candidates = re.findall(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", content, flags=re.IGNORECASE)
-        candidates.extend(re.findall(r"\{[\s\S]*\}", content))
         decoder = json.JSONDecoder()
-        for candidate in candidates:
+        for index, character in enumerate(content):
+            if character != "{":
+                continue
             try:
-                result, _ = decoder.raw_decode(candidate.strip())
+                result, _ = decoder.raw_decode(content[index:])
                 if isinstance(result, dict):
                     return result
             except json.JSONDecodeError:
