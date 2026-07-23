@@ -1,4 +1,4 @@
-services:
+﻿services:
   mysql:
     image: mysql:8.0
     environment:
@@ -37,6 +37,7 @@ services:
       MYSQL_PASSWORD: root123
       REDIS_HOST: redis
       JWT_SECRET: MedicalPreConsultPlatform2024SecretKeyForJWTTokenGeneration
+      SPRING_APPLICATION_JSON: "{\"ai\":{\"service\":{\"url\":\"http://ai-service:8000\"}}}"
     depends_on:
       mysql:
         condition: service_healthy
@@ -50,7 +51,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-placeholder}
+      DEEPSEEK_API_KEY: sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      DEEPSEEK_BASE_URL: https://api.deepseek.com
+      LLM_MODEL: deepseek-chat
     depends_on:
       - backend
 

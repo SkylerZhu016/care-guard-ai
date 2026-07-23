@@ -1,4 +1,4 @@
-server:
+﻿server:
   port: 8080
 
 spring:
@@ -22,10 +22,16 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
+    serialization:
+      fail-on-empty-beans: false
 
 jwt:
   secret: MedicalPreConsultPlatform2024SecretKeyForJWTTokenGeneration
   expiration-ms: 86400000
+
+ai:
+  service:
+    url: http://localhost:8000
 
 logging:
   level:

@@ -25,7 +25,7 @@
                   <el-descriptions :column="2" border size="small">
                     <el-descriptions-item label="主诉">{{ row.chiefComplaint }}</el-descriptions-item>
                     <el-descriptions-item label="风险等级">
-                      <el-tag :type="riskTag(row.riskLevel)" size="small">{{ row.riskLevel || '-' }}</el-tag>
+                      <el-tag :type="riskTag(row.riskLevel)" size="small">{{ riskLabel(row.riskLevel) }}</el-tag>
                     </el-descriptions-item>
                     <el-descriptions-item label="分诊结果">{{ row.triageResult || '待分诊' }}</el-descriptions-item>
                     <el-descriptions-item label="医生备注">{{ row.doctorNotes || '-' }}</el-descriptions-item>
@@ -48,7 +48,7 @@
             </el-table-column>
             <el-table-column prop="riskLevel" label="风险" width="80">
               <template #default="{ row }">
-                <el-tag :type="riskTag(row.riskLevel)" size="small">{{ row.riskLevel || '-' }}</el-tag>
+                <el-tag :type="riskTag(row.riskLevel)" size="small">{{ riskLabel(row.riskLevel) }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="createdAt" label="时间" width="140" />
@@ -109,9 +109,15 @@ function selectVisit(row: Visit) {
 }
 
 function riskTag(level: number) {
-  if (level >= 4) return 'danger'
+  if (level >= 5) return 'danger'
+  if (level >= 4) return 'warning'
   if (level >= 3) return 'warning'
   return 'info'
+}
+
+function riskLabel(level: number | null) {
+  const map: Record<number, string> = { 5: '危急', 4: '高风险', 3: '中等风险', 2: '低风险' }
+  return level ? (map[level] || '-') : '-'
 }
 
 function statusTag(s: string) {
