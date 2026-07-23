@@ -5,7 +5,7 @@ from redis import Redis
 from .celery_app import celery_app
 from .config import settings
 from .jobs import JobStore
-from .schemas import AnalysisRequest, JobAccepted, JobStatus
+from .schemas import AnalysisRequest, ComplaintStructureRequest, ComplaintStructureResult, JobAccepted, JobStatus
 
 
 app = FastAPI(title="MedSim Controlled AI Service", version="1.0.0", docs_url="/internal/docs")
@@ -44,4 +44,16 @@ def get_job(job_id: str) -> JobStatus:
     if not job:
         raise HTTPException(status_code=404, detail="JOB_NOT_FOUND")
     return job
+
+
+@app.post("/internal/v1/complaint-structure", response_model=ComplaintStructureResult, dependencies=[Depends(internal_auth)])
+def structure_complaint(request: ComplaintStructureRequest) -> ComplaintStructureResult:
+    import time
+    from .providers import get_provider
+    started = time.perf_counter()
+    provider = get_provider()
+    draft = provider.structure_complaint(request)
+    draft.update({"provider": provider.name, "model": settings.model,
+                  "durationMs": int((time.perf_counter() - started) * 1000)})
+    return ComplaintStructureResult.model_validate(draft)
 

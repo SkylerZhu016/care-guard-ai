@@ -11,7 +11,7 @@ vi.mock('element-plus',()=>({ElMessage:{success:vi.fn(),error:vi.fn(),warning:vi
 const ButtonStub=defineComponent({props:['disabled'],emits:['click'],template:'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>'})
 const InputStub=defineComponent({props:['modelValue'],emits:['update:modelValue'],template:'<input :value="modelValue" @input="$emit(\'update:modelValue\',$event.target.value)" />'})
 const SlotStub=defineComponent({template:'<div><slot /></div>'})
-const mountView=()=>mount(PatientView,{global:{directives:{loading:()=>{}},stubs:{'el-button':ButtonStub,'el-input':InputStub,'el-select':SlotStub,'el-option':SlotStub,'el-form':SlotStub,'el-form-item':SlotStub}}})
+const mountView=()=>mount(PatientView,{global:{directives:{loading:()=>{}},stubs:{Teleport:true,'el-button':ButtonStub,'el-input':InputStub,'el-select':SlotStub,'el-option':SlotStub,'el-form':SlotStub,'el-form-item':SlotStub}}})
 const profile={ownerId:'1',version:0,data:{ageBand:'UNKNOWN',physiologicalInfoStatus:'UNKNOWN',physiologicalInfo:'',chronicConditionsStatus:'UNKNOWN',chronicConditions:[],allergiesStatus:'UNKNOWN',allergies:[],longTermMedicationsStatus:'UNKNOWN',longTermMedications:[]}}
 const catalog={version:'intake-catalog-test',symptoms:[
   {code:'CHEST_PAIN',name:'胸痛',category:'胸部与呼吸',supportLevel:'RULE_SUPPORTED',common:true,questions:[{id:'chest.current',prompt:'现在有没有胸口疼、发紧或不舒服？',type:'SINGLE_CHOICE',multiple:false,options:[{value:'YES',label:'是'},{value:'NO',label:'否'},{value:'UNKNOWN',label:'不知道/说不清'}]}]},
@@ -34,6 +34,7 @@ describe('PatientView v2 intake',()=>{
 
   it('uses patient language and hides technical symptom codes',async()=>{
     const wrapper=mountView();await flushPromises()
+    await wrapper.find('.symptom-picker-launcher').trigger('click')
     await wrapper.findAll('button').find(button=>button.text().includes('胸痛'))!.trigger('click')
     expect(wrapper.findAll('input').some(input=>input.element.value==='主要不适为胸痛')).toBe(true)
     expect(wrapper.text()).not.toContain('CHEST_PAIN')
@@ -41,6 +42,7 @@ describe('PatientView v2 intake',()=>{
 
   it('explains record-only symptoms without declaring routine risk',async()=>{
     const wrapper=mountView();await flushPromises()
+    await wrapper.find('.symptom-picker-launcher').trigger('click')
     await wrapper.findAll('button').find(button=>button.text().includes('头痛'))!.trigger('click')
     expect(wrapper.text()).toContain('该症状会被记录并交由人工复核')
     expect(wrapper.text()).not.toContain('筛查通过')

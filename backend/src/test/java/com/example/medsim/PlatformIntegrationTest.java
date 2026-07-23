@@ -34,8 +34,8 @@ class PlatformIntegrationTest {
 
     @BeforeEach
     void cleanBusinessData() {
-        jdbc.execute("TRUNCATE TABLE visit_supplements, patient_profiles, audit_logs, safety_alerts, followup_tasks, followup_plans, citations, agent_runs, triage_results, symptoms, visits, guideline_chunks, guideline_versions, guidelines CASCADE");
-        when(aiClient.analyze(anyString(), any(), anyList(), any())).thenThrow(new IllegalStateException("AI_UNAVAILABLE_TEST"));
+        jdbc.execute("TRUNCATE TABLE visit_complaint_analyses, visit_supplements, patient_profiles, audit_logs, safety_alerts, followup_tasks, followup_plans, citations, agent_runs, triage_results, symptoms, visits, guideline_chunks, guideline_versions, guidelines CASCADE");
+        when(aiClient.analyze(anyString(), any(), anyList(), any(), any())).thenThrow(new IllegalStateException("AI_UNAVAILABLE_TEST"));
     }
 
     @Test
@@ -58,6 +58,8 @@ class PlatformIntegrationTest {
         assertThat(submitted.at("/triage/assessmentStatus").asText()).isEqualTo("REQUIRES_MANUAL_REVIEW");
         assertThat(jdbc.queryForObject("SELECT legacy_severity IS NULL FROM symptoms WHERE visit_id=?", Boolean.class,
             UUID.fromString(draft.get("id").asText()))).isTrue();
+        assertThat(jdbc.queryForObject("SELECT report_source FROM symptoms WHERE visit_id=?", String.class,
+            UUID.fromString(draft.get("id").asText()))).isEqualTo("USER_SELECTED");
     }
 
     @Test
@@ -87,13 +89,49 @@ class PlatformIntegrationTest {
     void catalogAndClinicianQueueExposeV2Contract() throws Exception {
         String patient = login("patient"); String clinician = login("clinician");
         mvc.perform(get("/api/v2/intake-catalog").header("Authorization", bearer(patient)))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.version").value("intake-catalog-2026.07"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.version").value("intake-catalog-2026.07.2"))
             .andExpect(jsonPath("$.symptoms[0].questions").isArray());
         JsonNode submitted = submitV2(patient, createV2(patient, unsupportedVisit()).get("id").asText(), "queue-001");
         mvc.perform(get("/api/v2/clinician/visits").header("Authorization", bearer(clinician)))
             .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(submitted.get("id").asText()));
         mvc.perform(get("/api/v2/clinician/visits").header("Authorization", bearer(patient)))
             .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void complaintAiStructureIsStoredConfirmedAndDoesNotReplaceSelectedSymptoms() throws Exception {
+        when(aiClient.structureComplaint(anyString(), anyList(), any())).thenReturn(new AiComplaintResult(
+            "患者自述今天头痛并伴恶心。",
+            java.util.List.of(new ComplaintTagView("NAUSEA", "恶心", "消化系统", "ai_extracted", 0.91, "恶心", "proposed")),
+            new ComplaintFactsView("今天", "", "头部", "", java.util.List.of(), java.util.List.of(), java.util.List.of("恶心"), ""),
+            java.util.List.of(), java.util.List.of("目前是否仍存在？"), java.util.List.of("病因不确定"),
+            "fake", "fake-v1", 12L, "AI 仅用于整理患者表述，不能替代医生诊断。"));
+        String patient = login("patient");
+        JsonNode draft = createV2(patient, unsupportedVisit());
+        String id = draft.get("id").asText();
+        mvc.perform(post("/api/v2/visits/{id}/analyze-complaint", id).header("Authorization", bearer(patient)))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("SUCCEEDED"))
+            .andExpect(jsonPath("$.tags[0].source").value("ai_extracted"));
+        mvc.perform(put("/api/v2/visits/{id}/complaint-structure", id).header("Authorization", bearer(patient))
+                .contentType(MediaType.APPLICATION_JSON).content("""
+                    {"normalizedSummary":"患者确认：今天头痛并伴恶心。","tags":[{"code":"NAUSEA","displayName":"恶心","category":"消化系统","source":"ai_extracted","confidence":0.91,"evidenceText":"恶心","confirmationStatus":"confirmed"}],"structuredFacts":{"duration":"今天","onset":"","location":"头部","character":"","aggravatingFactors":[],"relievingFactors":[],"associatedSymptoms":["恶心"],"activityImpact":""},"riskSignals":[],"missingQuestions":["目前是否仍存在？"],"uncertainties":["病因不确定"]}
+                    """))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.tags[0].confirmationStatus").value("confirmed"));
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM symptoms WHERE visit_id=?", Integer.class, UUID.fromString(id))).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT confirmed_json IS NOT NULL FROM visit_complaint_analyses WHERE visit_id=?", Boolean.class, UUID.fromString(id))).isTrue();
+    }
+
+    @Test
+    void invalidComplaintModelOutputIsDistinguishedFromServiceFailure() throws Exception {
+        when(aiClient.structureComplaint(anyString(), anyList(), any()))
+            .thenThrow(new IllegalStateException("AI_INVALID_JSON_OBJECT"));
+        String patient = login("patient");
+        JsonNode draft = createV2(patient, unsupportedVisit());
+        mvc.perform(post("/api/v2/visits/{id}/analyze-complaint", draft.get("id").asText())
+                .header("Authorization", bearer(patient)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("INVALID"))
+            .andExpect(jsonPath("$.errorCode").value("AI_INVALID_JSON_OBJECT"));
     }
 
     @Test
@@ -118,21 +156,24 @@ class PlatformIntegrationTest {
     }
 
     private String unsupportedVisit() {
-        return "{\"primarySymptomCode\":\"HEADACHE\",\"chiefComplaint\":\"今天头痛\",\"freeText\":\"希望记录具体情况\",\"symptomReports\":[{\"symptomCode\":\"HEADACHE\",\"source\":\"CATALOG\",\"onsetRange\":\"TODAY\",\"course\":\"INTERMITTENT\",\"currentStatus\":\"PRESENT\",\"activityImpact\":\"NEEDS_REST\",\"answers\":[]}]}";
+        return "{\"primarySymptomCode\":\"HEADACHE\",\"chiefComplaint\":\"今天头痛\",\"freeText\":\"希望记录具体情况\",\"symptomReports\":[{\"symptomCode\":\"HEADACHE\",\"source\":\"USER_SELECTED\",\"onsetRange\":\"TODAY\",\"course\":\"INTERMITTENT\",\"currentStatus\":\"PRESENT\",\"activityImpact\":\"NEEDS_REST\",\"answers\":[]}]}";
     }
 
     private String emergencyMixedVisit() {
         return "{\"primarySymptomCode\":\"CHEST_PAIN\",\"chiefComplaint\":\"现在胸口不舒服并喘不上气\",\"freeText\":\"同时头痛\",\"symptomReports\":[" +
-            "{\"symptomCode\":\"CHEST_PAIN\",\"source\":\"CATALOG\",\"onsetRange\":\"JUST_NOW\",\"course\":\"CONTINUOUS\",\"currentStatus\":\"PRESENT\",\"activityImpact\":\"UNABLE_NORMAL_ACTIVITY\",\"answers\":[{\"questionId\":\"chest.current\",\"selectedOptions\":[\"YES\"]}]}," +
-            "{\"symptomCode\":\"DYSPNEA\",\"source\":\"CATALOG\",\"onsetRange\":\"JUST_NOW\",\"course\":\"CONTINUOUS\",\"currentStatus\":\"PRESENT\",\"activityImpact\":\"UNABLE_NORMAL_ACTIVITY\",\"answers\":[{\"questionId\":\"dyspnea.current\",\"selectedOptions\":[\"YES\"]}]}," +
-            "{\"symptomCode\":\"HEADACHE\",\"source\":\"CATALOG\",\"onsetRange\":\"TODAY\",\"course\":\"INTERMITTENT\",\"currentStatus\":\"PRESENT\",\"activityImpact\":\"UNKNOWN\",\"answers\":[]}]}";
+            "{\"symptomCode\":\"CHEST_PAIN\",\"source\":\"USER_SELECTED\",\"onsetRange\":\"JUST_NOW\",\"course\":\"CONTINUOUS\",\"currentStatus\":\"PRESENT\",\"activityImpact\":\"UNABLE_NORMAL_ACTIVITY\",\"answers\":[{\"questionId\":\"chest.current\",\"selectedOptions\":[\"YES\"]}]}," +
+            "{\"symptomCode\":\"DYSPNEA\",\"source\":\"USER_SELECTED\",\"onsetRange\":\"JUST_NOW\",\"course\":\"CONTINUOUS\",\"currentStatus\":\"PRESENT\",\"activityImpact\":\"UNABLE_NORMAL_ACTIVITY\",\"answers\":[{\"questionId\":\"dyspnea.current\",\"selectedOptions\":[\"YES\"]}]}," +
+            "{\"symptomCode\":\"HEADACHE\",\"source\":\"USER_SELECTED\",\"onsetRange\":\"TODAY\",\"course\":\"INTERMITTENT\",\"currentStatus\":\"PRESENT\",\"activityImpact\":\"UNKNOWN\",\"answers\":[]}]}";
     }
 
     private void seedKnowledgeFixture() {
         UUID guidelineId = UUID.randomUUID(), versionId = UUID.randomUUID(), chunkId = UUID.randomUUID();
+        UUID unrelatedChunkId = UUID.randomUUID(), sameTopicBackgroundId = UUID.randomUUID();
         jdbc.update("INSERT INTO guidelines(id,guideline_id,title,publisher,source_url,license_note) VALUES (?,?,?,?,?,?)", guidelineId, "test-red-flags", "测试资料", "测试发布方", "https://example.org/test-source", "仅用于自动化测试");
         jdbc.update("INSERT INTO guideline_versions(id,guideline_id,version_id,version_label,language,object_key,sha256,active) VALUES (?,?,?,?,?,?,?,TRUE)", versionId, guidelineId, "test-red-flags-v1", "v1", "zh-CN", "test/v1.md", "0".repeat(64));
         jdbc.update("INSERT INTO guideline_chunks(id,version_id,chunk_id,section_name,topics,content,embedding) VALUES (?,?,?,?,?,?,CAST(? AS vector))", chunkId, versionId, "chunk-test-red-flag-001", "胸痛红旗", "CHEST_PAIN", "胸痛相关内容需人工评估", unitVector());
+        jdbc.update("INSERT INTO guideline_chunks(id,version_id,chunk_id,section_name,topics,content,embedding) VALUES (?,?,?,?,?,?,CAST(? AS vector))", unrelatedChunkId, versionId, "chunk-test-headache-000", "头痛资料", "HEADACHE", "与本次胸痛查询无关的头痛内容", unitVector());
+        jdbc.update("INSERT INTO guideline_chunks(id,version_id,chunk_id,section_name,topics,content,embedding) VALUES (?,?,?,?,?,?,CAST(? AS vector))", sameTopicBackgroundId, versionId, "chunk-test-background-000", "项目背景", "CHEST_PAIN", "全球公共卫生项目背景说明", unitVector());
     }
 
     private String unitVector() { return IntStream.range(0, 64).mapToObj(i -> i == 0 ? "1" : "0").collect(Collectors.joining(",", "[", "]")); }

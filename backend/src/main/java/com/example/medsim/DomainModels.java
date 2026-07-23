@@ -15,6 +15,7 @@ enum AssessmentStatus { RULE_EVALUATED, REQUIRES_MANUAL_REVIEW }
 enum ReviewDecision { ACCEPT, MODIFY, REJECT }
 enum PlanStatus { DRAFT, ACTIVE, PAUSED, COMPLETED, CANCELLED }
 enum TaskStatus { PENDING, IN_PROGRESS, COMPLETED, OVERDUE, CANCELLED }
+enum ComplaintAnalysisStatus { PENDING, SUCCEEDED, FAILED, INVALID }
 
 @Entity @Table(name = "users")
 class UserAccount {
@@ -78,6 +79,7 @@ class TriageResult {
     @Enumerated(EnumType.STRING) @Column(name = "coverage_status") CoverageStatus coverageStatus;
     @Enumerated(EnumType.STRING) @Column(name = "assessment_status") AssessmentStatus assessmentStatus;
     @Column(name = "ai_summary") String aiSummary;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(name = "ai_detail", columnDefinition = "jsonb") String aiDetail;
     @Enumerated(EnumType.STRING) @Column(name = "review_decision") ReviewDecision reviewDecision;
     @Column(name = "review_reason") String reviewReason;
     @Column(name = "reviewer_id") UUID reviewerId;
@@ -129,6 +131,23 @@ class FollowupPlan {
     @Column(name = "activated_at") OffsetDateTime activatedAt;
     @Version long version;
     @Column(name = "created_at", nullable = false) OffsetDateTime createdAt = OffsetDateTime.now();
+}
+
+@Entity @Table(name = "visit_complaint_analyses")
+class VisitComplaintAnalysis {
+    @Id UUID id;
+    @Column(name = "visit_id", nullable = false, unique = true) UUID visitId;
+    @Column(name = "raw_complaint", nullable = false) String rawComplaint;
+    @Enumerated(EnumType.STRING) @Column(nullable = false) ComplaintAnalysisStatus status = ComplaintAnalysisStatus.PENDING;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(name = "structured_json", columnDefinition = "jsonb") String structuredJson;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(name = "confirmed_json", columnDefinition = "jsonb") String confirmedJson;
+    @Column String provider;
+    @Column(name = "model_name") String modelName;
+    @Column(name = "prompt_version", nullable = false) String promptVersion = "complaint-structure-v1";
+    @Column(name = "error_code") String errorCode;
+    @Column(name = "duration_ms") Long durationMs;
+    @Column(name = "created_at", nullable = false) OffsetDateTime createdAt = OffsetDateTime.now();
+    @Column(name = "updated_at", nullable = false) OffsetDateTime updatedAt = OffsetDateTime.now();
 }
 
 @Entity @Table(name = "patient_profiles")

@@ -4,11 +4,12 @@
 
 ## 业务边界
 
-- 症状目录由 `GET /api/v2/intake-catalog` 提供，当前目录版本为 `intake-catalog-2026.07`。
+- 症状目录由 `GET /api/v2/intake-catalog` 提供，当前目录版本为 `intake-catalog-2026.07.2`，覆盖 34 项分类不适。
 - 胸痛、呼吸困难、晕厥、意识异常具备有限的确定性规则；其他目录症状为 `RECORD_ONLY`，“其他不适”为 `CUSTOM`。
 - 新问诊不采集数字严重度，只保存开始时间、变化过程、当前状态、活动影响和症状特异答案。
 - 未支持症状不会得到 `ROUTINE`：仅包含此类症状时，规则紧急度为空并进入人工复核。
-- AI/RAG 只生成摘要、遗漏问题和证据整理，不能把知识检索结果升级为确定性规则。
+- 患者可在草稿中调用 AI 主诉整理：原始主诉永久保留，手选标签与 `ai_extracted` 标签分源保存，患者可确认或删除；失败不阻断提交。
+- 医务端 AI/RAG 按结构化摘要、关键发现、异常信号、追问、排查方向、补充信息、风险、不确定性与引用分层展示，不能把知识检索结果升级为确定性规则。
 - 历史 `INTAKE_V1` 记录只读保留；新写入统一为 `INTAKE_V2`。
 
 ## 测试账号
@@ -39,12 +40,14 @@ wsl -d HermesUbuntu -- bash -lc "cd /mnt/d/工程实训/final && docker compose 
 - Docker：WSL2 发行版 `HermesUbuntu`
 
 ```powershell
-pnpm --dir frontend test -- --run
+pnpm --dir frontend exec vitest run
 pnpm --dir frontend build
 $env:JAVA_HOME='H:\Java\jdk-21'
 $env:MAVEN_OPTS='-Dmaven.repo.local=H:\Maven\repository'
 & 'H:\Maven\apache-maven-3.9.9\bin\mvn.cmd' -f backend\pom.xml test
 & 'D:\Anaconda\envs\ML3.9\python.exe' -m pytest ai-service\tests -q
 ```
+
+真实大模型使用 OpenAI 兼容接口，通过 `.env` 设置 `AI_PROVIDER=openai-compatible`、`AI_MODEL`、`AI_BASE_URL`、`AI_API_KEY` 和可选的 `AI_MAX_OUTPUT_TOKENS`。密钥不得写入仓库；未配置或调用失败时系统保留原始主诉并转人工复核。默认 `fake` Provider 用于离线开发和确定性测试。
 
 详细契约见 [OpenAPI](docs/api/openapi.yaml)、[SRS](docs/requirements/SRS.md)、[开发指导书](docs/PROJECT_DEVELOPMENT_GUIDE.md) 和 [RAG 实现说明](docs/ai/RAG_IMPLEMENTATION.md)。`期末任务.docx` 是原始任务书，禁止修改、转换或重导出。

@@ -1,4 +1,4 @@
-import type { Alert, Audit, Guideline, IntakeCatalog, PatientProfile, PatientProfileInput, ReviewDecision, Run, Task, TaskStatus, Urgency, User, Visit, VisitSupplement } from './types'
+import type { Alert, Audit, ComplaintAnalysis, ComplaintFacts, ComplaintTag, Guideline, IntakeCatalog, PatientProfile, PatientProfileInput, ReviewDecision, Run, Task, TaskStatus, Urgency, User, Visit, VisitSupplement } from './types'
 
 export class ApiError extends Error { constructor(public status: number, public code: string, message: string) { super(message) } }
 
@@ -22,6 +22,8 @@ export class ApiClient {
   createVisit(body: unknown) { return this.request<Visit>('/visits', { method:'POST', body:JSON.stringify(body) },'v2') }
   updateVisit(id:string, body:unknown) { return this.request<Visit>(`/visits/${id}`, { method:'PUT', body:JSON.stringify(body) },'v2') }
   submitVisit(id: string) { return this.request<Visit>(`/visits/${id}/submit`, { method:'POST', headers:{'Idempotency-Key':crypto.randomUUID()} },'v2') }
+  analyzeComplaint(id:string) { return this.request<ComplaintAnalysis>(`/visits/${id}/analyze-complaint`,{method:'POST'},'v2') }
+  confirmComplaint(id:string,body:{normalizedSummary:string;tags:ComplaintTag[];structuredFacts:ComplaintFacts;riskSignals:string[];missingQuestions:string[];uncertainties:string[]}) { return this.request<ComplaintAnalysis>(`/visits/${id}/complaint-structure`,{method:'PUT',body:JSON.stringify(body)},'v2') }
   supplementVisit(id:string,content:string) { return this.request<VisitSupplement>(`/visits/${id}/supplements`,{method:'POST',body:JSON.stringify({content})},'v2') }
   queue() { return this.request<Visit[]>('/clinician/visits',{},'v2') }
   review(id:string, decision:ReviewDecision, reason:string, finalUrgency?:Urgency) { return this.request<Visit>(`/triage-results/${id}/review`, {method:'POST',body:JSON.stringify({decision,reason,...(decision==='REJECT'?{}:{finalUrgency})})}) }

@@ -155,7 +155,8 @@ class PlatformService {
     private void runAi(Visit visit, List<SymptomEntity> symptomEntities, RuleOutcome outcome, TriageResult triageResult, UUID actor) {
         String runId="run-"+UUID.randomUUID(); var run=new AgentRun(); run.id=UUID.randomUUID(); run.runId=runId; run.visitId=visit.id; run.status="QUEUED"; runs.save(run);
         try {
-            var job=ai.analyze(runId, visit, symptomEntities, outcome); run.status=job.status(); run.durationMs=job.durationMs();
+            var job=ai.analyze(runId, visit, symptomEntities, outcome,
+                new AiCaseContext(null, null, java.util.List.of(), java.util.List.of())); run.status=job.status(); run.durationMs=job.durationMs();
             if(job.result()!=null) {
                 var result=job.result();
                 if (outcome.urgency()!=null && result.proposedUrgency()!=null && result.proposedUrgency().ordinal()<outcome.urgency().ordinal()) throw new IllegalStateException("AI_RULE_DOWNGRADE");

@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Component
 class IntakeCatalog {
-    static final String VERSION = "intake-catalog-2026.07";
+    static final String VERSION = "intake-catalog-2026.07.2";
     private final Map<String, CatalogSymptomView> byCode;
 
     IntakeCatalog() {
@@ -48,6 +48,24 @@ class IntakeCatalog {
         add(values, "PALPITATIONS", "心悸", "胸部与呼吸", SupportLevel.RECORD_ONLY, false, List.of());
         add(values, "RASH_ALLERGY", "皮疹或过敏不适", "皮肤与过敏", SupportLevel.RECORD_ONLY, false, List.of());
         add(values, "LIMB_WEAKNESS_NUMBNESS", "肢体无力或麻木", "头部与神经", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "SORE_THROAT", "咽痛或咽部不适", "耳鼻喉与口腔", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "NASAL_SYMPTOMS", "鼻塞或流涕", "耳鼻喉与口腔", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "EAR_DISCOMFORT", "耳痛或耳部不适", "耳鼻喉与口腔", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "ORAL_DISCOMFORT", "口腔或牙齿不适", "耳鼻喉与口腔", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "BACK_PAIN", "腰背痛", "骨骼与肌肉", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "JOINT_PAIN", "关节疼痛或肿胀", "骨骼与肌肉", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "LIMB_PAIN", "肢体疼痛", "骨骼与肌肉", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "EDEMA", "水肿", "全身不适", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "CONSTIPATION", "便秘", "消化系统", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "APPETITE_CHANGE", "食欲变化", "消化系统", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "URINARY_DISCOMFORT", "排尿不适", "泌尿与生殖", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "URINE_CHANGE", "尿液变化", "泌尿与生殖", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "MENSTRUAL_DISCOMFORT", "月经相关不适", "泌尿与生殖", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "VISION_CHANGE", "视物异常或眼部不适", "眼部", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "SLEEP_PROBLEM", "睡眠问题", "睡眠与情绪", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "ANXIETY_LOW_MOOD", "焦虑或情绪低落", "睡眠与情绪", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "UNEXPLAINED_BLEEDING", "异常出血", "其他", SupportLevel.RECORD_ONLY, false, List.of());
+        add(values, "WEIGHT_CHANGE", "体重明显变化", "全身不适", SupportLevel.RECORD_ONLY, false, List.of());
         add(values, "OTHER", "其他不适", "其他", SupportLevel.CUSTOM, false, List.of());
         byCode = Map.copyOf(values);
     }

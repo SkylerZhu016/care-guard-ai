@@ -30,6 +30,9 @@ def test_fake_provider_is_deterministic_and_cited():
         "CitationVerifierAgent:COMPLETED",
     ]
     assert first.citations[0].sourceUrl.startswith("https://")
+    assert first.structuredSummary
+    assert first.keyFindings
+    assert first.evidenceSynthesis
 
 
 def test_prompt_attack_is_blocked_but_rule_level_remains():

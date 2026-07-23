@@ -17,6 +17,7 @@ class IntakeV2Service {
     private final TriageRepository triage;
     private final PatientProfileRepository profiles;
     private final VisitSupplementRepository supplements;
+    private final VisitComplaintAnalysisRepository complaintAnalyses;
     private final AgentRunRepository runs;
     private final CitationRepository citations;
     private final SafetyAlertRepository alerts;
@@ -30,10 +31,12 @@ class IntakeV2Service {
 
     IntakeV2Service(VisitRepository visits, SymptomRepository symptoms, TriageRepository triage,
                     PatientProfileRepository profiles, VisitSupplementRepository supplements,
+                    VisitComplaintAnalysisRepository complaintAnalyses,
                     AgentRunRepository runs, CitationRepository citations, SafetyAlertRepository alerts,
                     AuditRepository audits, IntakeCatalog catalog, RuleEngine rules, AiClient ai,
                     KnowledgeService knowledge, PrivacySanitizer privacy, ObjectMapper mapper) {
         this.visits = visits; this.symptoms = symptoms; this.triage = triage; this.profiles = profiles;
+        this.complaintAnalyses = complaintAnalyses;
         this.supplements = supplements; this.runs = runs; this.citations = citations; this.alerts = alerts;
         this.audits = audits; this.catalog = catalog; this.rules = rules; this.ai = ai;
         this.knowledge = knowledge; this.privacy = privacy; this.mapper = mapper;
@@ -71,7 +74,13 @@ class IntakeV2Service {
     VisitViewV2 update(AuthPrincipal actor, UUID id, VisitIntakeV2Input input) {
         var visit = ownedDraft(actor, id);
         if (!"INTAKE_V2".equals(visit.intakeVersion)) throw ApiException.conflict("VISIT_LEGACY_READ_ONLY", "历史问诊只能查看，不能改写");
+        String previousComplaint = String.join("\n", List.of(visit.chiefComplaint, visit.freeText)).trim();
         apply(visit, input); replaceReports(visit.id, input.symptomReports()); visits.save(visit);
+        String currentComplaint = String.join("\n", List.of(visit.chiefComplaint, visit.freeText)).trim();
+        if (!previousComplaint.equals(currentComplaint)) complaintAnalyses.findByVisitId(id).ifPresent(value -> {
+            value.status = ComplaintAnalysisStatus.INVALID; value.confirmedJson = null; value.errorCode = "COMPLAINT_CHANGED";
+            value.updatedAt = OffsetDateTime.now(); complaintAnalyses.save(value);
+        });
         audit(actor.id(), "VISIT_V2_AUTOSAVED", "VISIT", visit.id, Map.of());
         return view(visit);
     }
@@ -135,6 +144,58 @@ class IntakeV2Service {
         return supplementView(value);
     }
 
+    @Transactional
+    ComplaintAnalysisView analyzeComplaint(AuthPrincipal actor, UUID id) {
+        var visit = ownedDraft(actor, id);
+        String raw = privacy.sanitize(String.join("\n", List.of(visit.chiefComplaint, visit.freeText)).trim());
+        if (raw.isBlank()) throw new ApiException(HttpStatus.BAD_REQUEST, "COMPLAINT_REQUIRED", "请先填写主诉再进行智能整理");
+        var entity = complaintAnalyses.findByVisitId(id).orElseGet(() -> {
+            var value = new VisitComplaintAnalysis(); value.id = UUID.randomUUID(); value.visitId = id; return value;
+        });
+        entity.rawComplaint = raw; entity.status = ComplaintAnalysisStatus.PENDING; entity.errorCode = null;
+        entity.updatedAt = OffsetDateTime.now(); complaintAnalyses.save(entity);
+        var selectedTags = symptoms.findByVisitId(id).stream().map(value -> new ComplaintTagView(
+            value.code, value.name, catalog.require(value.code).category(), "user_selected", null,
+            "患者手动选择", "confirmed")).toList();
+        var profile = profiles.findByOwnerId(actor.id()).map(value -> readProfile(value.profileData)).orElse(emptyProfile());
+        try {
+            var result = ai.structureComplaint(raw, selectedTags, profile);
+            var tags = normalizeAiTags(result.extractedTags(), selectedTags);
+            var view = new ComplaintAnalysisView("SUCCEEDED", raw, privacy.sanitize(result.normalizedSummary()), tags,
+                sanitizeFacts(result.structuredFacts()), sanitizeList(result.riskSignals()), sanitizeList(result.missingQuestions()),
+                sanitizeList(result.uncertainties()), result.provider(), result.model(), result.durationMs(), null,
+                "AI 仅用于整理患者表述，不能替代医生诊断；患者确认后仍需医务人员复核。");
+            entity.status = ComplaintAnalysisStatus.SUCCEEDED; entity.structuredJson = json(view);
+            entity.confirmedJson = null; entity.provider = result.provider(); entity.modelName = result.model();
+            entity.durationMs = result.durationMs(); entity.updatedAt = OffsetDateTime.now(); complaintAnalyses.save(entity);
+            audit(actor.id(), "COMPLAINT_AI_STRUCTURED", "VISIT", id, Map.of("tagCount", tags.size(), "status", "SUCCEEDED"));
+            return view;
+        } catch (Exception exception) {
+            String code = safeError(exception);
+            entity.status = invalidAiOutput(code) ? ComplaintAnalysisStatus.INVALID : ComplaintAnalysisStatus.FAILED;
+            entity.errorCode = code; entity.structuredJson = null;
+            entity.confirmedJson = null; entity.updatedAt = OffsetDateTime.now(); complaintAnalyses.save(entity);
+            audit(actor.id(), "COMPLAINT_AI_STRUCTURED", "VISIT", id, Map.of("status", entity.status.name(), "errorCode", code));
+            return failedComplaint(entity);
+        }
+    }
+
+    @Transactional
+    ComplaintAnalysisView confirmComplaint(AuthPrincipal actor, UUID id, ComplaintConfirmationInput input) {
+        ownedDraft(actor, id);
+        var entity = complaintAnalyses.findByVisitId(id).orElseThrow(ApiException::notFound);
+        if (entity.status != ComplaintAnalysisStatus.SUCCEEDED)
+            throw ApiException.conflict("COMPLAINT_ANALYSIS_NOT_READY", "智能整理未成功，仍可直接继续填写并提交");
+        var tags = normalizeConfirmedTags(input.tags());
+        var confirmed = new ComplaintAnalysisView("SUCCEEDED", entity.rawComplaint, privacy.sanitize(input.normalizedSummary()),
+            tags, sanitizeFacts(input.structuredFacts()), sanitizeList(input.riskSignals()), sanitizeList(input.missingQuestions()),
+            sanitizeList(input.uncertainties()), entity.provider, entity.modelName, entity.durationMs, null,
+            "AI 仅用于整理患者表述，不能替代医生诊断；患者确认后仍需医务人员复核。");
+        entity.confirmedJson = json(confirmed); entity.updatedAt = OffsetDateTime.now(); complaintAnalyses.save(entity);
+        audit(actor.id(), "COMPLAINT_AI_CONFIRMED", "VISIT", id, Map.of("confirmedTags", tags.stream().filter(t -> "confirmed".equals(t.confirmationStatus())).count()));
+        return confirmed;
+    }
+
     private void apply(Visit visit, VisitIntakeV2Input input) {
         catalog.require(input.primarySymptomCode());
         visit.primarySymptomCode = input.primarySymptomCode();
@@ -157,7 +218,7 @@ class IntakeV2Service {
             value.codeSystem = "LOCAL_SYMPTOM_V2"; value.code = item.symptomCode();
             value.name = privacy.sanitize(definition.supportLevel() == SupportLevel.CUSTOM ? item.customName() : definition.name());
             value.catalogVersion = IntakeCatalog.VERSION; value.supportLevel = definition.supportLevel();
-            value.reportSource = item.source() == null ? "CATALOG" : item.source(); value.onsetRange = item.onsetRange();
+            value.reportSource = item.source() == null ? "USER_SELECTED" : item.source(); value.onsetRange = item.onsetRange();
             value.course = item.course(); value.currentStatus = item.currentStatus(); value.activityImpact = item.activityImpact();
             value.answersJson = json(sanitizeAnswers(item.answers())); symptoms.save(value);
         }
@@ -187,7 +248,15 @@ class IntakeV2Service {
         String runId = "run-" + UUID.randomUUID(); var run = new AgentRun(); run.id = UUID.randomUUID(); run.runId = runId;
         run.visitId = visit.id; run.status = "QUEUED"; run.promptVersion = "intake-summary-v2"; run.ruleSetVersion = "fact-rules-v2"; runs.save(run);
         try {
-            var job = ai.analyze(runId, visit, reports, outcome); run.status = job.status(); run.durationMs = job.durationMs();
+            var history = visits.findByOwnerIdOrderByCreatedAtDesc(visit.ownerId).stream().filter(value -> !value.id.equals(visit.id))
+                .limit(5).map(value -> {
+                    Map<String,Object> item = new LinkedHashMap<>(); item.put("chiefComplaint", value.chiefComplaint);
+                    item.put("status", value.status.name()); item.put("createdAt", value.createdAt.toString()); return item;
+                }).toList();
+            var profile = visit.profileSnapshot == null ? emptyProfile() : readProfile(visit.profileSnapshot);
+            var context = new AiCaseContext(complaintView(visit.id), profile, history,
+                supplements.findByVisitIdOrderByCreatedAtAsc(visit.id).stream().map(value -> value.content).toList());
+            var job = ai.analyze(runId, visit, reports, outcome, context); run.status = job.status(); run.durationMs = job.durationMs();
             if (job.result() != null) {
                 var result = job.result();
                 if (outcome.urgency() != null && result.proposedUrgency() != null && result.proposedUrgency().ordinal() < outcome.urgency().ordinal())
@@ -197,7 +266,13 @@ class IntakeV2Service {
                 run.provider = result.provider(); run.modelName = result.model(); run.outputHash = result.outputHash();
                 run.safetyDecision = result.safety().decision(); run.safetyReasonCodes = String.join(",", result.safety().reasonCodes());
                 run.agentTrace = result.agentTrace() == null ? "" : String.join(",", result.agentTrace());
-                triageResult.aiUrgency = rules.max(outcome.urgency(), result.proposedUrgency()); triageResult.aiSummary = result.caseSummary(); triage.save(triageResult);
+                triageResult.aiUrgency = rules.max(outcome.urgency(), result.proposedUrgency()); triageResult.aiSummary = result.caseSummary();
+                triageResult.aiDetail = json(new AiClinicalSupportView(
+                    valueOr(result.structuredSummary(), result.caseSummary()), safe(result.keyFindings()), safe(result.abnormalSignals()),
+                    safe(result.missingQuestions()), safe(result.areasToRuleOut()), safe(result.recommendedAdditionalInformation()),
+                    safe(result.riskSignals()), valueOr(result.evidenceSynthesis(), "请结合下方引用逐条核对。"),
+                    safe(result.uncertainties()), safe(result.clinicalThinkingPrompts()), result.disclaimer()));
+                triage.save(triageResult);
                 runs.save(run);
                 for (var item : safe(result.citations())) {
                     var citation = new CitationEntity(); citation.id = UUID.randomUUID(); citation.agentRunId = run.id;
@@ -233,7 +308,7 @@ class IntakeV2Service {
         var triageView = triage.findByVisitId(value.id).map(this::triageView).orElse(null);
         return new VisitViewV2(value.id, value.ownerId, value.status, value.intakeVersion,
             value.primarySymptomCode == null && !reportViews.isEmpty() ? reportViews.get(0).symptomCode() : value.primarySymptomCode,
-            value.chiefComplaint, value.freeText, reportViews, snapshot, triageView,
+            value.chiefComplaint, value.freeText, reportViews, snapshot, complaintView(value.id), triageView,
             runs.findByVisitIdOrderByCreatedAtDesc(value.id).stream().map(this::runView).toList(),
             supplements.findByVisitIdOrderByCreatedAtAsc(value.id).stream().map(this::supplementView).toList(), value.createdAt, value.submittedAt);
     }
@@ -246,8 +321,74 @@ class IntakeV2Service {
     private TriageViewV2 triageView(TriageResult value) {
         return new TriageViewV2(value.id, value.ruleUrgency, value.aiUrgency, value.finalUrgency,
             value.coverageStatus, value.assessmentStatus, split(value.ruleReasonCodes), value.aiSummary,
-            value.reviewDecision, value.reviewReason);
+            value.reviewDecision, value.reviewReason, readAiSupport(value.aiDetail));
     }
+
+    private ComplaintAnalysisView complaintView(UUID visitId) {
+        return complaintAnalyses.findByVisitId(visitId).map(value -> {
+            if (value.status == ComplaintAnalysisStatus.FAILED || value.status == ComplaintAnalysisStatus.INVALID) return failedComplaint(value);
+            String content = value.confirmedJson == null ? value.structuredJson : value.confirmedJson;
+            if (content == null) return new ComplaintAnalysisView(value.status.name(), value.rawComplaint, "", List.of(), null,
+                List.of(), List.of(), List.of(), value.provider, value.modelName, value.durationMs, value.errorCode,
+                "AI 仅用于整理患者表述，不能替代医生诊断。");
+            try { return mapper.readValue(content, ComplaintAnalysisView.class); }
+            catch (JsonProcessingException ignored) { return failedComplaint(value); }
+        }).orElse(null);
+    }
+
+    private ComplaintAnalysisView failedComplaint(VisitComplaintAnalysis value) {
+        return new ComplaintAnalysisView(value.status.name(), value.rawComplaint, "", List.of(), null, List.of(), List.of(), List.of(),
+            value.provider, value.modelName, value.durationMs, value.errorCode,
+            "智能整理暂不可用，不影响保存或提交；原始主诉将完整交由医务人员审核。");
+    }
+
+    private List<ComplaintTagView> normalizeAiTags(List<ComplaintTagView> aiTags, List<ComplaintTagView> selected) {
+        var selectedCodes = new HashSet<String>(); selected.forEach(value -> selectedCodes.add(value.code().toUpperCase(Locale.ROOT)));
+        var seen = new HashSet<String>(); var result = new ArrayList<ComplaintTagView>();
+        for (var tag : safe(aiTags)) {
+            if (tag == null || tag.code() == null || tag.displayName() == null) continue;
+            String code = tag.code().strip().toUpperCase(Locale.ROOT);
+            if (code.length() > 60 || selectedCodes.contains(code) || !seen.add(code)) continue;
+            result.add(new ComplaintTagView(code, privacy.sanitize(tag.displayName()), privacy.sanitize(tag.category()),
+                "ai_extracted", clamp(tag.confidence()), privacy.sanitize(tag.evidenceText()), "proposed"));
+        }
+        return List.copyOf(result);
+    }
+
+    private List<ComplaintTagView> normalizeConfirmedTags(List<ComplaintTagView> tags) {
+        var seen = new HashSet<String>(); var result = new ArrayList<ComplaintTagView>();
+        for (var tag : safe(tags)) {
+            if (tag == null || tag.code() == null || tag.displayName() == null) continue;
+            String code = tag.code().strip().toUpperCase(Locale.ROOT);
+            if (code.length() > 60 || !seen.add(code)) continue;
+            String source = "user_selected".equals(tag.source()) ? "user_selected" : "ai_extracted";
+            String status = "removed".equals(tag.confirmationStatus()) ? "removed" : "confirmed";
+            result.add(new ComplaintTagView(code, privacy.sanitize(tag.displayName()), privacy.sanitize(tag.category()), source,
+                clamp(tag.confidence()), privacy.sanitize(tag.evidenceText()), status));
+        }
+        return List.copyOf(result);
+    }
+
+    private ComplaintFactsView sanitizeFacts(ComplaintFactsView value) {
+        if (value == null) return new ComplaintFactsView("", "", "", "", List.of(), List.of(), List.of(), "");
+        return new ComplaintFactsView(privacy.sanitize(value.duration()), privacy.sanitize(value.onset()), privacy.sanitize(value.location()),
+            privacy.sanitize(value.character()), sanitizeList(value.aggravatingFactors()), sanitizeList(value.relievingFactors()),
+            sanitizeList(value.associatedSymptoms()), privacy.sanitize(value.activityImpact()));
+    }
+
+    private AiClinicalSupportView readAiSupport(String value) {
+        if (value == null || value.isBlank()) return null;
+        try { return mapper.readValue(value, AiClinicalSupportView.class); }
+        catch (JsonProcessingException ignored) { return null; }
+    }
+
+    private Double clamp(Double value) { return value == null ? null : Math.max(0, Math.min(1, value)); }
+    private boolean invalidAiOutput(String code) {
+        String value = code == null ? "" : code.toUpperCase(Locale.ROOT);
+        return value.contains("INVALID") || value.contains("JSON") || value.contains("DESERIALIZ");
+    }
+    private String safeError(Exception value) { String message = value.getMessage() == null ? value.getClass().getSimpleName() : value.getMessage(); return message.substring(0, Math.min(120, message.length())); }
+    private String valueOr(String value, String fallback) { return value == null || value.isBlank() ? fallback : value; }
 
     private PatientProfileView profileView(PatientProfile value) { return new PatientProfileView(value.id, value.ownerId, value.version, readProfile(value.profileData), value.updatedAt); }
     private VisitSupplementView supplementView(VisitSupplement value) { return new VisitSupplementView(value.id, value.content, value.createdAt); }

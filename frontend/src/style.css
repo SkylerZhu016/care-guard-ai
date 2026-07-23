@@ -431,3 +431,94 @@ footer strong { color: var(--green); }
   .trace-row summary { grid-template-columns: 1fr auto; }
   .trace-row summary > span { display: none; }
 }
+
+/* Demo migration: complaint AI and layered clinician support */
+.complaint-ai-launcher { margin-top: 18px; padding: 18px 20px; border: 1px solid #cbded9; border-radius: 14px; background: linear-gradient(135deg,#f2faf7,#f8fbff); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.complaint-ai-launcher strong { display: block; margin: 5px 0; color: #173b35; }
+.complaint-ai-launcher p { margin: 0; color: #5f7470; font-size: 13px; }
+.complaint-ai-result { margin-top: 14px; padding: 20px; border: 1px solid #cbded9; border-radius: 14px; background: #fff; }
+.ai-result-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.ai-result-head span { color: #6a7c79; font-size: 12px; }
+.ai-result-head h3 { margin: 5px 0 16px; line-height: 1.55; }
+.tag-groups { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; }
+.tag-groups > div { padding: 14px; background: #f6f9f8; border-radius: 12px; }
+.tag-groups strong { display: block; margin-bottom: 10px; font-size: 13px; }
+.complaint-tag { display: inline-flex; align-items: center; gap: 6px; margin: 0 7px 7px 0; padding: 7px 10px; border: 1px solid #a9cbc2; border-radius: 999px; background: #edf8f4; color: #185d50; }
+.complaint-tag small { color: inherit; opacity: .72; }
+.complaint-tag.user-tag { border-color: #b9c9db; background: #f1f5fa; color: #345472; }
+.complaint-tag.removed { border-style: dashed; background: #f6f6f6; color: #89918f; text-decoration: line-through; }
+.ai-facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.ai-facts > span { padding: 9px 12px; border-radius: 9px; background: #f3f6f5; font-weight: 650; }
+.ai-facts small { display: block; margin-bottom: 3px; color: #72807d; font-weight: 400; }
+.ai-confirm-row { margin-top: 16px; display: flex; justify-content: space-between; align-items: center; gap: 18px; }
+.ai-confirm-row small { color: #667773; line-height: 1.5; }
+.patient-quote { margin: 0 0 18px; padding: 15px 18px; border-left: 4px solid #2b7668; background: #f4f9f7; color: #294a44; line-height: 1.65; }
+.clinician-complaint-ai { margin-top: 16px; padding: 18px; border: 1px solid #c9ddd8; border-radius: 13px; background: #f7fbfa; }
+.clinician-complaint-ai h4 { margin: 5px 0 12px; }
+.clinician-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.clinician-tags > span { padding: 7px 10px; border-radius: 999px; background: #e9f5f1; color: #175c50; }
+.clinician-tags > span.ai { background: #eef2fb; color: #425c8c; }
+.clinician-tags small { margin-left: 6px; opacity: .7; }
+.ai-support-grid { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ai-support-grid article { padding: 16px; border: 1px solid #d8e2df; border-radius: 12px; background: #fafcfb; }
+.review-layout > *, .review-section, .ai-support-grid, .ai-support-grid article { min-width: 0; }
+.ai-support-grid li, .ai-support-grid p, .citation-card, .citation-card * { overflow-wrap: anywhere; }
+.ai-support-grid article.risk { border-color: #edc6c0; background: #fff8f7; }
+.ai-support-grid article.wide { grid-column: 1 / -1; }
+.ai-support-grid h4 { margin: 0 0 10px; }
+.ai-support-grid ul { margin: 0; padding-left: 18px; color: #42534f; }
+.ai-support-grid li + li { margin-top: 6px; }
+
+@media (max-width: 760px) {
+  .complaint-ai-launcher, .ai-confirm-row { align-items: stretch; flex-direction: column; }
+  .tag-groups, .ai-support-grid { grid-template-columns: 1fr; }
+  .ai-support-grid article.wide { grid-column: auto; }
+}
+
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: rgba(8,33,29,.56); backdrop-filter: blur(5px); }
+.modal-card { width: min(620px,100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 25px; color: var(--ink); background: #fff; border-radius: 20px; box-shadow: 0 30px 90px rgba(0,0,0,.25); }
+.modal-head { display: flex; justify-content: space-between; gap: 18px; }
+.modal-head h2 { margin: 5px 0 0; font-size: 22px; }
+.modal-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; margin-top: 23px; padding-top: 18px; border-top: 1px solid var(--line); }
+.modal-copy { margin-top: 18px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.fade-enter-active,.fade-leave-active { transition: opacity .18s ease,transform .18s ease; }
+.fade-enter-from,.fade-leave-to { opacity: 0; }
+.symptom-picker-launcher { width: 100%; min-height: 82px; display: grid; grid-template-columns: 42px minmax(0,1fr) 18px; align-items: center; gap: 13px; margin: 18px 0 10px; padding: 16px; color: var(--ink); background: #f6faf8; border: 1px solid #cbded8; border-radius: 13px; text-align: left; transition: .18s ease; }
+.symptom-picker-launcher:hover { border-color: var(--green); background: #f0f8f4; box-shadow: var(--shadow); }
+.symptom-picker-launcher > svg { color: var(--green); }
+.picker-launcher-icon { width: 42px; height: 42px; display: grid; place-items: center; color: #fff; background: var(--green); border-radius: 11px; }
+.picker-launcher-icon svg { width: 19px; }
+.symptom-picker-launcher strong,.symptom-picker-launcher small { display: block; }
+.symptom-picker-launcher small { margin-top: 5px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.selected-box { display: grid; grid-template-columns: 150px 1fr; gap: 16px; margin-top: 12px; padding: 14px; background: #f5f9f7; border: 1px solid var(--line); border-radius: 11px; }
+.selected-box strong,.selected-box small { display: block; }
+.selected-box small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.selected-box > div:last-child { display: flex; flex-wrap: wrap; gap: 7px; }
+.selected-box button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; color: var(--green); background: #fff; border: 1px solid #c8ddd5; border-radius: 999px; font-size: 11px; }
+.selected-box button svg { width: 12px; }
+.primary-symptom-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 12px 0 20px; }
+.primary-symptom-row > span { margin-right: 4px; color: var(--muted); font-size: 12px; }
+.primary-symptom-row button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--muted); }
+.primary-symptom-row button.selected { border-color: #87bbaa; background: var(--mint); color: var(--green); font-weight: 700; }
+.primary-symptom-row svg { width: 12px; }
+.picker-search { display: grid; gap: 7px; margin-top: 18px; color: var(--muted); font-size: 12px; }
+.picker-search input { width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 9px; }
+.symptom-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-top: 14px; max-height: 340px; overflow-y: auto; padding: 2px; }
+.symptom-grid button { min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 13px; color: #4d655f; background: #fbfdfc; border: 1px solid var(--line); border-radius: 10px; text-align: left; }
+.symptom-grid button span strong,.symptom-grid button span small { display: block; }
+.symptom-grid button span small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.symptom-grid button svg { width: 14px; color: #95a7a2; }
+.symptom-grid button.selected { color: var(--green); background: var(--mint); border-color: #8fc4b4; font-weight: 700; }
+.custom-symptom-row { display: grid; grid-template-columns: 1fr auto; gap: 9px; margin-top: 13px; }
+.picker-count { margin-right: auto; color: var(--muted); font-size: 11px; }
+
+@media (max-width: 620px) {
+  .queue-item { min-width: 0; align-items: flex-start; overflow: hidden; }
+  .queue-item > div { min-width: 0; flex: 1; }
+  .queue-item strong { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+  .queue-item .status-pill { max-width: 46%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+  .modal-card { padding: 20px 17px; }
+  .symptom-grid { grid-template-columns: 1fr; }
+  .selected-box { grid-template-columns: 1fr; }
+  .custom-symptom-row { grid-template-columns: 1fr; }
+}

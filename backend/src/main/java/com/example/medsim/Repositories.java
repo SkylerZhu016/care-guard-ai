@@ -22,4 +22,5 @@ interface SafetyAlertRepository extends JpaRepository<SafetyAlert, UUID> { List<
 interface AuditRepository extends JpaRepository<AuditLog, UUID> { List<AuditLog> findTop100ByOrderByCreatedAtDesc(); }
 interface PatientProfileRepository extends JpaRepository<PatientProfile, UUID> { Optional<PatientProfile> findByOwnerId(UUID ownerId); }
 interface VisitSupplementRepository extends JpaRepository<VisitSupplement, UUID> { List<VisitSupplement> findByVisitIdOrderByCreatedAtAsc(UUID visitId); }
+interface VisitComplaintAnalysisRepository extends JpaRepository<VisitComplaintAnalysis, UUID> { Optional<VisitComplaintAnalysis> findByVisitId(UUID visitId); }
 

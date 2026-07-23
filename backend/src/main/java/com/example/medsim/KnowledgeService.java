@@ -22,6 +22,8 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -78,21 +80,62 @@ class KnowledgeService {
 
     List<KnowledgeChunkView> search(List<String> symptomCodes, String query, int limit) {
         int bounded = Math.max(1, Math.min(limit, 8));
-        String searchText = String.join(" ", symptomCodes) + " " + query;
+        String topicText = symptomCodes == null ? "" : symptomCodes.stream()
+            .filter(Objects::nonNull).map(value -> value.toUpperCase(Locale.ROOT))
+            .filter(value -> value.matches("[A-Z0-9_]+"))
+            .collect(java.util.stream.Collectors.joining(" "));
+        String searchText = topicText + " " + query;
+        String lexicalPattern = lexicalPattern(topicText);
         String vector = vectorLiteral(embed(searchText));
         return jdbc.query("""
-            SELECT g.guideline_id, v.version_id, c.chunk_id, g.title, c.section_name, c.content,
-                   g.source_url, g.license_note, 1 - (c.embedding <=> CAST(? AS vector)) AS score
-            FROM guideline_chunks c
-            JOIN guideline_versions v ON v.id=c.version_id AND v.active=TRUE
-            JOIN guidelines g ON g.id=v.guideline_id
-            ORDER BY c.embedding <=> CAST(? AS vector), c.chunk_id
+            WITH candidates AS (
+              SELECT g.guideline_id, v.version_id, c.chunk_id, g.title, c.section_name, c.content,
+                     g.source_url, g.license_note,
+                     CASE WHEN ? <> '' AND
+                       regexp_split_to_array(upper(c.topics), '[[:space:]]+') &&
+                       regexp_split_to_array(upper(?), '[[:space:]]+') THEN 0 ELSE 1 END AS topic_rank,
+                     CASE WHEN ? <> '' AND
+                       (c.section_name || ' ' || c.content) ~* ? THEN 0 ELSE 1 END AS lexical_rank,
+                     c.embedding <=> CAST(? AS vector) AS distance
+              FROM guideline_chunks c
+              JOIN guideline_versions v ON v.id=c.version_id AND v.active=TRUE
+              JOIN guidelines g ON g.id=v.guideline_id
+            ), diversified AS (
+              SELECT *, row_number() OVER (
+                PARTITION BY guideline_id ORDER BY topic_rank, lexical_rank, distance, chunk_id
+              ) AS source_rank
+              FROM candidates
+            )
+            SELECT guideline_id, version_id, chunk_id, title, section_name, content,
+                   source_url, license_note, 1 - distance AS score
+            FROM diversified
+            WHERE source_rank <= 2
+            ORDER BY topic_rank, lexical_rank, distance, chunk_id
             LIMIT ?
             """, (rs, row) -> new KnowledgeChunkView(
             rs.getString("guideline_id"), rs.getString("version_id"), rs.getString("chunk_id"),
             rs.getString("title"), rs.getString("section_name"), rs.getString("content"),
             rs.getString("source_url"), rs.getString("license_note"), rs.getDouble("score")
-        ), vector, vector, bounded);
+        ), topicText, topicText, lexicalPattern, lexicalPattern, vector, bounded);
+    }
+
+    private String lexicalPattern(String topicText) {
+        var values = new LinkedHashSet<String>();
+        for (String code : topicText.split(" ")) switch (code) {
+            case "CHEST_PAIN" -> values.add("chest|heart attack|angina|胸痛|胸口");
+            case "DYSPNEA" -> values.add("dyspnea|breath|breathing|shortness|呼吸|气短|喘");
+            case "SYNCOPE" -> values.add("syncope|faint|pass(ed)? out|晕厥|晕倒|失去意识");
+            case "ALTERED_CONSCIOUSNESS" -> values.add("conscious|confus|unresponsive|意识|反应异常");
+            case "HEADACHE" -> values.add("headache|head pain|头痛|头疼");
+            case "DIZZINESS" -> values.add("dizz|vertigo|头晕|眩晕");
+            case "FEVER" -> values.add("fever|temperature|发热|发烧");
+            case "COUGH" -> values.add("cough|咳嗽");
+            case "ABDOMINAL_PAIN" -> values.add("abdominal pain|stomach pain|腹痛|肚子痛");
+            case "NAUSEA", "VOMITING" -> values.add("nausea|vomit|sick|恶心|呕吐");
+            case "PALPITATIONS" -> values.add("palpitation|heart racing|心悸|心慌");
+            default -> { }
+        }
+        return String.join("|", values);
     }
 
     boolean isActiveChunk(String chunkId) {

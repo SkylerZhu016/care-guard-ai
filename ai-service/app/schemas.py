@@ -43,7 +43,7 @@ class Symptom(BaseModel):
     code: str
     name: str = ""
     supportLevel: SupportLevel
-    source: str = "CATALOG"
+    source: str = "USER_SELECTED"
     onsetRange: str = "UNKNOWN"
     course: str = "UNKNOWN"
     currentStatus: str = "UNKNOWN"
@@ -62,6 +62,10 @@ class AnalysisRequest(BaseModel):
     ruleReasonCodes: List[str] = []
     coverageStatus: CoverageStatus
     assessmentStatus: AssessmentStatus
+    complaintStructure: Optional[Dict[str, Any]] = None
+    profileSnapshot: Optional[Dict[str, Any]] = None
+    history: List[Dict[str, Any]] = Field(default_factory=list, max_length=10)
+    supplements: List[str] = Field(default_factory=list, max_length=20)
 
     @field_validator("freeText", "chiefComplaint")
     @classmethod
@@ -90,6 +94,15 @@ class AnalysisResult(BaseModel):
     proposedUrgency: Optional[Urgency] = None
     rationale: List[str]
     missingQuestions: List[str]
+    structuredSummary: str
+    keyFindings: List[str]
+    abnormalSignals: List[str]
+    areasToRuleOut: List[str]
+    recommendedAdditionalInformation: List[str]
+    riskSignals: List[str]
+    evidenceSynthesis: str
+    uncertainties: List[str]
+    clinicalThinkingPrompts: List[str]
     citations: List[Citation]
     safety: SafetyResult
     disclaimer: str = "系统仅整理信息，不构成诊断、处方或医疗建议；自动结果必须由人工审核"
@@ -117,4 +130,63 @@ class JobStatus(BaseModel):
 
 class WorkflowState(Dict[str, Any]):
     pass
+
+
+class ComplaintTag(BaseModel):
+    code: str = Field(min_length=2, max_length=60, pattern=r"^[A-Z][A-Z0-9_]+$")
+    displayName: str = Field(min_length=1, max_length=100)
+    category: str = Field(min_length=1, max_length=60)
+    source: str = Field(pattern=r"^(user_selected|ai_extracted)$")
+    confidence: Optional[float] = Field(default=None, ge=0, le=1)
+    evidenceText: str = Field(default="", max_length=300)
+    confirmationStatus: str = Field(default="proposed", pattern=r"^(proposed|confirmed|removed)$")
+
+
+class ComplaintFacts(BaseModel):
+    duration: str = Field(default="", max_length=100)
+    onset: str = Field(default="", max_length=100)
+    location: str = Field(default="", max_length=120)
+    character: str = Field(default="", max_length=120)
+    aggravatingFactors: List[str] = Field(default_factory=list, max_length=12)
+    relievingFactors: List[str] = Field(default_factory=list, max_length=12)
+    associatedSymptoms: List[str] = Field(default_factory=list, max_length=20)
+    activityImpact: str = Field(default="", max_length=120)
+
+    @field_validator("duration", "onset", "location", "character", "activityImpact", mode="before")
+    @classmethod
+    def empty_unknown_text(cls, value: Any) -> str:
+        return "" if value is None else str(value)
+
+    @field_validator("aggravatingFactors", "relievingFactors", "associatedSymptoms", mode="before")
+    @classmethod
+    def normalize_fact_lists(cls, value: Any) -> List[str]:
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return [value] if value.strip() else []
+        return value
+
+
+class ComplaintStructureRequest(BaseModel):
+    rawComplaint: str = Field(min_length=1, max_length=2500)
+    selectedTags: List[ComplaintTag] = Field(default_factory=list, max_length=30)
+    ageBand: str = Field(default="UNKNOWN", max_length=40)
+
+    @field_validator("rawComplaint")
+    @classmethod
+    def clean_raw_complaint(cls, value: str) -> str:
+        return "".join(ch for ch in value.strip() if ch in "\n\t" or ord(ch) >= 32)
+
+
+class ComplaintStructureResult(BaseModel):
+    normalizedSummary: str = Field(min_length=1, max_length=500)
+    extractedTags: List[ComplaintTag] = Field(default_factory=list, max_length=30)
+    structuredFacts: ComplaintFacts
+    riskSignals: List[str] = Field(default_factory=list, max_length=20)
+    missingQuestions: List[str] = Field(default_factory=list, max_length=20)
+    uncertainties: List[str] = Field(default_factory=list, max_length=20)
+    provider: str
+    model: str
+    durationMs: int = Field(ge=0)
+    disclaimer: str = "AI 仅用于整理患者表述，不能替代医生诊断；患者确认后仍需医务人员复核。"
 

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: 预问诊与随访信息服务 API
-  version: 2.0.0
+  version: 2.1.0
   description: 新问诊统一使用 v2；旧 v1 问诊写接口返回 410。
 servers:
   - url: http://localhost:18088
@@ -108,6 +108,34 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/VisitViewV2' }
+  /api/v2/visits/{id}/analyze-complaint:
+    post:
+      summary: 对草稿中的原始主诉进行 AI 结构化整理
+      description: 失败时返回 FAILED 结构，不阻断草稿保存或最终提交。
+      parameters:
+        - $ref: '#/components/parameters/VisitId'
+      responses:
+        '200':
+          description: 成功结果或可降级的失败状态
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ComplaintAnalysis' }
+  /api/v2/visits/{id}/complaint-structure:
+    put:
+      summary: 保存患者确认、删除或补充后的主诉结构
+      parameters:
+        - $ref: '#/components/parameters/VisitId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ComplaintConfirmation' }
+      responses:
+        '200':
+          description: 已保存确认版本
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ComplaintAnalysis' }
   /api/v2/visits/{id}/supplements:
     post:
       summary: 为已提交问诊追加补充信息
@@ -303,7 +331,10 @@ components:
       properties:
         symptomCode: { type: string }
         customName: { type: string, maxLength: 100 }
-        source: { type: string, enum: [CATALOG, RELATED_ANSWER, CUSTOM] }
+        source:
+          type: string
+          enum: [USER_SELECTED, CATALOG, RELATED_ANSWER, CUSTOM]
+          description: 新版目录手选使用 USER_SELECTED；CATALOG 仅为早期 v2 草稿兼容值。
         onsetRange: { type: string, enum: [JUST_NOW, TODAY, ONE_TO_THREE_DAYS, MORE_THAN_THREE_DAYS, UNKNOWN] }
         course: { type: string, enum: [CONTINUOUS, INTERMITTENT, RELIEVED, UNKNOWN] }
         currentStatus: { type: string, enum: [PRESENT, NOT_PRESENT, UNKNOWN] }
@@ -328,6 +359,7 @@ components:
         freeText: { type: string }
         symptomReports: { type: array, items: { $ref: '#/components/schemas/SymptomReportInput' } }
         profileSnapshot: { $ref: '#/components/schemas/PatientProfileInput' }
+        complaintAnalysis: { $ref: '#/components/schemas/ComplaintAnalysis' }
         triage: { $ref: '#/components/schemas/TriageV2' }
         createdAt: { type: string, format: date-time }
         submittedAt: { type: string, format: date-time }
@@ -342,6 +374,63 @@ components:
         assessmentStatus: { type: string, enum: [RULE_EVALUATED, REQUIRES_MANUAL_REVIEW] }
         ruleReasons: { type: array, items: { type: string } }
         aiSummary: { type: string }
+        aiSupport: { $ref: '#/components/schemas/AiClinicalSupport' }
+    ComplaintTag:
+      type: object
+      required: [code, displayName, category, source, confirmationStatus]
+      properties:
+        code: { type: string, pattern: '^[A-Z][A-Z0-9_]+$' }
+        displayName: { type: string, maxLength: 100 }
+        category: { type: string, maxLength: 60 }
+        source: { type: string, enum: [user_selected, ai_extracted] }
+        confidence: { type: [number, 'null'], minimum: 0, maximum: 1 }
+        evidenceText: { type: string, maxLength: 300 }
+        confirmationStatus: { type: string, enum: [proposed, confirmed, removed] }
+    ComplaintFacts:
+      type: object
+      properties:
+        duration: { type: string }
+        onset: { type: string }
+        location: { type: string }
+        character: { type: string }
+        aggravatingFactors: { type: array, items: { type: string } }
+        relievingFactors: { type: array, items: { type: string } }
+        associatedSymptoms: { type: array, items: { type: string } }
+        activityImpact: { type: string }
+    ComplaintAnalysis:
+      type: object
+      properties:
+        status: { type: string, enum: [PENDING, SUCCEEDED, FAILED, INVALID] }
+        rawComplaint: { type: string }
+        normalizedSummary: { type: string }
+        tags: { type: array, items: { $ref: '#/components/schemas/ComplaintTag' } }
+        structuredFacts: { $ref: '#/components/schemas/ComplaintFacts' }
+        riskSignals: { type: array, items: { type: string } }
+        missingQuestions: { type: array, items: { type: string } }
+        uncertainties: { type: array, items: { type: string } }
+        provider: { type: string }
+        model: { type: string }
+        durationMs: { type: integer }
+        errorCode: { type: string }
+        disclaimer: { type: string }
+    ComplaintConfirmation:
+      allOf:
+        - $ref: '#/components/schemas/ComplaintAnalysis'
+      description: 仅提交 normalizedSummary、tags、structuredFacts、riskSignals、missingQuestions 和 uncertainties。
+    AiClinicalSupport:
+      type: object
+      properties:
+        structuredSummary: { type: string }
+        keyFindings: { type: array, items: { type: string } }
+        abnormalSignals: { type: array, items: { type: string } }
+        missingQuestions: { type: array, items: { type: string } }
+        areasToRuleOut: { type: array, items: { type: string } }
+        recommendedAdditionalInformation: { type: array, items: { type: string } }
+        riskSignals: { type: array, items: { type: string } }
+        evidenceSynthesis: { type: string }
+        uncertainties: { type: array, items: { type: string } }
+        clinicalThinkingPrompts: { type: array, items: { type: string } }
+        disclaimer: { type: string }
     ReviewInput:
       type: object
       required: [decision, reason]

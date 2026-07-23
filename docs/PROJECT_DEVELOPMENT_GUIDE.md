@@ -43,7 +43,11 @@ PostgreSQL 是唯一业务数据库。包名 `com.example.medsim` 和制品名�
 
 活动影响只进入摘要和人工审核，不换算成旧分值。
 
-### 3.3 健康资料
+### 3.3 主诉 AI 结构
+
+主诉原文不得被 AI 改写覆盖。草稿保存后调用 `POST /api/v2/visits/{id}/analyze-complaint`，模型结构写入 `visit_complaint_analyses.structured_json`；患者确认、删除或补充后的版本通过 `PUT /api/v2/visits/{id}/complaint-structure` 写入 `confirmed_json`。标签来源固定为 `user_selected` 或 `ai_extracted`，确认状态固定为 `proposed`、`confirmed` 或 `removed`。
+
+### 3.4 健康资料
 
 `GET/PUT /api/v2/patient-profile` 维护年龄段、必要生理信息、慢病、过敏和长期用药。提交时把当前资料写入 `visits.profile_snapshot`，以后修改档案不会改变历史问诊。
 
@@ -51,7 +55,7 @@ PostgreSQL 是唯一业务数据库。包名 `com.example.medsim` 和制品名�
 
 ### 4.1 哪里不舒服
 
-目录必须来自服务端。页面提供搜索、中文分类、常用卡片和其他不适。选中项目后生成可编辑主诉。患者端不显示英文代码。
+目录必须来自服务端。页面提供搜索、中文分类、常用卡片和其他不适。选中项目后生成可编辑主诉。患者端不显示英文代码。AI 建议标签与患者手选项目分区展示，允许确认和删除，调用失败不得阻塞下一步或提交。
 
 ### 4.2 具体情况
 
@@ -81,7 +85,7 @@ PostgreSQL 是唯一业务数据库。包名 `com.example.medsim` 和制品名�
 
 ## 6. 历史兼容与迁移
 
-Flyway V4 完成：
+Flyway V4 完成患者 v2 基础迁移；V10 增加 `visit_complaint_analyses` 和 `triage_results.ai_detail`。其中：
 
 - 用户角色迁移为 `PATIENT` 并重建约束。
 - `visits` 增加 intake 版本、主症状和资料快照。
@@ -90,13 +94,13 @@ Flyway V4 完成：
 - 新增 `patient_profiles` 和 `visit_supplements`。
 - 随访模板统一为 `GENERAL_FOLLOWUP_V1`。
 
-V1–V3 是已发布迁移，不能修改，否则会破坏 Flyway 校验。旧写接口返回 `410 INTAKE_V1_DEPRECATED`，历史记录可经 v2 读取。
+V1–V9 是已发布迁移，不能修改，否则会破坏 Flyway 校验。旧写接口返回 `410 INTAKE_V1_DEPRECATED`，历史记录可经 v2 读取。
 
 ## 7. AI/RAG
 
-Java 发送事实答案、支持级别、覆盖状态和规则结果，不发送旧数字字段。Python schema 的 `ruleUrgency` 和 `proposedUrgency` 均可为空。Fake Provider 与真实 Provider 不执行阈值升级；当规则结果为空时，AI 也必须保持为空。
+Java 发送事实答案、主诉确认结构、支持级别、覆盖状态和规则结果，不发送旧数字字段。Python schema 的 `ruleUrgency` 和 `proposedUrgency` 均可为空。Fake Provider 与真实 Provider 不执行阈值升级；当规则结果为空时，AI 也必须保持为空。医务端 AI 输出使用固定对象，分别保存摘要、发现、异常、追问、排查方向、补充信息、风险、证据综合、不确定性和思路提示。
 
-RAG 语料通过网络采集管道写入 MinIO/PostgreSQL，保留来源 URL、抓取时间、SHA-256、对象键、版本和启用状态。检索到材料不等于获得确定性规则资格。
+RAG 语料通过网络采集管道写入 MinIO/PostgreSQL，保留来源 URL、抓取时间、SHA-256、对象键、版本和启用状态。召回先按症状主题代码精确匹配，再核对症状词是否出现在分块标题或正文，最后按 pgvector 相似度排序，并限制每个来源最多 2 个分块；检索到材料不等于获得确定性规则资格。
 
 ## 8. 安全要求
 

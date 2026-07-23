@@ -42,6 +42,17 @@ class IntakeV2Controller {
         return service.submit(actor(authentication), id, key);
     }
 
+    @PostMapping("/visits/{id}/analyze-complaint") @PreAuthorize("hasRole('PATIENT')")
+    ComplaintAnalysisView analyzeComplaint(Authentication authentication, @PathVariable UUID id) {
+        return service.analyzeComplaint(actor(authentication), id);
+    }
+
+    @PutMapping("/visits/{id}/complaint-structure") @PreAuthorize("hasRole('PATIENT')")
+    ComplaintAnalysisView confirmComplaint(Authentication authentication, @PathVariable UUID id,
+                                             @Valid @RequestBody ComplaintConfirmationInput body) {
+        return service.confirmComplaint(actor(authentication), id, body);
+    }
+
     @PostMapping("/visits/{id}/supplements") @PreAuthorize("hasRole('PATIENT')")
     VisitSupplementView supplement(Authentication authentication, @PathVariable UUID id,
                                     @Valid @RequestBody VisitSupplementInput body) {

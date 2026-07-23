@@ -29,9 +29,10 @@ class AiClient {
         this.client = builder.baseUrl(baseUrl).requestFactory(requestFactory).build(); this.token = token; this.timeoutSeconds = timeoutSeconds; this.mapper = mapper;
     }
 
-    AiJobStatus analyze(String runId, Visit visit, List<SymptomEntity> symptoms, RuleOutcome rule) {
+    AiJobStatus analyze(String runId, Visit visit, List<SymptomEntity> symptoms, RuleOutcome rule, AiCaseContext context) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("runId", runId); body.put("visitId", visit.id.toString()); body.put("ageBand", "UNKNOWN");
+        body.put("runId", runId); body.put("visitId", visit.id.toString());
+        body.put("ageBand", context.profileSnapshot() == null ? "UNKNOWN" : context.profileSnapshot().ageBand());
         body.put("chiefComplaint", visit.chiefComplaint); body.put("freeText", visit.freeText);
         body.put("symptoms", symptoms.stream().map(value -> {
             Map<String,Object> report = new LinkedHashMap<>();
@@ -48,6 +49,10 @@ class AiClient {
         if (rule.urgency() != null) body.put("ruleUrgency", rule.urgency().name());
         body.put("ruleReasonCodes", rule.reasonCodes());
         body.put("coverageStatus", rule.coverageStatus().name()); body.put("assessmentStatus", rule.assessmentStatus().name());
+        body.put("complaintStructure", context.complaintAnalysis());
+        body.put("profileSnapshot", context.profileSnapshot());
+        body.put("history", context.history());
+        body.put("supplements", context.supplements());
         final String requestJson;
         try { requestJson = mapper.writeValueAsString(body); }
         catch (JsonProcessingException ex) { throw new IllegalStateException("AI_REQUEST_SERIALIZATION_FAILED", ex); }
@@ -64,6 +69,19 @@ class AiClient {
         throw new IllegalStateException("AI_TIMEOUT");
     }
 
+    AiComplaintResult structureComplaint(String rawComplaint, List<ComplaintTagView> selectedTags,
+                                         PatientProfileInput profile) {
+        Map<String,Object> body = new LinkedHashMap<>();
+        body.put("rawComplaint", rawComplaint);
+        body.put("selectedTags", selectedTags == null ? List.of() : selectedTags);
+        body.put("ageBand", profile == null ? "UNKNOWN" : profile.ageBand());
+        var result = client.post().uri("/internal/v1/complaint-structure")
+            .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
+            .header("X-Internal-Token", token).body(body).retrieve().body(AiComplaintResult.class);
+        if (result == null) throw new IllegalStateException("AI_COMPLAINT_EMPTY_RESPONSE");
+        return result;
+    }
+
     private Object parseAnswers(String value) {
         if (value == null || value.isBlank()) return List.of();
         try { return mapper.readTree(value); }
@@ -74,7 +92,17 @@ class AiClient {
 record AiJobAccepted(String jobId, String runId, String status) {}
 record AiJobStatus(String jobId, String runId, String status, AiResult result, String errorCode, Long durationMs) {}
 record AiResult(String caseSummary, Urgency proposedUrgency, List<String> rationale, List<String> missingQuestions,
+                String structuredSummary, List<String> keyFindings, List<String> abnormalSignals,
+                List<String> areasToRuleOut, List<String> recommendedAdditionalInformation,
+                List<String> riskSignals, String evidenceSynthesis, List<String> uncertainties,
+                List<String> clinicalThinkingPrompts,
                 List<AiCitation> citations, AiSafety safety, String disclaimer, String provider, String model,
                 String outputHash, Map<String, String> versions, List<String> agentTrace) {}
 record AiCitation(String guidelineId, String chunkId, String claimKey, String quote, String title, String section, String sourceUrl, String licenseNote) {}
 record AiSafety(String decision, List<String> reasonCodes) {}
+record AiCaseContext(ComplaintAnalysisView complaintAnalysis, PatientProfileInput profileSnapshot,
+                     List<Map<String,Object>> history, List<String> supplements) {}
+record AiComplaintResult(String normalizedSummary, List<ComplaintTagView> extractedTags,
+                         ComplaintFactsView structuredFacts, List<String> riskSignals,
+                         List<String> missingQuestions, List<String> uncertainties,
+                         String provider, String model, Long durationMs, String disclaimer) {}
