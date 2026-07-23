@@ -22,7 +22,8 @@ const form=reactive({primarySymptomCode:'',chiefComplaint:'',freeText:'',symptom
 const areas=[{id:'INTAKE',label:'新建预问诊',icon:FirstAidKit},{id:'RECORDS',label:'问诊记录',icon:FolderOpened},{id:'TASKS',label:'随访任务',icon:Bell},{id:'PROFILE',label:'健康资料',icon:User}] as const
 const filteredCatalog=computed(()=>catalog.value.symptoms.filter(item=>!query.value.trim()||`${item.name}${item.category}`.includes(query.value.trim())))
 const selectedDefinitions=computed(()=>form.symptomReports.map(report=>definition(report.symptomCode)).filter(Boolean) as CatalogSymptom[])
-const canContinue=computed(()=>form.symptomReports.length>0&&!!form.chiefComplaint.trim())
+const canSaveDraft=computed(()=>!!form.chiefComplaint.trim())
+const canContinue=computed(()=>form.symptomReports.length>0&&canSaveDraft.value)
 const hasRecordOnly=computed(()=>selectedDefinitions.value.some(item=>item.supportLevel!=='RULE_SUPPORTED'))
 const urgentSignal=computed(()=>{
   const yes=(id:string)=>form.symptomReports.some(report=>answer(report,id).selectedOptions.includes('YES'))
@@ -42,7 +43,7 @@ function definition(code:string){return catalog.value.symptoms.find(item=>item.c
 function displayName(report:SymptomReport){return report.customName||report.name||definition(report.symptomCode)?.name||'其他不适'}
 function answer(report:SymptomReport,id:string){let value=report.answers.find(item=>item.questionId===id);if(!value){value={questionId:id,selectedOptions:[]};report.answers.push(value)}return value}
 function chooseAnswer(report:SymptomReport,id:string,value:string){answer(report,id).selectedOptions=[value];if(value==='YES'){if(id==='chest.dyspnea'||id==='syncope.dyspnea')addByCode('DYSPNEA','RELATED_ANSWER');if(id==='chest.syncope')addByCode('SYNCOPE','RELATED_ANSWER');if(id==='syncope.chest_pain')addByCode('CHEST_PAIN','RELATED_ANSWER')}}
-function addByCode(code:string,source:'USER_SELECTED'|'RELATED_ANSWER'|'CUSTOM'='USER_SELECTED'){
+function addByCode(code:string,source:'USER_SELECTED'|'AI_EXTRACTED'|'RELATED_ANSWER'|'CUSTOM'='USER_SELECTED'){
   if(form.symptomReports.some(item=>item.symptomCode===code))return
   const item=definition(code);if(!item)return
   const report:SymptomReport={symptomCode:code,name:item.name,source,customName:code==='OTHER'?customName.value.trim():undefined,onsetRange:'UNKNOWN',course:'UNKNOWN',currentStatus:'UNKNOWN',activityImpact:'UNKNOWN',answers:[]}
@@ -51,26 +52,34 @@ function addByCode(code:string,source:'USER_SELECTED'|'RELATED_ANSWER'|'CUSTOM'=
 function addSelected(){if(!selectedCode.value)return;if(selectedCode.value==='OTHER'&&!customName.value.trim())return ElMessage.warning('请填写其他不适的简短名称');addByCode(selectedCode.value,selectedCode.value==='OTHER'?'CUSTOM':'USER_SELECTED')}
 function removeReport(index:number){const removed=form.symptomReports.splice(index,1)[0];if(removed?.symptomCode===form.primarySymptomCode)form.primarySymptomCode=form.symptomReports[0]?.symptomCode||'';generateSummary()}
 function toggleCatalog(code:string){const index=form.symptomReports.findIndex(item=>item.symptomCode===code);if(index>=0)removeReport(index);else addByCode(code)}
-function generateSummary(){const names=form.symptomReports.map(displayName);if(names.length)form.chiefComplaint=`主要不适为${names.join('、')}`}
-function payload(){return {primarySymptomCode:form.primarySymptomCode,chiefComplaint:form.chiefComplaint.trim(),freeText:form.freeText.trim(),symptomReports:form.symptomReports.map(({id,name,supportLevel,catalogVersion,legacySeverity,legacyOnset,...report})=>report)}}
+function generateSummary(){const names=form.symptomReports.map(displayName);if(names.length&&(!form.chiefComplaint.trim()||form.chiefComplaint.startsWith('主要不适为')))form.chiefComplaint=`主要不适为${names.join('、')}`}
+function payload(){return {primarySymptomCode:form.primarySymptomCode||null,chiefComplaint:form.chiefComplaint.trim(),freeText:form.freeText.trim(),symptomReports:form.symptomReports.map(({id,name,supportLevel,catalogVersion,legacySeverity,legacyOnset,...report})=>report)}}
 function restoreLocal(){const stored=localStorage.getItem(draftKey);if(!stored)return;try{const value=JSON.parse(stored);Object.assign(form,value);ElMessage.info('已恢复上次未提交的草稿')}catch{localStorage.removeItem(draftKey)}}
 function reset(){draftId.value=null;complaintAnalysis.value=null;step.value=1;Object.assign(form,{primarySymptomCode:'',chiefComplaint:'',freeText:'',symptomReports:[]});localStorage.removeItem(draftKey)}
 async function load(){loading.value=true;try{const [catalogData,visitData,taskData,profileData]=await Promise.all([api.intakeCatalog(),api.myVisits(),api.myTasks(),api.patientProfile()]);catalog.value=catalogData;visits.value=visitData;tasks.value=taskData;Object.assign(profile,profileData.data);restoreLocal()}finally{loading.value=false}}
-async function saveDraft(exit=false){if(!canContinue.value){ElMessage.warning('请至少选择一项不适并确认主诉摘要');return null}saving.value=true;try{const saved=draftId.value?await api.updateVisit(draftId.value,payload()):await api.createVisit(payload());draftId.value=saved.id;localStorage.setItem(draftKey,JSON.stringify(form));ElMessage.success(exit?'草稿已保存，可稍后继续':'草稿已保存');await refreshVisits();if(exit)area.value='RECORDS';return saved}catch(e:any){ElMessage.error(e.message);return null}finally{saving.value=false}}
+async function saveDraft(exit=false,quiet=false){if(!canSaveDraft.value){if(!quiet)ElMessage.warning('请先填写主诉');return null}saving.value=true;try{const saved=draftId.value?await api.updateVisit(draftId.value,payload()):await api.createVisit(payload());draftId.value=saved.id;localStorage.setItem(draftKey,JSON.stringify(form));if(!quiet)ElMessage.success(exit?'草稿已保存，可稍后继续':'草稿已保存');await refreshVisits();if(exit)area.value='RECORDS';return saved}catch(e:any){if(!quiet)ElMessage.error(e.message);return null}finally{saving.value=false}}
 async function analyzeComplaint(){
-  const saved=await saveDraft(false);if(!saved)return
+  if(analyzing.value||!form.chiefComplaint.trim())return
+  const retained=form.symptomReports.filter(item=>item.source!=='AI_EXTRACTED')
+  if(retained.length!==form.symptomReports.length){
+    form.symptomReports.splice(0,form.symptomReports.length,...retained)
+    if(!form.symptomReports.some(item=>item.symptomCode===form.primarySymptomCode))form.primarySymptomCode=form.symptomReports[0]?.symptomCode||''
+  }
+  const saved=await saveDraft(false,true);if(!saved){ElMessage.warning('草稿保存失败，暂时无法自动识别，请稍后重试');return}
   analyzing.value=true
-  try{complaintAnalysis.value=await api.analyzeComplaint(saved.id);if(complaintAnalysis.value.status==='SUCCEEDED')ElMessage.success('AI 已完成主诉整理，请确认建议标签');else ElMessage.warning('智能整理暂不可用，不影响继续填写和提交')}
-  catch(e:any){ElMessage.warning(e.message||'智能整理暂不可用，不影响继续填写和提交')}
+  try{
+    complaintAnalysis.value=await api.analyzeComplaint(saved.id)
+    if(complaintAnalysis.value.status==='SUCCEEDED'){
+      complaintAnalysis.value.tags.filter(tag=>tag.confirmationStatus!=='removed').forEach(tag=>addByCode(tag.code,'AI_EXTRACTED'))
+      await saveDraft(false,true)
+      if(complaintAnalysis.value.tags.length)ElMessage.success(`已自动识别：${complaintAnalysis.value.tags.map(tag=>tag.displayName).join('、')}`)
+      else ElMessage.info('AI 未匹配到目录标签，请从症状目录中选择')
+    }else ElMessage.warning('AI 自动识别暂不可用，可直接从症状目录中选择')
+  }
+  catch(e:any){ElMessage.warning(e.message||'AI 自动识别暂不可用，可直接从症状目录中选择')}
   finally{analyzing.value=false}
 }
-function toggleAiTag(index:number){const tag=complaintAnalysis.value?.tags[index];if(tag)tag.confirmationStatus=tag.confirmationStatus==='removed'?'confirmed':'removed'}
-async function confirmComplaint(){
-  const value=complaintAnalysis.value;if(!draftId.value||!value?.structuredFacts)return
-  analyzing.value=true
-  try{value.tags.forEach(tag=>{if(tag.confirmationStatus==='proposed')tag.confirmationStatus='confirmed'});complaintAnalysis.value=await api.confirmComplaint(draftId.value,{normalizedSummary:value.normalizedSummary,tags:value.tags,structuredFacts:value.structuredFacts,riskSignals:value.riskSignals,missingQuestions:value.missingQuestions,uncertainties:value.uncertainties});ElMessage.success('已保存你确认后的整理结果')}
-  catch(e:any){ElMessage.error(e.message)}finally{analyzing.value=false}
-}
+function onComplaintKeydown(event:KeyboardEvent){if(event.key==='Enter'){event.preventDefault();void analyzeComplaint()}}
 async function submit(){const saved=await saveDraft(false);if(!saved)return;try{await ElMessageBox.confirm('提交后不能直接修改，但仍可在记录中补充信息。以上信息与我填写的一致。','确认提交',{type:urgentSignal.value?'error':'warning',confirmButtonText:'确认并提交',cancelButtonText:'返回检查'});await api.submitVisit(saved.id);ElMessage.success('已提交，正在进入人工审核');reset();area.value='RECORDS';await refreshVisits()}catch(e:any){if(e!=='cancel'&&e!=='close')ElMessage.error(e.message)}}
 async function editDraft(visit:Visit){draftId.value=visit.id;complaintAnalysis.value=visit.complaintAnalysis||null;Object.assign(form,{primarySymptomCode:visit.primarySymptomCode||visit.symptomReports[0]?.symptomCode||'',chiefComplaint:visit.chiefComplaint,freeText:visit.freeText,symptomReports:visit.symptomReports.map(item=>({...item,customName:item.supportLevel==='CUSTOM'?item.name:undefined,answers:item.answers.map(a=>({...a,selectedOptions:[...a.selectedOptions]}))}))});area.value='INTAKE';step.value=1;window.scrollTo({top:0,behavior:'smooth'})}
 async function refreshVisits(){visits.value=await api.myVisits()}
@@ -78,7 +87,7 @@ async function addSupplement(visit:Visit){try{const result=await ElMessageBox.pr
 async function saveProfile(){saving.value=true;try{await api.savePatientProfile({...profile});ElMessage.success('健康资料已保存，提交问诊时会保存当时的资料快照')}catch(e:any){ElMessage.error(e.message)}finally{saving.value=false}}
 function listText(values:string[]){return values.join('、')}
 function setList(key:'chronicConditions'|'allergies'|'longTermMedications',value:string){profile[key]=value.split(/[，,、\n]/).map(item=>item.trim()).filter(Boolean)}
-watch(form,()=>{if(form.symptomReports.length)localStorage.setItem(draftKey,JSON.stringify(form))},{deep:true})
+watch(form,()=>{if(form.chiefComplaint.trim()||form.symptomReports.length)localStorage.setItem(draftKey,JSON.stringify(form))},{deep:true})
 onMounted(()=>load().catch((e:any)=>ElMessage.error(e.message)))
 </script>
 
@@ -98,27 +107,19 @@ onMounted(()=>load().catch((e:any)=>ElMessage.error(e.message)))
 
           <article class="panel v2-intake-panel">
             <section v-if="step===1" aria-labelledby="where-title">
-              <div class="section-heading"><div><span class="step-kicker">阶段 1 / 4</span><h2 id="where-title">哪里不舒服？</h2><p>可搜索或从常用症状中选择；患者无需理解内部医学代码。</p></div></div>
+              <div class="section-heading"><div><span class="step-kicker">阶段 1 / 4</span><h2 id="where-title">哪里不舒服？</h2><p>可直接描述自己的感受，AI 会从症状目录中自动匹配标签；也可以手动选择或修改。</p></div></div>
+              <div class="chief-complaint-form"><label class="chief-complaint-input"><span><b>*</b> 主诉</span><input v-model="form.chiefComplaint" maxlength="500" placeholder="例如：我肚子痛。输入完成后按 Enter 自动识别标签" @keydown="onComplaintKeydown"/><small>{{form.chiefComplaint.length}} / 500</small></label></div>
+              <div class="complaint-auto-status" :class="{loading:analyzing}" aria-live="polite">
+                <Clock v-if="analyzing"/><CircleCheck v-else-if="complaintAnalysis?.status==='SUCCEEDED'"/><Document v-else/>
+                <div v-if="analyzing"><strong>正在识别症状标签…</strong><p>将只从当前症状目录中选择，不会生成诊断。</p></div>
+                <div v-else-if="complaintAnalysis?.status==='SUCCEEDED'"><strong>{{complaintAnalysis.tags.length?'已根据主诉自动匹配标签':'未匹配到目录标签'}}</strong><p>{{complaintAnalysis.tags.length?'标签已加入下方“已选不适”，如不准确可直接删除。':'请打开症状目录手动选择最接近的不适。'}} AI 结果仅供辅助，不能替代医生诊断。</p></div>
+                <div v-else-if="complaintAnalysis"><strong>AI 自动识别暂不可用</strong><p>原始主诉已保留，可直接从症状目录中选择，不影响后续提交。</p></div>
+                <div v-else><strong>按 Enter 自动识别</strong><p>AI 只会从现有症状标签中选择；仍可手动增删。</p></div>
+              </div>
               <button class="symptom-picker-launcher" type="button" @click="symptomPickerOpen=true"><span class="picker-launcher-icon"><Plus/></span><span><strong>{{form.symptomReports.length?'选择或修改不适项目':'选择不适项目'}}</strong><small>{{form.symptomReports.length?`当前已选择：${form.symptomReports.map(displayName).join('、')}`:'打开分类目录进行选择'}}</small></span><ArrowRight/></button>
-              <div v-if="form.symptomReports.length" class="selected-box compact-selected" aria-live="polite"><div><strong>已选不适</strong><small>点击标签可移除；点击“设为主要”调整主诉顺序</small></div><div><button v-for="(report,index) in form.symptomReports" :key="report.symptomCode" type="button" @click="removeReport(index)">{{displayName(report)}}<Delete/></button></div></div>
+              <div v-if="form.symptomReports.length" class="selected-box compact-selected" aria-live="polite"><div><strong>已选不适</strong><small>AI 识别与手动选择会分别标注；点击标签可移除</small></div><div><button v-for="(report,index) in form.symptomReports" :key="report.symptomCode" type="button" @click="removeReport(index)">{{displayName(report)}}<small>{{report.source==='AI_EXTRACTED'?'AI 识别':'手动'}}</small><Delete/></button></div></div>
               <div v-if="form.symptomReports.length" class="primary-symptom-row"><span>本次最主要的不适</span><button v-for="report in form.symptomReports" :key="report.symptomCode" type="button" :class="{selected:form.primarySymptomCode===report.symptomCode}" @click="form.primarySymptomCode=report.symptomCode">{{displayName(report)}}<Check v-if="form.primarySymptomCode===report.symptomCode"/></button></div>
               <div v-if="hasRecordOnly" class="manual-notice compact" role="status"><Document/><div><strong>部分所选不适当前没有确定性自动规则</strong><p>该症状会被记录并交由人工复核；这不代表常规、无风险或已经排除风险。</p></div></div>
-              <el-form-item label="主诉摘要（可以修改）" required><el-input v-model="form.chiefComplaint" maxlength="500" show-word-limit placeholder="选择不适后会自动生成，也可以用自己的话修改"/></el-form-item>
-              <el-form-item label="用自己的话补充（可选）"><el-input v-model="form.freeText" type="textarea" :rows="4" maxlength="2000" show-word-limit placeholder="例如什么情况下出现、还有哪些感受；不要填写姓名、电话或地址"/></el-form-item>
-              <div class="complaint-ai-launcher">
-                <div><span class="step-kicker">AI 主诉整理</span><strong>把日常表述整理成可核对的医学信息</strong><p>不会覆盖你手动选择的不适，也不会给出诊断。失败时仍可正常提交原始主诉。</p></div>
-                <el-button type="primary" plain :loading="analyzing" :disabled="!canContinue" @click="analyzeComplaint">{{complaintAnalysis?.status==='SUCCEEDED'?'重新整理':'智能整理主诉'}}</el-button>
-              </div>
-              <section v-if="complaintAnalysis" class="complaint-ai-result" aria-live="polite">
-                <div v-if="complaintAnalysis.status==='SUCCEEDED'">
-                  <div class="ai-result-head"><div><span>规范化摘要</span><h3>{{complaintAnalysis.normalizedSummary}}</h3></div><StatusPill value="SUCCEEDED"/></div>
-                  <div class="tag-groups"><div><strong>患者手动选择</strong><span v-for="report in form.symptomReports" :key="report.symptomCode" class="complaint-tag user-tag">{{displayName(report)}}<small>手动</small></span></div><div><strong>AI 建议标签（可确认或删除）</strong><button v-for="(tag,index) in complaintAnalysis.tags" :key="tag.code" type="button" class="complaint-tag" :class="{removed:tag.confirmationStatus==='removed'}" @click="toggleAiTag(index)">{{tag.displayName}}<small>{{tag.confirmationStatus==='removed'?'已删除':'AI 提取'}}</small></button><p v-if="!complaintAnalysis.tags.length">没有发现需要额外建议的标签。</p></div></div>
-                  <div v-if="complaintAnalysis.structuredFacts" class="ai-facts"><span v-if="complaintAnalysis.structuredFacts.duration"><small>持续时间</small>{{complaintAnalysis.structuredFacts.duration}}</span><span v-if="complaintAnalysis.structuredFacts.location"><small>部位</small>{{complaintAnalysis.structuredFacts.location}}</span><span v-if="complaintAnalysis.structuredFacts.character"><small>性质</small>{{complaintAnalysis.structuredFacts.character}}</span><span v-for="item in complaintAnalysis.structuredFacts.aggravatingFactors" :key="item"><small>加重因素</small>{{item}}</span></div>
-                  <div v-if="complaintAnalysis.riskSignals.length" class="urgent-notice compact"><Clock/><div><strong>需重点核对</strong><p>{{complaintAnalysis.riskSignals.join('；')}}</p></div></div>
-                  <div class="ai-confirm-row"><small>{{complaintAnalysis.disclaimer}}</small><el-button type="success" :loading="analyzing" @click="confirmComplaint">确认并保存整理结果</el-button></div>
-                </div>
-                <div v-else class="manual-notice"><Document/><div><strong>智能整理暂不可用</strong><p>{{complaintAnalysis.disclaimer}} 原始主诉已保留。</p></div></div>
-              </section>
             </section>
 
             <section v-else-if="step===2" aria-labelledby="detail-title">
@@ -142,7 +143,7 @@ onMounted(()=>load().catch((e:any)=>ElMessage.error(e.message)))
               <label class="agreement"><input type="checkbox" checked disabled/>以上信息与我填写的一致</label>
             </section>
 
-            <div class="v2-form-actions"><el-button v-if="step>1" @click="step--">上一步</el-button><span/><el-button :loading="saving" :disabled="!canContinue" @click="saveDraft(true)">保存退出</el-button><el-button v-if="step<4" type="primary" :disabled="!canContinue" @click="step++">下一步</el-button><el-button v-else type="primary" size="large" :loading="saving" :disabled="!canContinue" @click="submit">提交预问诊</el-button></div>
+            <div class="v2-form-actions"><el-button v-if="step>1" @click="step--">上一步</el-button><span/><el-button :loading="saving" :disabled="!canSaveDraft" @click="saveDraft(true)">保存退出</el-button><el-button v-if="step<4" type="primary" :disabled="!canContinue" @click="step++">下一步</el-button><el-button v-else type="primary" size="large" :loading="saving" :disabled="!canContinue" @click="submit">提交预问诊</el-button></div>
           </article>
         </template>
 

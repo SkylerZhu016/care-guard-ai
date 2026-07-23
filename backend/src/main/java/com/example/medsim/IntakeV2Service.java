@@ -98,6 +98,9 @@ class IntakeV2Service {
         if (!"INTAKE_V2".equals(visit.intakeVersion)) throw ApiException.conflict("VISIT_LEGACY_READ_ONLY", "历史问诊不能通过新版接口重新提交");
         var reports = symptoms.findByVisitId(visit.id);
         if (reports.isEmpty()) throw new ApiException(HttpStatus.BAD_REQUEST, "VISIT_SYMPTOMS_REQUIRED", "至少填写一项不适");
+        if (visit.primarySymptomCode == null || visit.primarySymptomCode.isBlank()
+            || reports.stream().noneMatch(value -> visit.primarySymptomCode.equals(value.code)))
+            throw new ApiException(HttpStatus.BAD_REQUEST, "PRIMARY_SYMPTOM_REQUIRED", "请选择本次最主要的不适");
         var currentProfile = profiles.findByOwnerId(actor.id()).map(value -> readProfile(value.profileData)).orElse(emptyProfile());
         visit.profileSnapshot = json(currentProfile);
         visit.status = VisitStatus.SUBMITTED; visit.idempotencyKey = idempotencyKey; visit.submittedAt = OffsetDateTime.now(); visits.save(visit);
@@ -155,11 +158,12 @@ class IntakeV2Service {
         entity.rawComplaint = raw; entity.status = ComplaintAnalysisStatus.PENDING; entity.errorCode = null;
         entity.updatedAt = OffsetDateTime.now(); complaintAnalyses.save(entity);
         var selectedTags = symptoms.findByVisitId(id).stream().map(value -> new ComplaintTagView(
-            value.code, value.name, catalog.require(value.code).category(), "user_selected", null,
-            "患者手动选择", "confirmed")).toList();
+            value.code, value.name, catalog.require(value.code).category(),
+            "AI_EXTRACTED".equals(value.reportSource) ? "ai_extracted" : "user_selected", null,
+            "AI_EXTRACTED".equals(value.reportSource) ? "AI 已识别" : "患者手动选择", "confirmed")).toList();
         var profile = profiles.findByOwnerId(actor.id()).map(value -> readProfile(value.profileData)).orElse(emptyProfile());
         try {
-            var result = ai.structureComplaint(raw, selectedTags, profile);
+            var result = ai.structureComplaint(raw, selectedTags, catalog.view().symptoms(), profile);
             var tags = normalizeAiTags(result.extractedTags(), selectedTags);
             var view = new ComplaintAnalysisView("SUCCEEDED", raw, privacy.sanitize(result.normalizedSummary()), tags,
                 sanitizeFacts(result.structuredFacts()), sanitizeList(result.riskSignals()), sanitizeList(result.missingQuestions()),
@@ -197,15 +201,19 @@ class IntakeV2Service {
     }
 
     private void apply(Visit visit, VisitIntakeV2Input input) {
-        catalog.require(input.primarySymptomCode());
-        visit.primarySymptomCode = input.primarySymptomCode();
+        if (input.primarySymptomCode() == null || input.primarySymptomCode().isBlank()) {
+            visit.primarySymptomCode = null;
+        } else {
+            catalog.require(input.primarySymptomCode());
+            visit.primarySymptomCode = input.primarySymptomCode();
+        }
         visit.chiefComplaint = privacy.sanitize(input.chiefComplaint());
-        visit.freeText = privacy.sanitize(input.freeText());
+        visit.freeText = privacy.sanitize(input.freeText() == null ? "" : input.freeText());
     }
 
     private void replaceReports(UUID visitId, List<SymptomReportInput> input) {
         symptoms.deleteByVisitId(visitId);
-        var normalized = new ArrayList<>(input);
+        var normalized = new ArrayList<>(safe(input));
         addRelated(normalized, "chest.dyspnea", "DYSPNEA");
         addRelated(normalized, "chest.syncope", "SYNCOPE");
         addRelated(normalized, "syncope.chest_pain", "CHEST_PAIN");
@@ -349,7 +357,9 @@ class IntakeV2Service {
             if (tag == null || tag.code() == null || tag.displayName() == null) continue;
             String code = tag.code().strip().toUpperCase(Locale.ROOT);
             if (code.length() > 60 || selectedCodes.contains(code) || !seen.add(code)) continue;
-            result.add(new ComplaintTagView(code, privacy.sanitize(tag.displayName()), privacy.sanitize(tag.category()),
+            var definition = catalog.find(code).orElse(null);
+            if (definition == null || definition.supportLevel() == SupportLevel.CUSTOM) continue;
+            result.add(new ComplaintTagView(code, definition.name(), definition.category(),
                 "ai_extracted", clamp(tag.confidence()), privacy.sanitize(tag.evidenceText()), "proposed"));
         }
         return List.copyOf(result);

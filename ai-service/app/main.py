@@ -53,6 +53,27 @@ def structure_complaint(request: ComplaintStructureRequest) -> ComplaintStructur
     started = time.perf_counter()
     provider = get_provider()
     draft = provider.structure_complaint(request)
+    allowed = {tag.code: tag for tag in request.availableTags}
+    selected_codes = {tag.code for tag in request.selectedTags}
+    filtered_tags = []
+    seen_codes = set()
+    for candidate in draft.get("extractedTags", []):
+        if not isinstance(candidate, dict):
+            continue
+        code = str(candidate.get("code", "")).strip().upper()
+        definition = allowed.get(code)
+        if definition is None or code in selected_codes or code in seen_codes:
+            continue
+        seen_codes.add(code)
+        filtered_tags.append({
+            **candidate,
+            "code": definition.code,
+            "displayName": definition.displayName,
+            "category": definition.category,
+            "source": "ai_extracted",
+            "confirmationStatus": "proposed",
+        })
+    draft["extractedTags"] = filtered_tags
     draft.update({"provider": provider.name, "model": settings.model,
                   "durationMs": int((time.perf_counter() - started) * 1000)})
     return ComplaintStructureResult.model_validate(draft)

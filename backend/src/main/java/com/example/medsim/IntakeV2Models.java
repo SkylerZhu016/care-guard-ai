@@ -2,7 +2,6 @@ package com.example.medsim;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -81,7 +80,7 @@ record QuestionAnswerInput(
 record SymptomReportInput(
     @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{1,59}") String symptomCode,
     @Size(max = 100) String customName,
-    @Pattern(regexp = "USER_SELECTED|CATALOG|RELATED_ANSWER|CUSTOM") String source,
+    @Pattern(regexp = "USER_SELECTED|AI_EXTRACTED|CATALOG|RELATED_ANSWER|CUSTOM") String source,
     @Pattern(regexp = "JUST_NOW|TODAY|ONE_TO_THREE_DAYS|MORE_THAN_THREE_DAYS|UNKNOWN") String onsetRange,
     @Pattern(regexp = "CONTINUOUS|INTERMITTENT|RELIEVED|UNKNOWN") String course,
     @Pattern(regexp = "PRESENT|NOT_PRESENT|UNKNOWN") String currentStatus,
@@ -90,10 +89,10 @@ record SymptomReportInput(
 ) {}
 
 record VisitIntakeV2Input(
-    @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{1,59}") String primarySymptomCode,
+    @Pattern(regexp = "[A-Z][A-Z0-9_]{1,59}") String primarySymptomCode,
     @NotBlank @Size(max = 500) String chiefComplaint,
     @Size(max = 2000) String freeText,
-    @NotEmpty List<@Valid SymptomReportInput> symptomReports
+    @Size(max = 30) List<@Valid SymptomReportInput> symptomReports
 ) {}
 
 record SymptomReportView(UUID id, String symptomCode, String name, String source, String catalogVersion,

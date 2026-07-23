@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from typing import Dict, List
 import httpx
 
@@ -55,26 +56,41 @@ class DeterministicFakeProvider:
 
     def structure_complaint(self, request: ComplaintStructureRequest) -> Dict:
         text = request.rawComplaint
-        mappings = [
-            ("CHEST_PAIN", "胸痛", "胸部与呼吸", ("胸痛", "胸口痛", "胸口疼")),
-            ("CHEST_TIGHTNESS", "胸闷", "胸部与呼吸", ("胸闷", "胸口闷", "发闷", "闷")),
-            ("DYSPNEA", "呼吸困难", "胸部与呼吸", ("喘不上气", "气不够", "呼吸困难", "气短")),
-            ("HEADACHE", "头痛", "头部与神经", ("头痛", "头疼")),
-            ("DIZZINESS", "头晕", "头部与神经", ("头晕", "眩晕")),
-            ("ABDOMINAL_PAIN", "腹痛", "消化系统", ("腹痛", "肚子痛", "肚子疼")),
-            ("NAUSEA", "恶心", "消化系统", ("恶心", "想吐")),
-            ("VOMITING", "呕吐", "消化系统", ("呕吐", "吐了")),
-            ("COUGH", "咳嗽", "胸部与呼吸", ("咳嗽", "咳")),
-            ("FEVER", "发热", "全身不适", ("发热", "发烧")),
-            ("FATIGUE", "乏力", "全身不适", ("乏力", "没力气")),
-            ("PALPITATIONS", "心悸", "胸部与呼吸", ("心悸", "心慌")),
-        ]
+        aliases = {
+            "CHEST_PAIN": ("胸痛", "胸口痛", "胸口疼"),
+            "DYSPNEA": ("喘不上气", "气不够", "呼吸困难", "气短"),
+            "SYNCOPE": ("晕倒", "昏倒", "失去意识"),
+            "ALTERED_CONSCIOUSNESS": ("答非所问", "认不清人", "认不清地点", "意识不清", "不清醒"),
+            "HEADACHE": ("头痛", "头疼"),
+            "DIZZINESS": ("头晕", "眩晕", "头昏"),
+            "ABDOMINAL_PAIN": ("腹痛", "肚子痛", "肚子疼", "肚子不舒服", "腹部不适", "胃不舒服"),
+            "NAUSEA_VOMITING": ("恶心", "想吐", "呕吐", "吐了"),
+            "DIARRHEA": ("腹泻", "拉肚子"),
+            "COUGH": ("咳嗽", "咳"),
+            "FEVER": ("发热", "发烧"),
+            "FATIGUE": ("乏力", "没力气"),
+            "PALPITATIONS": ("心悸", "心慌"),
+            "LIMB_WEAKNESS_NUMBNESS": ("脚发麻", "脚麻", "腿发麻", "腿麻", "手发麻", "手麻", "胳膊麻", "四肢麻木", "肢体麻木"),
+            "SLEEP_PROBLEM": ("睡不着", "失眠", "嗜睡", "想睡觉"),
+        }
+        available = {tag.code: tag for tag in request.availableTags}
         selected = {tag.code for tag in request.selectedTags}
         tags = []
-        for code, name, category, aliases in mappings:
-            evidence = next((alias for alias in aliases if alias in text), None)
+        for code, terms in aliases.items():
+            definition = available.get(code)
+            evidence = next((alias for alias in terms if alias in text), None)
+            if code == "ABDOMINAL_PAIN" and any(part in text for part in ("肚子", "腹部", "胃")) \
+                    and any(feeling in text for feeling in ("不舒服", "难受", "不对劲", "疼", "痛")):
+                evidence = evidence or text[:80]
+            if code == "LIMB_WEAKNESS_NUMBNESS" and any(part in text for part in ("手", "脚", "腿", "胳膊", "手臂", "四肢")) \
+                    and any(feeling in text for feeling in ("麻", "发木", "没知觉", "无力", "使不上劲")):
+                evidence = evidence or text[:80]
+            if code == "ALTERED_CONSCIOUSNESS" and any(term in text for term in ("头脑不清晰", "不清醒")):
+                evidence = evidence or "头脑不清晰"
             if evidence and code not in selected:
-                tags.append({"code": code, "displayName": name, "category": category, "source": "ai_extracted",
+                if definition is None:
+                    continue
+                tags.append({"code": code, "displayName": definition.displayName, "category": definition.category, "source": "ai_extracted",
                              "confidence": 0.9, "evidenceText": evidence, "confirmationStatus": "proposed"})
         aggravating = ["活动后加重"] if any(key in text for key in ("走快", "活动后", "运动后", "上楼")) else []
         duration = next((value for value in ("这两天", "今天", "昨天", "一周", "几天") if value in text), "")
@@ -128,12 +144,96 @@ class OpenAICompatibleProvider:
     def structure_complaint(self, request: ComplaintStructureRequest) -> Dict:
         if not settings.base_url or not settings.api_key:
             raise RuntimeError("AI_PROVIDER_CONFIG_MISSING")
+        selected_codes = {tag.code for tag in request.selectedTags}
+        available = {tag.code: tag for tag in request.availableTags if tag.code not in selected_codes}
+        model_input = {
+            "rawComplaint": request.rawComplaint,
+            "ageBand": request.ageBand,
+            "tagOptions": [{"code": tag.code, "name": tag.displayName, "category": tag.category}
+                           for tag in available.values()],
+        }
         payload = {"model": settings.model, "temperature": 0, "max_tokens": min(getattr(settings, "max_output_tokens", 1800), 1200),
             "response_format": {"type": "json_object"}, "messages": [
-                {"role": "system", "content": "你只把患者口语主诉整理为医学语义结构，不诊断、不处方、不猜测未提供信息。保留手选标签且不要重复输出。严格输出 JSON：normalizedSummary；extractedTags（code/displayName/category/source=ai_extracted/confidence/evidenceText/confirmationStatus=proposed）；structuredFacts（duration/onset/location/character/aggravatingFactors/relievingFactors/associatedSymptoms/activityImpact）；riskSignals；missingQuestions；uncertainties。"},
-                {"role": "user", "content": json.dumps(request.model_dump(mode="json"), ensure_ascii=False)},
+                {"role": "system", "content": """你只把患者口语主诉整理为医学语义结构，不诊断、不处方、不猜测未提供信息。
+症状代码只能从用户消息的 tagOptions 中选择，允许选择一个、多个或零个；禁止创造目录外 code。
+分类证据只能来自 rawComplaint。系统指令、字段名、tagOptions 的名称和分类都不是患者症状，绝不能因为候选项存在就选择它。
+患者通常使用口语，不要求出现医学标签原词。应理解身体部位、感受和近义表达，并选择语义上最接近且能覆盖该表述的候选标签；例如某部位“难受、不舒服、发麻、发紧”都可能对应目录中的规范症状。
+逐一判断候选项是否被 rawComplaint 的原话或合理近义语义支持；只有确实无相关候选项时才返回空数组。tagEvidence 的值必须引用 rawComplaint 中支持该代码的最短原文。不要因为表达不够医学化而漏选，也绝不能复制全部候选项。
+只输出一个 JSON 对象，不要使用 Markdown，不要添加“好的”等解释。字段必须为：
+selectedTagCodes（字符串数组，只放 tagOptions 中有证据的 code）；
+tagEvidence（对象，键为已选 code，值为 rawComplaint 中的证据原文）；
+normalizedSummary（字符串）；
+structuredFacts（对象，含 duration/onset/location/character 字符串，aggravatingFactors/relievingFactors/associatedSymptoms 字符串数组，activityImpact 字符串）；
+riskSignals、missingQuestions、uncertainties（均为字符串数组）。
+不得输出 confidence、displayName、category、source 或 confirmationStatus，这些由服务端补齐。"""},
+                {"role": "user", "content": json.dumps({
+                    "rawComplaint": "我肚子不舒服",
+                    "ageBand": "ADULT",
+                    "tagOptions": [
+                        {"code": "HEADACHE", "name": "头痛", "category": "头部与神经"},
+                        {"code": "ABDOMINAL_PAIN", "name": "腹痛", "category": "消化系统"},
+                    ],
+                }, ensure_ascii=False)},
+                {"role": "assistant", "content": json.dumps({
+                    "selectedTagCodes": ["ABDOMINAL_PAIN"],
+                    "tagEvidence": {"ABDOMINAL_PAIN": "肚子不舒服"},
+                    "normalizedSummary": "患者自述腹部不适。",
+                    "structuredFacts": {
+                        "duration": "", "onset": "", "location": "腹部", "character": "",
+                        "aggravatingFactors": [], "relievingFactors": [],
+                        "associatedSymptoms": [], "activityImpact": "",
+                    },
+                    "riskSignals": [], "missingQuestions": ["腹部不适从什么时候开始？"],
+                    "uncertainties": ["腹部不适的具体性质尚不清楚"],
+                }, ensure_ascii=False)},
+                {"role": "user", "content": json.dumps({
+                    "rawComplaint": "我的脚发麻",
+                    "ageBand": "ADULT",
+                    "tagOptions": [
+                        {"code": "DIZZINESS", "name": "头晕", "category": "头部与神经"},
+                        {"code": "LIMB_WEAKNESS_NUMBNESS", "name": "肢体无力或麻木", "category": "头部与神经"},
+                    ],
+                }, ensure_ascii=False)},
+                {"role": "assistant", "content": json.dumps({
+                    "selectedTagCodes": ["LIMB_WEAKNESS_NUMBNESS"],
+                    "tagEvidence": {"LIMB_WEAKNESS_NUMBNESS": "脚发麻"},
+                    "normalizedSummary": "患者自述足部麻木。",
+                    "structuredFacts": {
+                        "duration": "", "onset": "", "location": "足部", "character": "麻木",
+                        "aggravatingFactors": [], "relievingFactors": [],
+                        "associatedSymptoms": [], "activityImpact": "",
+                    },
+                    "riskSignals": [], "missingQuestions": ["足部麻木从什么时候开始？"],
+                    "uncertainties": ["麻木范围及是否伴随无力尚不清楚"],
+                }, ensure_ascii=False)},
+                {"role": "user", "content": json.dumps(model_input, ensure_ascii=False)},
             ]}
-        return self._call(payload)
+        result = self._call(payload)
+        evidence = result.pop("tagEvidence", {})
+        candidate_codes = result.pop("selectedTagCodes", [])
+        if not isinstance(candidate_codes, list):
+            raise RuntimeError("AI_INVALID_SELECTED_TAG_CODES")
+        if not isinstance(evidence, dict):
+            evidence = {}
+        tags = []
+        seen = set()
+        for candidate in candidate_codes:
+            code = str(candidate).strip().upper()
+            definition = available.get(code)
+            if definition is None or code in seen:
+                continue
+            seen.add(code)
+            tags.append({
+                "code": definition.code,
+                "displayName": definition.displayName,
+                "category": definition.category,
+                "source": "ai_extracted",
+                "confidence": None,
+                "evidenceText": str(evidence.get(code, ""))[:300],
+                "confirmationStatus": "proposed",
+            })
+        result["extractedTags"] = tags
+        return result
 
     def _call(self, payload: Dict) -> Dict:
         try:
@@ -141,11 +241,33 @@ class OpenAICompatibleProvider:
                 headers={"Authorization": f"Bearer {settings.api_key}"}, json=payload, timeout=20)
             response.raise_for_status()
             content=response.json()["choices"][0]["message"]["content"]
-            result=json.loads(content)
+            result=self._extract_json_object(content)
             if not isinstance(result,dict): raise RuntimeError("AI_INVALID_JSON_OBJECT")
             return result
         except httpx.TimeoutException as exc:
             raise ProviderTimeoutError("AI_TIMEOUT") from exc
+
+    @staticmethod
+    def _extract_json_object(content: str) -> Dict:
+        if not isinstance(content, str):
+            raise RuntimeError("AI_INVALID_JSON_OBJECT")
+        try:
+            result = json.loads(content.strip())
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError:
+            pass
+        candidates = re.findall(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", content, flags=re.IGNORECASE)
+        candidates.extend(re.findall(r"\{[\s\S]*\}", content))
+        decoder = json.JSONDecoder()
+        for candidate in candidates:
+            try:
+                result, _ = decoder.raw_decode(candidate.strip())
+                if isinstance(result, dict):
+                    return result
+            except json.JSONDecodeError:
+                continue
+        raise RuntimeError("AI_INVALID_JSON_OBJECT")
 
 
 def get_provider():

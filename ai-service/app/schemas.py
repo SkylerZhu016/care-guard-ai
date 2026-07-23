@@ -142,6 +142,12 @@ class ComplaintTag(BaseModel):
     confirmationStatus: str = Field(default="proposed", pattern=r"^(proposed|confirmed|removed)$")
 
 
+class AvailableComplaintTag(BaseModel):
+    code: str = Field(min_length=2, max_length=60, pattern=r"^[A-Z][A-Z0-9_]+$")
+    displayName: str = Field(min_length=1, max_length=100)
+    category: str = Field(min_length=1, max_length=60)
+
+
 class ComplaintFacts(BaseModel):
     duration: str = Field(default="", max_length=100)
     onset: str = Field(default="", max_length=100)
@@ -170,6 +176,7 @@ class ComplaintFacts(BaseModel):
 class ComplaintStructureRequest(BaseModel):
     rawComplaint: str = Field(min_length=1, max_length=2500)
     selectedTags: List[ComplaintTag] = Field(default_factory=list, max_length=30)
+    availableTags: List[AvailableComplaintTag] = Field(default_factory=list, max_length=100)
     ageBand: str = Field(default="UNKNOWN", max_length=40)
 
     @field_validator("rawComplaint")

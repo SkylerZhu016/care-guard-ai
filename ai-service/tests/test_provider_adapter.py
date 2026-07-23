@@ -6,7 +6,7 @@ import pytest
 
 import app.providers as providers
 from app.providers import OpenAICompatibleProvider, ProviderTimeoutError
-from app.schemas import AnalysisRequest
+from app.schemas import AnalysisRequest, ComplaintStructureRequest
 
 
 def request():
@@ -57,3 +57,44 @@ def test_openai_compatible_maps_timeout(monkeypatch):
     monkeypatch.setattr(providers.httpx, "post", timeout)
     with pytest.raises(ProviderTimeoutError, match="AI_TIMEOUT"):
         OpenAICompatibleProvider().generate(request(), [])
+
+
+def test_openai_compatible_extracts_json_from_model_chatter():
+    content = '好的，以下是我的回答：\n```json\n{"extractedTags":[{"code":"ABDOMINAL_PAIN"}]}\n```\n请查收。'
+    result = OpenAICompatibleProvider._extract_json_object(content)
+    assert result["extractedTags"][0]["code"] == "ABDOMINAL_PAIN"
+
+
+def test_openai_compatible_rejects_content_without_json():
+    with pytest.raises(RuntimeError, match="AI_INVALID_JSON_OBJECT"):
+        OpenAICompatibleProvider._extract_json_object("好的，但这次没有提供结构化内容。")
+
+
+def test_complaint_provider_maps_selected_codes_to_server_catalog(monkeypatch):
+    monkeypatch.setattr(providers, "settings", SimpleNamespace(
+        base_url="https://provider.example/v1", api_key="test-only",
+        model="model-test", max_output_tokens=1800))
+    adapter = OpenAICompatibleProvider()
+    monkeypatch.setattr(adapter, "_call", lambda payload: {
+        "selectedTagCodes": ["ABDOMINAL_PAIN", "INVENTED_TAG", "ABDOMINAL_PAIN"],
+        "tagEvidence": {"ABDOMINAL_PAIN": "肚子痛"},
+        "normalizedSummary": "患者自述腹部疼痛。",
+        "structuredFacts": {"duration": "", "onset": "", "location": "腹部", "character": "",
+                            "aggravatingFactors": [], "relievingFactors": [],
+                            "associatedSymptoms": [], "activityImpact": ""},
+        "riskSignals": [], "missingQuestions": [], "uncertainties": [],
+    })
+    request = ComplaintStructureRequest.model_validate({
+        "rawComplaint": "我肚子痛",
+        "selectedTags": [],
+        "availableTags": [
+            {"code": "HEADACHE", "displayName": "头痛", "category": "头部与神经"},
+            {"code": "ABDOMINAL_PAIN", "displayName": "腹痛", "category": "消化系统"},
+        ],
+    })
+    result = adapter.structure_complaint(request)
+    assert result["extractedTags"] == [{
+        "code": "ABDOMINAL_PAIN", "displayName": "腹痛", "category": "消化系统",
+        "source": "ai_extracted", "confidence": None, "evidenceText": "肚子痛",
+        "confirmationStatus": "proposed",
+    }]

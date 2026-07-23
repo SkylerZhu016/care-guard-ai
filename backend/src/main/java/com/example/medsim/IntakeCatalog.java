@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 class IntakeCatalog {
@@ -77,6 +78,10 @@ class IntakeCatalog {
         if (value == null) throw new ApiException(org.springframework.http.HttpStatus.BAD_REQUEST,
             "INTAKE_SYMPTOM_UNKNOWN", "症状目录中不存在该项目，请刷新后重试");
         return value;
+    }
+
+    Optional<CatalogSymptomView> find(String code) {
+        return Optional.ofNullable(code == null ? null : byCode.get(code));
     }
 
     private static void add(Map<String, CatalogSymptomView> values, String code, String name, String category,

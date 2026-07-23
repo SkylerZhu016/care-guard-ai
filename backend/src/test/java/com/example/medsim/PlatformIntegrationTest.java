@@ -100,9 +100,9 @@ class PlatformIntegrationTest {
 
     @Test
     void complaintAiStructureIsStoredConfirmedAndDoesNotReplaceSelectedSymptoms() throws Exception {
-        when(aiClient.structureComplaint(anyString(), anyList(), any())).thenReturn(new AiComplaintResult(
+        when(aiClient.structureComplaint(anyString(), anyList(), anyList(), any())).thenReturn(new AiComplaintResult(
             "患者自述今天头痛并伴恶心。",
-            java.util.List.of(new ComplaintTagView("NAUSEA", "恶心", "消化系统", "ai_extracted", 0.91, "恶心", "proposed")),
+            java.util.List.of(new ComplaintTagView("NAUSEA_VOMITING", "恶心或呕吐", "消化系统", "ai_extracted", 0.91, "恶心", "proposed")),
             new ComplaintFactsView("今天", "", "头部", "", java.util.List.of(), java.util.List.of(), java.util.List.of("恶心"), ""),
             java.util.List.of(), java.util.List.of("目前是否仍存在？"), java.util.List.of("病因不确定"),
             "fake", "fake-v1", 12L, "AI 仅用于整理患者表述，不能替代医生诊断。"));
@@ -114,7 +114,7 @@ class PlatformIntegrationTest {
             .andExpect(jsonPath("$.tags[0].source").value("ai_extracted"));
         mvc.perform(put("/api/v2/visits/{id}/complaint-structure", id).header("Authorization", bearer(patient))
                 .contentType(MediaType.APPLICATION_JSON).content("""
-                    {"normalizedSummary":"患者确认：今天头痛并伴恶心。","tags":[{"code":"NAUSEA","displayName":"恶心","category":"消化系统","source":"ai_extracted","confidence":0.91,"evidenceText":"恶心","confirmationStatus":"confirmed"}],"structuredFacts":{"duration":"今天","onset":"","location":"头部","character":"","aggravatingFactors":[],"relievingFactors":[],"associatedSymptoms":["恶心"],"activityImpact":""},"riskSignals":[],"missingQuestions":["目前是否仍存在？"],"uncertainties":["病因不确定"]}
+                    {"normalizedSummary":"患者确认：今天头痛并伴恶心。","tags":[{"code":"NAUSEA_VOMITING","displayName":"恶心或呕吐","category":"消化系统","source":"ai_extracted","confidence":0.91,"evidenceText":"恶心","confirmationStatus":"confirmed"}],"structuredFacts":{"duration":"今天","onset":"","location":"头部","character":"","aggravatingFactors":[],"relievingFactors":[],"associatedSymptoms":["恶心"],"activityImpact":""},"riskSignals":[],"missingQuestions":["目前是否仍存在？"],"uncertainties":["病因不确定"]}
                     """))
             .andExpect(status().isOk()).andExpect(jsonPath("$.tags[0].confirmationStatus").value("confirmed"));
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM symptoms WHERE visit_id=?", Integer.class, UUID.fromString(id))).isEqualTo(1);
@@ -123,7 +123,7 @@ class PlatformIntegrationTest {
 
     @Test
     void invalidComplaintModelOutputIsDistinguishedFromServiceFailure() throws Exception {
-        when(aiClient.structureComplaint(anyString(), anyList(), any()))
+        when(aiClient.structureComplaint(anyString(), anyList(), anyList(), any()))
             .thenThrow(new IllegalStateException("AI_INVALID_JSON_OBJECT"));
         String patient = login("patient");
         JsonNode draft = createV2(patient, unsupportedVisit());
@@ -132,6 +132,27 @@ class PlatformIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("INVALID"))
             .andExpect(jsonPath("$.errorCode").value("AI_INVALID_JSON_OBJECT"));
+    }
+
+    @Test
+    void complaintOnlyDraftCanBeAnalyzedButCannotBeSubmittedWithoutTags() throws Exception {
+        when(aiClient.structureComplaint(anyString(), anyList(), anyList(), any())).thenReturn(new AiComplaintResult(
+            "患者自述腹部疼痛。",
+            java.util.List.of(new ComplaintTagView("ABDOMINAL_PAIN", "腹痛", "消化系统", "ai_extracted", 0.96, "肚子痛", "proposed")),
+            new ComplaintFactsView("", "", "腹部", "", java.util.List.of(), java.util.List.of(), java.util.List.of(), ""),
+            java.util.List.of(), java.util.List.of(), java.util.List.of(),
+            "fake", "fake-v1", 8L, "AI 仅用于整理患者表述，不能替代医生诊断。"));
+        String patient = login("patient");
+        JsonNode draft = createV2(patient,
+            "{\"primarySymptomCode\":null,\"chiefComplaint\":\"我肚子痛\",\"freeText\":\"\",\"symptomReports\":[]}");
+        String id = draft.get("id").asText();
+        mvc.perform(post("/api/v2/visits/{id}/analyze-complaint", id).header("Authorization", bearer(patient)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.tags[0].code").value("ABDOMINAL_PAIN"));
+        mvc.perform(post("/api/v2/visits/{id}/submit", id).header("Authorization", bearer(patient))
+                .header("Idempotency-Key", "complaint-only-001"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VISIT_SYMPTOMS_REQUIRED"));
     }
 
     @Test

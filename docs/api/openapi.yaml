@@ -110,8 +110,8 @@ paths:
               schema: { $ref: '#/components/schemas/VisitViewV2' }
   /api/v2/visits/{id}/analyze-complaint:
     post:
-      summary: 对草稿中的原始主诉进行 AI 结构化整理
-      description: 失败时返回 FAILED 结构，不阻断草稿保存或最终提交。
+      summary: 对草稿中的原始主诉进行 AI 结构化并匹配目录标签
+      description: 草稿可暂时不含症状；模型只能从服务端当前症状目录选择标签。失败时返回 FAILED 结构，不阻断草稿保存，患者可改为手动选择。
       parameters:
         - $ref: '#/components/parameters/VisitId'
       responses:
@@ -316,14 +316,19 @@ components:
         updatedAt: { type: [string, 'null'], format: date-time }
     VisitIntakeV2Input:
       type: object
-      required: [primarySymptomCode, chiefComplaint, symptomReports]
+      required: [chiefComplaint]
+      description: 草稿阶段只要求原始主诉；提交时服务端额外要求至少一项症状和有效的主要症状。
       properties:
-        primarySymptomCode: { type: string }
+        primarySymptomCode: { type: [string, 'null'] }
         chiefComplaint: { type: string, minLength: 1, maxLength: 500 }
-        freeText: { type: string, maxLength: 2000 }
+        freeText:
+          type: string
+          maxLength: 2000
+          deprecated: true
+          description: 仅用于兼容已有草稿；新版患者端不再提供独立补充输入框。
         symptomReports:
           type: array
-          minItems: 1
+          maxItems: 30
           items: { $ref: '#/components/schemas/SymptomReportInput' }
     SymptomReportInput:
       type: object
@@ -333,8 +338,8 @@ components:
         customName: { type: string, maxLength: 100 }
         source:
           type: string
-          enum: [USER_SELECTED, CATALOG, RELATED_ANSWER, CUSTOM]
-          description: 新版目录手选使用 USER_SELECTED；CATALOG 仅为早期 v2 草稿兼容值。
+          enum: [USER_SELECTED, AI_EXTRACTED, CATALOG, RELATED_ANSWER, CUSTOM]
+          description: AI 自动匹配使用 AI_EXTRACTED，患者手选使用 USER_SELECTED；CATALOG 仅为早期 v2 草稿兼容值。
         onsetRange: { type: string, enum: [JUST_NOW, TODAY, ONE_TO_THREE_DAYS, MORE_THAN_THREE_DAYS, UNKNOWN] }
         course: { type: string, enum: [CONTINUOUS, INTERMITTENT, RELIEVED, UNKNOWN] }
         currentStatus: { type: string, enum: [PRESENT, NOT_PRESENT, UNKNOWN] }

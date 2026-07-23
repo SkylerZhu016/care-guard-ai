@@ -32,7 +32,7 @@ PostgreSQL 是唯一业务数据库。包名 `com.example.medsim` 和制品名�
 
 ### 3.2 问诊
 
-`VisitIntakeV2` 由主症状、主诉、补充描述和 `SymptomReport[]` 构成。`SymptomReport` 保存：
+`VisitIntakeV2` 由主症状、原始主诉、兼容用补充描述和 `SymptomReport[]` 构成。草稿阶段允许只有原始主诉、没有症状；提交阶段才强制要求至少一项症状和有效主症状。新版患者端不再展示独立“用自己的话补充”输入框。`SymptomReport` 保存：
 
 - `symptomCode`、`source`、`catalogVersion`、`supportLevel`
 - `onsetRange`：刚刚、今天、1–3 天、3 天以上、不清楚
@@ -45,7 +45,7 @@ PostgreSQL 是唯一业务数据库。包名 `com.example.medsim` 和制品名�
 
 ### 3.3 主诉 AI 结构
 
-主诉原文不得被 AI 改写覆盖。草稿保存后调用 `POST /api/v2/visits/{id}/analyze-complaint`，模型结构写入 `visit_complaint_analyses.structured_json`；患者确认、删除或补充后的版本通过 `PUT /api/v2/visits/{id}/complaint-structure` 写入 `confirmed_json`。标签来源固定为 `user_selected` 或 `ai_extracted`，确认状态固定为 `proposed`、`confirmed` 或 `removed`。
+主诉原文不得被 AI 改写覆盖。患者在主诉输入框按 Enter 后，前端先保存仅含主诉的草稿，再调用 `POST /api/v2/visits/{id}/analyze-complaint`。Java 必须把当前完整症状目录传给 Python；提示词要求模型只能从目录中选择一个、多个或零个标签。真实 Provider 只要求模型输出 `selectedTagCodes` 和 `tagEvidence`，显示名、分类、来源及确认状态由服务端目录补齐。模型响应先尝试整体 JSON 解析，再从代码块或夹带说明文字中提取 JSON，经 Pydantic 校验和目录白名单过滤后才返回。合法标签自动写为 `SymptomReport.source=AI_EXTRACTED`，与 `USER_SELECTED` 分离，患者可删除或手动补充。模型结构仍写入 `visit_complaint_analyses.structured_json`；兼容接口 `PUT /api/v2/visits/{id}/complaint-structure` 可保存确认版本。
 
 ### 3.4 健康资料
 
@@ -55,7 +55,7 @@ PostgreSQL 是唯一业务数据库。包名 `com.example.medsim` 和制品名�
 
 ### 4.1 哪里不舒服
 
-目录必须来自服务端。页面提供搜索、中文分类、常用卡片和其他不适。选中项目后生成可编辑主诉。患者端不显示英文代码。AI 建议标签与患者手选项目分区展示，允许确认和删除，调用失败不得阻塞下一步或提交。
+目录必须来自服务端。页面先提供一个简洁主诉输入框，按 Enter 自动匹配标签；不再提供独立“智能整理”按钮或重复的补充描述框。页面继续提供搜索、中文分类、常用卡片和其他不适，患者端不显示英文代码。AI 标签和患者手选标签在同一区域分源标注并允许删除；调用失败时保留原文并提示改为手选。
 
 ### 4.2 具体情况
 

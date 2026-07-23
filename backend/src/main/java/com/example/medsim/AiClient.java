@@ -70,10 +70,15 @@ class AiClient {
     }
 
     AiComplaintResult structureComplaint(String rawComplaint, List<ComplaintTagView> selectedTags,
-                                         PatientProfileInput profile) {
+                                         List<CatalogSymptomView> availableTags, PatientProfileInput profile) {
         Map<String,Object> body = new LinkedHashMap<>();
         body.put("rawComplaint", rawComplaint);
         body.put("selectedTags", selectedTags == null ? List.of() : selectedTags);
+        body.put("availableTags", availableTags == null ? List.of() : availableTags.stream().map(value -> {
+            Map<String,Object> tag = new LinkedHashMap<>();
+            tag.put("code", value.code()); tag.put("displayName", value.name()); tag.put("category", value.category());
+            return tag;
+        }).toList());
         body.put("ageBand", profile == null ? "UNKNOWN" : profile.ageBand());
         var result = client.post().uri("/internal/v1/complaint-structure")
             .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
