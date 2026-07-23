@@ -3,6 +3,7 @@ package cn.edu.medplatform.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,7 +18,7 @@ public class Visit {
     private Long ownerUserId;
     private String status = "DRAFT";
     private String riskLevel;
-    @Column(columnDefinition = "jsonb") private String formData;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String formData;
     @Version private Integer version;
     private Long createdBy;
     private LocalDateTime submittedAt;

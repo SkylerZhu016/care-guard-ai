@@ -14,7 +14,8 @@
         <el-table-column prop="phone" label="电话" width="140" />
         <el-table-column label="慢病标签" min-width="150">
           <template #default="{ row }">
-            <el-tag v-for="t in row.chronicTags" :key="t" size="small" style="margin-right:4px">{{ t }}</el-tag>
+            <el-tag v-for="t in (row.chronicTags || [])" :key="t" size="small" type="danger" style="margin-right:4px">{{ t }}</el-tag>
+            <span v-if="!row.chronicTags || row.chronicTags.length === 0" style="color:#bbb;font-size:12px">无</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">

@@ -2,6 +2,7 @@ package cn.edu.medplatform.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,8 +15,8 @@ public class AgentRunStep {
     private Long runId;
     private String step;
     private String status = "RUNNING";
-    @Column(columnDefinition = "jsonb") private String inputJson;
-    @Column(columnDefinition = "jsonb") private String outputJson;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String inputJson;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String outputJson;
     private Integer tokens = 0;
     private Integer durationMs;
     private String error;

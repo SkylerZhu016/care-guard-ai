@@ -3,6 +3,7 @@ package cn.edu.medplatform.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,7 +20,7 @@ public class ModelConfig {
     private String purpose = "CHAT";
     private Boolean enabled = true;
     private Boolean isDefault = false;
-    @Column(columnDefinition = "jsonb") private String params;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String params;
     @CreationTimestamp
 
     private LocalDateTime createdAt;

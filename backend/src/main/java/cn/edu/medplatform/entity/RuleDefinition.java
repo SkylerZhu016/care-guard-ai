@@ -3,6 +3,7 @@ package cn.edu.medplatform.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ public class RuleDefinition {
     private String name;
     private String category;
     private Integer priority = 100;
-    @Column(columnDefinition = "jsonb") private String conditionExpr;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String conditionExpr;
     private String message;
     private String riskLevel;
     private Boolean enabled = true;

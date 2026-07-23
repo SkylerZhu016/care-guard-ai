@@ -9,7 +9,7 @@ import cn.edu.medplatform.entity.*;
 import java.util.List;
 
 public interface FollowupTaskRepository extends JpaRepository<FollowupTask, Long> {
-    @Query("SELECT t FROM FollowupTask t WHERE (:status IS NULL OR t.status = :status) AND (:riskLevel IS NULL OR t.riskLevel = :riskLevel) AND (:patientId IS NULL OR t.patientId = :patientId) AND (:assigneeId IS NULL OR t.assigneeId = :assigneeId) AND (:dueBefore IS NULL OR t.dueDate <= :dueBefore) ORDER BY t.dueDate ASC")
-    Page<FollowupTask> search(@Param("status") String status, @Param("riskLevel") String riskLevel, @Param("patientId") Long patientId, @Param("assigneeId") Long assigneeId, @Param("dueBefore") java.time.LocalDate dueBefore, Pageable p);
+    @Query("SELECT t FROM FollowupTask t WHERE (t.status = :status OR :status = '') AND (t.riskLevel = :riskLevel OR :riskLevel = '') AND (:patientId = -1L OR t.patientId = :patientId) ORDER BY t.dueDate ASC")
+    Page<FollowupTask> search(@Param("status") String status, @Param("riskLevel") String riskLevel, @Param("patientId") Long patientId, Pageable p);
     List<FollowupTask> findByPlanId(Long planId);
 }

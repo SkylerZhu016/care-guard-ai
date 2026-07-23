@@ -2,6 +2,7 @@ package cn.edu.medplatform.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,8 +16,8 @@ public class TriageResult {
     private Long agentRunId;
     private String riskLevel;
     private String riskSummary;
-    @Column(columnDefinition = "jsonb") private String riskPoints;
-    @Column(columnDefinition = "jsonb") private String summaryForReview;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String riskPoints;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String summaryForReview;
     private String safetyStatus;
     private String disclaimer;
     private String knowledgeVersion;

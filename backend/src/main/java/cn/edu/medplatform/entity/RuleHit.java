@@ -2,6 +2,7 @@ package cn.edu.medplatform.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,7 +20,7 @@ public class RuleHit {
     private String category;
     private String riskLevel;
     private String message;
-    @Column(columnDefinition = "jsonb") private String evidence;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String evidence;
     @CreationTimestamp
 
     private LocalDateTime createdAt;

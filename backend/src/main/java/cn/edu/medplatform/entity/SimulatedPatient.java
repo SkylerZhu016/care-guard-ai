@@ -3,6 +3,7 @@ package cn.edu.medplatform.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,7 +21,7 @@ public class SimulatedPatient {
     private String phone;
     private String idCard;
     private String bloodType;
-    @Column(columnDefinition = "jsonb") private String chronicTags;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String chronicTags;
     private String address;
     @CreationTimestamp
 

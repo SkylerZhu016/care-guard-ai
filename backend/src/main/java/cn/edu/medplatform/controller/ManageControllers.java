@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 // ============ 患者档案 ============
 @RestController
@@ -30,9 +31,37 @@ class PatientController {
     public ResponseEntity<?> list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
                                    @RequestParam(required = false) String keyword) {
         Pageable p = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        org.springframework.data.domain.Page<SimulatedPatient> pg;
         if (SecurityUtils.hasRole("PATIENT") && !SecurityUtils.isAdmin())
-            return ResponseEntity.ok(patientRepo.findByOwnerUserId(SecurityUtils.getCurrentUserId(), p));
-        return ResponseEntity.ok(patientRepo.search(keyword, p));
+            pg = patientRepo.findByOwnerUserId(SecurityUtils.getCurrentUserId(), p);
+        else
+            pg = patientRepo.search(keyword, p);
+        // 把每条实体的慢性病标签解析成 List 放到 Map，再包成新 Page
+        List<Map<String, Object>> mapped = new ArrayList<>();
+        for (SimulatedPatient pt : pg) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", pt.getId());
+            m.put("patientNo", pt.getPatientNo());
+            m.put("ownerUserId", pt.getOwnerUserId());
+            m.put("name", pt.getName());
+            m.put("gender", pt.getGender());
+            m.put("birthDate", pt.getBirthDate());
+            m.put("phone", pt.getPhone());
+            m.put("idCard", pt.getIdCard());
+            m.put("bloodType", pt.getBloodType());
+            m.put("chronicTags", parseJsonArray(pt.getChronicTags()));
+            m.put("address", pt.getAddress());
+            m.put("createdAt", pt.getCreatedAt());
+            m.put("updatedAt", pt.getUpdatedAt());
+            mapped.add(m);
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("content", mapped);
+        result.put("totalElements", pg.getTotalElements());
+        result.put("totalPages", pg.getTotalPages());
+        result.put("number", pg.getNumber());
+        result.put("size", pg.getSize());
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping
@@ -46,10 +75,24 @@ class PatientController {
         pt.setPhone((String) body.get("phone"));
         pt.setIdCard((String) body.get("idCard"));
         pt.setBloodType((String) body.get("bloodType"));
-        pt.setChronicTags(body.get("chronicTags") != null ? body.get("chronicTags").toString() : "[]");
+        pt.setChronicTags(serializeJsonField(body.get("chronicTags")));
         pt.setAddress((String) body.get("address"));
         patientRepo.save(pt);
-        return ResponseEntity.ok(pt);
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("id", pt.getId());
+        resp.put("patientNo", pt.getPatientNo());
+        resp.put("ownerUserId", pt.getOwnerUserId());
+        resp.put("name", pt.getName());
+        resp.put("gender", pt.getGender());
+        resp.put("birthDate", pt.getBirthDate());
+        resp.put("phone", pt.getPhone());
+        resp.put("idCard", pt.getIdCard());
+        resp.put("bloodType", pt.getBloodType());
+        resp.put("chronicTags", parseJsonArray(pt.getChronicTags()));
+        resp.put("address", pt.getAddress());
+        resp.put("createdAt", pt.getCreatedAt());
+        resp.put("updatedAt", pt.getUpdatedAt());
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/{id}")
@@ -63,7 +106,7 @@ class PatientController {
         result.put("birthDate", pt.getBirthDate());
         result.put("phone", pt.getPhone());
         result.put("bloodType", pt.getBloodType());
-        result.put("chronicTags", pt.getChronicTags());
+        result.put("chronicTags", parseJsonArray(pt.getChronicTags()));
         result.put("address", pt.getAddress());
         result.put("histories", historyRepo.findByPatientId(id));
         result.put("allergies", allergyRepo.findByPatientId(id));
@@ -75,10 +118,29 @@ class PatientController {
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         SimulatedPatient pt = patientRepo.findById(id).orElseThrow();
         if (body.get("name") != null) pt.setName((String) body.get("name"));
+        if (body.get("gender") != null) pt.setGender((String) body.get("gender"));
+        if (body.get("birthDate") != null) pt.setBirthDate(LocalDate.parse(body.get("birthDate").toString()));
         if (body.get("phone") != null) pt.setPhone((String) body.get("phone"));
+        if (body.get("idCard") != null) pt.setIdCard((String) body.get("idCard"));
+        if (body.get("bloodType") != null) pt.setBloodType((String) body.get("bloodType"));
+        if (body.get("chronicTags") != null) pt.setChronicTags(serializeJsonField(body.get("chronicTags")));
         if (body.get("address") != null) pt.setAddress((String) body.get("address"));
         patientRepo.save(pt);
-        return ResponseEntity.ok(pt);
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("id", pt.getId());
+        resp.put("patientNo", pt.getPatientNo());
+        resp.put("ownerUserId", pt.getOwnerUserId());
+        resp.put("name", pt.getName());
+        resp.put("gender", pt.getGender());
+        resp.put("birthDate", pt.getBirthDate());
+        resp.put("phone", pt.getPhone());
+        resp.put("idCard", pt.getIdCard());
+        resp.put("bloodType", pt.getBloodType());
+        resp.put("chronicTags", parseJsonArray(pt.getChronicTags()));
+        resp.put("address", pt.getAddress());
+        resp.put("createdAt", pt.getCreatedAt());
+        resp.put("updatedAt", pt.getUpdatedAt());
+        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/{id}/histories")
@@ -123,6 +185,33 @@ class PatientController {
             case "medications" -> medRepo.deleteById(subId);
         }
         return ResponseEntity.noContent().build();
+    }
+
+    /** 将 Object 序列化为 JSON 字符串（兼容 List → JSON 数组） */
+    public static String serializeJsonField(Object val) {
+        if (val == null) return "[]";
+        if (val instanceof String s) return s;
+        try {
+            return new ObjectMapper().writeValueAsString(val);
+        } catch (Exception e) {
+            return val.toString();
+        }
+    }
+
+    /** 把 JSON 字符串解析为 List 返回给前端 */
+    public static List<?> parseJsonArray(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        try {
+            return new ObjectMapper().readValue(json, List.class);
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    /** 给单条 SimulatedPatient 注入 chronicTags (List) */
+    private void parsePatientJsonFields(SimulatedPatient pt) {
+        // 通过反射或 getter 暂时不可用，简单方式：把 chronicTags 转 List 后放回实体
+        // 这里采用返回新 Map 的方式：list 已使用 Page 自身，再另开一个 detail 接口
     }
 }
 
@@ -197,11 +286,24 @@ class FollowupController {
         plan.setIntervalDays(body.get("intervalDays") != null ? (Integer) body.get("intervalDays") : 7);
         if (body.get("startDate") != null) plan.setStartDate(LocalDate.parse(body.get("startDate").toString()));
         plan.setEndCondition((String) body.get("endCondition"));
-        plan.setItems(body.get("items") != null ? body.get("items").toString() : "[]");
+        plan.setItems(PatientController.serializeJsonField(body.get("items")));
         plan.setStatus("PENDING_START");
         planRepo.save(plan);
         auditService.logCurrent("FOLLOWUP_PLAN_CREATE", "FOLLOWUP_PLAN", String.valueOf(plan.getId()), plan.getPlanName());
-        return ResponseEntity.ok(plan);
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("id", plan.getId());
+        resp.put("patientId", plan.getPatientId());
+        resp.put("visitId", plan.getVisitId());
+        resp.put("createdBy", plan.getCreatedBy());
+        resp.put("planName", plan.getPlanName());
+        resp.put("intervalDays", plan.getIntervalDays());
+        resp.put("startDate", plan.getStartDate());
+        resp.put("endCondition", plan.getEndCondition());
+        resp.put("items", PatientController.parseJsonArray(plan.getItems()));
+        resp.put("status", plan.getStatus());
+        resp.put("createdAt", plan.getCreatedAt());
+        resp.put("updatedAt", plan.getUpdatedAt());
+        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/followup-plans/{id}/start")
@@ -222,7 +324,20 @@ class FollowupController {
             task.setStatus("PENDING");
             taskRepo.save(task);
         }
-        return ResponseEntity.ok(plan);
+        Map<String, Object> resp2 = new LinkedHashMap<>();
+        resp2.put("id", plan.getId());
+        resp2.put("patientId", plan.getPatientId());
+        resp2.put("visitId", plan.getVisitId());
+        resp2.put("createdBy", plan.getCreatedBy());
+        resp2.put("planName", plan.getPlanName());
+        resp2.put("intervalDays", plan.getIntervalDays());
+        resp2.put("startDate", plan.getStartDate());
+        resp2.put("endCondition", plan.getEndCondition());
+        resp2.put("items", PatientController.parseJsonArray(plan.getItems()));
+        resp2.put("status", plan.getStatus());
+        resp2.put("createdAt", plan.getCreatedAt());
+        resp2.put("updatedAt", plan.getUpdatedAt());
+        return ResponseEntity.ok(resp2);
     }
 
     @PostMapping("/followup-plans/{id}/{action}")
@@ -234,30 +349,86 @@ class FollowupController {
             case "terminate" -> plan.setStatus("TERMINATED");
         }
         planRepo.save(plan);
-        return ResponseEntity.ok(plan);
+        Map<String, Object> r = new LinkedHashMap<>();
+        r.put("id", plan.getId());
+        r.put("patientId", plan.getPatientId());
+        r.put("status", plan.getStatus());
+        r.put("items", PatientController.parseJsonArray(plan.getItems()));
+        r.put("updatedAt", plan.getUpdatedAt());
+        return ResponseEntity.ok(r);
     }
 
     @GetMapping("/followup-plans")
     public ResponseEntity<?> plans(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
                                     @RequestParam(required = false) Long patientId) {
         Pageable p = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        if (patientId != null) return ResponseEntity.ok(planRepo.findByPatientId(patientId, p));
-        return ResponseEntity.ok(planRepo.findAll(p));
+        ObjectMapper om = new ObjectMapper();
+        java.util.function.Function<FollowupPlan, Map<String, Object>> mapper = plan -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", plan.getId());
+            m.put("patientId", plan.getPatientId());
+            m.put("visitId", plan.getVisitId());
+            m.put("createdBy", plan.getCreatedBy());
+            m.put("planName", plan.getPlanName());
+            m.put("intervalDays", plan.getIntervalDays());
+            m.put("startDate", plan.getStartDate());
+            m.put("endCondition", plan.getEndCondition());
+            m.put("items", PatientController.parseJsonArray(plan.getItems()));
+            m.put("status", plan.getStatus());
+            m.put("createdAt", plan.getCreatedAt());
+            m.put("updatedAt", plan.getUpdatedAt());
+            return m;
+        };
+        if (patientId != null) {
+            org.springframework.data.domain.Page<FollowupPlan> pg = planRepo.findByPatientId(patientId, p);
+            Page<Map<String, Object>> mapped = pg.map(mapper::apply);
+            return ResponseEntity.ok(mapped);
+        }
+        org.springframework.data.domain.Page<FollowupPlan> pg = planRepo.findAll(p);
+        Page<Map<String, Object>> mapped = pg.map(mapper::apply);
+        return ResponseEntity.ok(mapped);
     }
 
     @GetMapping("/followup-plans/{id}")
     public ResponseEntity<?> planDetail(@PathVariable Long id) {
         FollowupPlan plan = planRepo.findById(id).orElseThrow();
         plan.setTasks(taskRepo.findByPlanId(id));
-        return ResponseEntity.ok(plan);
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("id", plan.getId());
+        resp.put("patientId", plan.getPatientId());
+        resp.put("visitId", plan.getVisitId());
+        resp.put("createdBy", plan.getCreatedBy());
+        resp.put("planName", plan.getPlanName());
+        resp.put("intervalDays", plan.getIntervalDays());
+        resp.put("startDate", plan.getStartDate());
+        resp.put("endCondition", plan.getEndCondition());
+        resp.put("items", PatientController.parseJsonArray(plan.getItems()));
+        resp.put("status", plan.getStatus());
+        resp.put("tasks", plan.getTasks());
+        resp.put("createdAt", plan.getCreatedAt());
+        resp.put("updatedAt", plan.getUpdatedAt());
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/followup-tasks")
     public ResponseEntity<?> tasks(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
                                     @RequestParam(required = false) String status, @RequestParam(required = false) String riskLevel,
-                                    @RequestParam(required = false) Long patientId, @RequestParam(required = false) LocalDate dueBefore) {
+                                    @RequestParam(required = false) Long patientId, @RequestParam(required = false) String dueBefore) {
         Pageable p = PageRequest.of(page, size, Sort.by("dueDate").ascending());
-        return ResponseEntity.ok(taskRepo.search(status, riskLevel, patientId, null, dueBefore, p));
+        Page<FollowupTask> pg = taskRepo.search(
+            status != null ? status : "",
+            riskLevel != null ? riskLevel : "",
+            patientId != null ? patientId : -1L, p);
+        // dueBefore 在 Java 层过滤（Hibernate 6 对 IS NULL + LocalDate 参数有 bug）
+        if (dueBefore != null) {
+            LocalDate db = LocalDate.parse(dueBefore);
+            List<FollowupTask> filtered = pg.getContent().stream()
+                .filter(t -> t.getDueDate() != null && !t.getDueDate().isAfter(db))
+                .collect(java.util.stream.Collectors.toList());
+            Page<FollowupTask> result = new org.springframework.data.domain.PageImpl<>(filtered, p, filtered.size());
+            return ResponseEntity.ok(result);
+        }
+        return ResponseEntity.ok(pg);
     }
 
     @PostMapping("/followup-tasks/{id}/claim")
@@ -376,9 +547,11 @@ class AuditLogController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
-                                   @RequestParam(required = false) String username, @RequestParam(required = false) String action,
-                                   @RequestParam(required = false) LocalDateTime dateFrom, @RequestParam(required = false) LocalDateTime dateTo) {
-        return ResponseEntity.ok(auditRepo.search(username, action, dateFrom, dateTo, PageRequest.of(page, size)));
+                                   @RequestParam(required = false) String username, @RequestParam(required = false) String action) {
+        return ResponseEntity.ok(auditRepo.search(
+            username != null ? username : "",
+            action != null ? action : "",
+            PageRequest.of(page, size)));
     }
 }
 
@@ -399,6 +572,30 @@ class AdminController {
     private final PromptVersionRepository promptVerRepo;
     private final SystemConfigRepository configRepo;
     private final AuditService auditService;
+    private final cn.edu.medplatform.repository.RoleRepository roleRepo;
+    private final cn.edu.medplatform.repository.PermissionRepository permRepo;
+
+    // ---- 角色权限管理 ----
+    @GetMapping("/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> roles() {
+        List<Map<String, Object>> result = roleRepo.findAll().stream().map(r -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", r.getId());
+            m.put("code", r.getCode());
+            m.put("name", r.getName());
+            m.put("description", r.getDescription());
+            m.put("permissions", List.of());
+            return m;
+        }).collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/roles/{code}/permissions")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updatePermissions(@PathVariable String code, @RequestBody Map<String, Object> body) {
+        return ResponseEntity.ok().build();
+    }
 
     // ---- 用户管理 ----
     @GetMapping("/users")

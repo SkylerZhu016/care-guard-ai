@@ -3,6 +3,7 @@ package cn.edu.medplatform.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,7 +21,7 @@ public class FollowupPlan {
     private Integer intervalDays = 7;
     private LocalDate startDate;
     private String endCondition;
-    @Column(columnDefinition = "jsonb") private String items;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String items;
     @Version private Integer version;
     @CreationTimestamp
 

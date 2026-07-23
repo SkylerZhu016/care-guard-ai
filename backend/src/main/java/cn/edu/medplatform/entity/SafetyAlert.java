@@ -2,6 +2,7 @@ package cn.edu.medplatform.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ public class SafetyAlert {
     private Long visitId;
     private Long agentRunId;
     private String description;
-    @Column(columnDefinition = "jsonb") private String detail;
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON) private String detail;
     private String status = "OPEN";
     private Long handledBy;
     private LocalDateTime handledAt;
