@@ -21,26 +21,33 @@ export interface PhysiologicalSelection { birthSex:BirthSex; reproductiveStatus:
 export const BIRTH_SEX_OPTIONS:Array<{value:BirthSex;label:string}> = [
   {value:'MALE',label:'男'},
   {value:'FEMALE',label:'女'},
-  {value:'INTERSEX_OR_OTHER',label:'其他/未明确'},
-  {value:'UNKNOWN',label:'不确定'},
-  {value:'PREFER_NOT_TO_SAY',label:'暂不回答'},
 ]
 
-export const REPRODUCTIVE_STATUS_OPTIONS:Array<{value:ReproductiveStatus;label:string}> = [
+const REPRODUCTIVE_STATUS_MALE:Array<{value:ReproductiveStatus;label:string}> = [
   {value:'NOT_APPLICABLE',label:'不适用'},
-  {value:'NOT_PREGNANT',label:'目前未怀孕'},
+]
+
+const REPRODUCTIVE_STATUS_FEMALE:Array<{value:ReproductiveStatus;label:string}> = [
+  {value:'NOT_PREGNANT',label:'未怀孕'},
   {value:'POSSIBLY_PREGNANT',label:'可能怀孕'},
   {value:'PREGNANT',label:'已怀孕'},
   {value:'POSTPARTUM_SIX_WEEKS',label:'产后 6 周内'},
   {value:'BREASTFEEDING',label:'正在哺乳'},
-  {value:'UNKNOWN',label:'不确定'},
-  {value:'PREFER_NOT_TO_SAY',label:'暂不回答'},
+]
+
+export const REPRODUCTIVE_STATUS_OPTIONS:Array<{value:ReproductiveStatus;label:string}> = [
+  ...REPRODUCTIVE_STATUS_MALE,
+  ...REPRODUCTIVE_STATUS_FEMALE,
 ]
 
 const birthSexValues=new Set(BIRTH_SEX_OPTIONS.map(item=>item.value))
 const reproductiveStatusValues=new Set(REPRODUCTIVE_STATUS_OPTIONS.map(item=>item.value))
 const birthSexLabels=Object.fromEntries(BIRTH_SEX_OPTIONS.map(item=>[item.value,item.label])) as Record<BirthSex,string>
 const reproductiveStatusLabels=Object.fromEntries(REPRODUCTIVE_STATUS_OPTIONS.map(item=>[item.value,item.label])) as Record<ReproductiveStatus,string>
+
+export function reproductiveOptionsFor(sex:BirthSex){
+  return sex==='MALE'?REPRODUCTIVE_STATUS_MALE:REPRODUCTIVE_STATUS_FEMALE
+}
 
 export function parsePhysiologicalInfo(value?:string):PhysiologicalSelection {
   try {
