@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight, Bell, Check, CircleCheck, Clock, Delete, Document, EditPen, FirstAidKit, FolderOpened, Plus, User } from '@element-plus/icons-vue'
 import { ApiClient } from '../api'
-import { formatDate, formatDateTime } from '../domain/presentation'
+import { BIRTH_SEX_OPTIONS, formatDate, formatDateTime, parsePhysiologicalInfo, REPRODUCTIVE_STATUS_OPTIONS, serializePhysiologicalInfo } from '../domain/presentation'
 import { useSessionStore } from '../stores/session'
 import type { CatalogSymptom, ComplaintAnalysis, IntakeCatalog, PatientProfileInput, QuestionAnswer, SymptomReport, Task, Visit } from '../types'
 import StatusPill from '../components/StatusPill.vue'
@@ -17,6 +17,7 @@ const complaintAnalysis=ref<ComplaintAnalysis|null>(null)
 const symptomPickerOpen=ref(false)
 const draftKey='patient-intake-v2-draft'
 const profile=reactive<PatientProfileInput>({ageBand:'UNKNOWN',physiologicalInfoStatus:'UNKNOWN',physiologicalInfo:'',chronicConditionsStatus:'UNKNOWN',chronicConditions:[],allergiesStatus:'UNKNOWN',allergies:[],longTermMedicationsStatus:'UNKNOWN',longTermMedications:[]})
+const physiology=reactive(parsePhysiologicalInfo())
 const form=reactive({primarySymptomCode:'',chiefComplaint:'',freeText:'',symptomReports:[] as SymptomReport[]})
 
 const areas=[{id:'INTAKE',label:'新建预问诊',icon:FirstAidKit},{id:'RECORDS',label:'问诊记录',icon:FolderOpened},{id:'TASKS',label:'随访任务',icon:Bell},{id:'PROFILE',label:'健康资料',icon:User}] as const
@@ -56,7 +57,7 @@ function generateSummary(){const names=form.symptomReports.map(displayName);if(n
 function payload(){return {primarySymptomCode:form.primarySymptomCode||null,chiefComplaint:form.chiefComplaint.trim(),freeText:form.freeText.trim(),symptomReports:form.symptomReports.map(({id,name,supportLevel,catalogVersion,legacySeverity,legacyOnset,...report})=>report)}}
 function restoreLocal(){const stored=localStorage.getItem(draftKey);if(!stored)return;try{const value=JSON.parse(stored);Object.assign(form,value);ElMessage.info('已恢复上次未提交的草稿')}catch{localStorage.removeItem(draftKey)}}
 function reset(){draftId.value=null;complaintAnalysis.value=null;step.value=1;Object.assign(form,{primarySymptomCode:'',chiefComplaint:'',freeText:'',symptomReports:[]});localStorage.removeItem(draftKey)}
-async function load(){loading.value=true;try{const [catalogData,visitData,taskData,profileData]=await Promise.all([api.intakeCatalog(),api.myVisits(),api.myTasks(),api.patientProfile()]);catalog.value=catalogData;visits.value=visitData;tasks.value=taskData;Object.assign(profile,profileData.data);restoreLocal()}finally{loading.value=false}}
+async function load(){loading.value=true;try{const [catalogData,visitData,taskData,profileData]=await Promise.all([api.intakeCatalog(),api.myVisits(),api.myTasks(),api.patientProfile()]);catalog.value=catalogData;visits.value=visitData;tasks.value=taskData;Object.assign(profile,profileData.data);Object.assign(physiology,parsePhysiologicalInfo(profile.physiologicalInfo));restoreLocal()}finally{loading.value=false}}
 async function saveDraft(exit=false,quiet=false){if(!canSaveDraft.value){if(!quiet)ElMessage.warning('请先填写主诉');return null}saving.value=true;try{const saved=draftId.value?await api.updateVisit(draftId.value,payload()):await api.createVisit(payload());draftId.value=saved.id;localStorage.setItem(draftKey,JSON.stringify(form));if(!quiet)ElMessage.success(exit?'草稿已保存，可稍后继续':'草稿已保存');await refreshVisits();if(exit)area.value='RECORDS';return saved}catch(e:any){if(!quiet)ElMessage.error(e.message);return null}finally{saving.value=false}}
 async function analyzeComplaint(){
   if(analyzing.value||!form.chiefComplaint.trim())return
@@ -80,11 +81,24 @@ async function analyzeComplaint(){
   finally{analyzing.value=false}
 }
 function onComplaintKeydown(event:KeyboardEvent){if(event.key==='Enter'){event.preventDefault();void analyzeComplaint()}}
-async function submit(){const saved=await saveDraft(false);if(!saved)return;try{await ElMessageBox.confirm('提交后不能直接修改，但仍可在记录中补充信息。以上信息与我填写的一致。','确认提交',{type:urgentSignal.value?'error':'warning',confirmButtonText:'确认并提交',cancelButtonText:'返回检查'});await api.submitVisit(saved.id);ElMessage.success('已提交，正在进入人工审核');reset();area.value='RECORDS';await refreshVisits()}catch(e:any){if(e!=='cancel'&&e!=='close')ElMessage.error(e.message)}}
+async function submit(){
+  const saved=await saveDraft(false);if(!saved)return
+  try{
+    await ElMessageBox.confirm('提交后不能直接修改，但仍可在记录中补充信息。以上信息与我填写的一致。','确认提交',{type:urgentSignal.value?'error':'warning',confirmButtonText:'确认并提交',cancelButtonText:'返回检查'})
+    saving.value=true
+    try{await persistProfile()}
+    catch(e:any){ElMessage.error(`健康资料保存失败，预问诊未提交：${e.message||'请稍后重试'}`);return}
+    await api.submitVisit(saved.id)
+    ElMessage.success('已提交，正在进入人工审核');reset();area.value='RECORDS';await refreshVisits()
+  }catch(e:any){if(e!=='cancel'&&e!=='close')ElMessage.error(e.message)}
+  finally{saving.value=false}
+}
 async function editDraft(visit:Visit){draftId.value=visit.id;complaintAnalysis.value=visit.complaintAnalysis||null;Object.assign(form,{primarySymptomCode:visit.primarySymptomCode||visit.symptomReports[0]?.symptomCode||'',chiefComplaint:visit.chiefComplaint,freeText:visit.freeText,symptomReports:visit.symptomReports.map(item=>({...item,customName:item.supportLevel==='CUSTOM'?item.name:undefined,answers:item.answers.map(a=>({...a,selectedOptions:[...a.selectedOptions]}))}))});area.value='INTAKE';step.value=1;window.scrollTo({top:0,behavior:'smooth'})}
 async function refreshVisits(){visits.value=await api.myVisits()}
 async function addSupplement(visit:Visit){try{const result=await ElMessageBox.prompt('请只补充与本次不适有关的新信息，不要填写姓名、电话或地址。','补充信息',{confirmButtonText:'提交补充',cancelButtonText:'取消',inputType:'textarea',inputValidator:value=>!!value.trim()||'请输入补充内容'});supplementing.value=visit.id;await api.supplementVisit(visit.id,result.value);ElMessage.success('补充信息已提交，将随原记录一起审核');await refreshVisits()}catch(e:any){if(e!=='cancel'&&e!=='close')ElMessage.error(e.message)}finally{supplementing.value=null}}
-async function saveProfile(){saving.value=true;try{await api.savePatientProfile({...profile});ElMessage.success('健康资料已保存，提交问诊时会保存当时的资料快照')}catch(e:any){ElMessage.error(e.message)}finally{saving.value=false}}
+function syncPhysiologicalInfo(){profile.physiologicalInfo=serializePhysiologicalInfo(physiology);profile.physiologicalInfoStatus=physiology.birthSex==='UNKNOWN'&&physiology.reproductiveStatus==='UNKNOWN'?'UNKNOWN':'PROVIDED'}
+async function persistProfile(){syncPhysiologicalInfo();return api.savePatientProfile({...profile})}
+async function saveProfile(){saving.value=true;try{await persistProfile();ElMessage.success('健康资料已保存，只影响之后提交的问诊快照')}catch(e:any){ElMessage.error(e.message)}finally{saving.value=false}}
 function listText(values:string[]){return values.join('、')}
 function setList(key:'chronicConditions'|'allergies'|'longTermMedications',value:string){profile[key]=value.split(/[，,、\n]/).map(item=>item.trim()).filter(Boolean)}
 watch(form,()=>{if(form.chiefComplaint.trim()||form.symptomReports.length)localStorage.setItem(draftKey,JSON.stringify(form))},{deep:true})
@@ -159,8 +173,35 @@ onMounted(()=>load().catch((e:any)=>ElMessage.error(e.message)))
         </template>
 
         <template v-else>
-          <div class="page-heading"><div><span class="eyebrow">健康资料</span><h1>维护必要的健康背景</h1><p>每项均可选择“无、未知、已填写”；提交问诊时会保存当时的资料快照。</p></div></div>
-          <article class="panel profile-panel"><el-form label-position="top"><div class="profile-grid"><el-form-item label="年龄段"><el-select v-model="profile.ageBand"><el-option label="儿童" value="CHILD"/><el-option label="青少年" value="ADOLESCENT"/><el-option label="成年人" value="ADULT"/><el-option label="老年人" value="OLDER_ADULT"/><el-option label="未知" value="UNKNOWN"/></el-select></el-form-item><el-form-item label="必要生理信息"><el-select v-model="profile.physiologicalInfoStatus"><el-option label="无" value="NONE"/><el-option label="未知" value="UNKNOWN"/><el-option label="已填写" value="PROVIDED"/></el-select><el-input v-if="profile.physiologicalInfoStatus==='PROVIDED'" v-model="profile.physiologicalInfo" maxlength="500" placeholder="只填写与健康评估必要的信息"/></el-form-item><el-form-item label="慢性病"><el-select v-model="profile.chronicConditionsStatus"><el-option label="无" value="NONE"/><el-option label="未知" value="UNKNOWN"/><el-option label="已填写" value="PROVIDED"/></el-select><el-input v-if="profile.chronicConditionsStatus==='PROVIDED'" :model-value="listText(profile.chronicConditions)" type="textarea" placeholder="多项可用逗号分隔" @update:model-value="setList('chronicConditions',$event)"/></el-form-item><el-form-item label="过敏"><el-select v-model="profile.allergiesStatus"><el-option label="无" value="NONE"/><el-option label="未知" value="UNKNOWN"/><el-option label="已填写" value="PROVIDED"/></el-select><el-input v-if="profile.allergiesStatus==='PROVIDED'" :model-value="listText(profile.allergies)" type="textarea" placeholder="多项可用逗号分隔" @update:model-value="setList('allergies',$event)"/></el-form-item><el-form-item label="长期用药"><el-select v-model="profile.longTermMedicationsStatus"><el-option label="无" value="NONE"/><el-option label="未知" value="UNKNOWN"/><el-option label="已填写" value="PROVIDED"/></el-select><el-input v-if="profile.longTermMedicationsStatus==='PROVIDED'" :model-value="listText(profile.longTermMedications)" type="textarea" placeholder="多项可用逗号分隔" @update:model-value="setList('longTermMedications',$event)"/></el-form-item></div><el-button type="primary" size="large" :loading="saving" @click="saveProfile">保存健康资料</el-button></el-form></article>
+          <div class="page-heading"><div><span class="eyebrow">健康资料</span><h1>维护必要的健康背景</h1><p>生理情况直接点击选项；慢性病、过敏和长期用药仍可选择“无、不确定、已填写”。提交问诊时会保存当时的资料快照。</p></div></div>
+          <article class="panel profile-panel">
+            <el-form label-position="top">
+              <div class="profile-grid">
+                <el-form-item label="年龄段">
+                  <el-select v-model="profile.ageBand"><el-option label="儿童" value="CHILD"/><el-option label="青少年" value="ADOLESCENT"/><el-option label="成年人" value="ADULT"/><el-option label="老年人" value="OLDER_ADULT"/><el-option label="未知" value="UNKNOWN"/></el-select>
+                </el-form-item>
+                <el-form-item class="physiology-profile-item" label="生理情况（点击选择）">
+                  <p class="profile-field-help">仅选择与当前健康评估有关的信息，不需要自行描述。</p>
+                  <section class="profile-option-section" aria-labelledby="birth-sex-label">
+                    <strong id="birth-sex-label">出生时登记性别</strong>
+                    <div class="profile-choice-grid">
+                      <button v-for="option in BIRTH_SEX_OPTIONS" :key="option.value" type="button" class="profile-choice" :class="{selected:physiology.birthSex===option.value}" :aria-pressed="physiology.birthSex===option.value" @click="physiology.birthSex=option.value">{{option.label}}</button>
+                    </div>
+                  </section>
+                  <section class="profile-option-section" aria-labelledby="reproductive-status-label">
+                    <strong id="reproductive-status-label">当前生育相关情况</strong>
+                    <div class="profile-choice-grid reproductive">
+                      <button v-for="option in REPRODUCTIVE_STATUS_OPTIONS" :key="option.value" type="button" class="profile-choice" :class="{selected:physiology.reproductiveStatus===option.value}" :aria-pressed="physiology.reproductiveStatus===option.value" @click="physiology.reproductiveStatus=option.value">{{option.label}}</button>
+                    </div>
+                  </section>
+                </el-form-item>
+                <el-form-item label="慢性病"><el-select v-model="profile.chronicConditionsStatus"><el-option label="无" value="NONE"/><el-option label="不确定" value="UNKNOWN"/><el-option label="已填写" value="PROVIDED"/></el-select><el-input v-if="profile.chronicConditionsStatus==='PROVIDED'" :model-value="listText(profile.chronicConditions)" type="textarea" placeholder="多项可用逗号分隔" @update:model-value="setList('chronicConditions',$event)"/></el-form-item>
+                <el-form-item label="过敏"><el-select v-model="profile.allergiesStatus"><el-option label="无" value="NONE"/><el-option label="不确定" value="UNKNOWN"/><el-option label="已填写" value="PROVIDED"/></el-select><el-input v-if="profile.allergiesStatus==='PROVIDED'" :model-value="listText(profile.allergies)" type="textarea" placeholder="多项可用逗号分隔" @update:model-value="setList('allergies',$event)"/></el-form-item>
+                <el-form-item label="长期用药"><el-select v-model="profile.longTermMedicationsStatus"><el-option label="无" value="NONE"/><el-option label="不确定" value="UNKNOWN"/><el-option label="已填写" value="PROVIDED"/></el-select><el-input v-if="profile.longTermMedicationsStatus==='PROVIDED'" :model-value="listText(profile.longTermMedications)" type="textarea" placeholder="多项可用逗号分隔" @update:model-value="setList('longTermMedications',$event)"/></el-form-item>
+              </div>
+              <el-button type="primary" size="large" :loading="saving" @click="saveProfile">保存健康资料</el-button>
+            </el-form>
+          </article>
         </template>
       </main>
     </div>

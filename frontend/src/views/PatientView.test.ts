@@ -29,6 +29,8 @@ describe('PatientView v2 intake',()=>{
     state.patientProfile.mockReset().mockResolvedValue(profile)
     state.createVisit.mockReset().mockResolvedValue({id:'visit-1'})
     state.updateVisit.mockReset().mockResolvedValue({id:'visit-1'})
+    state.submitVisit.mockReset().mockResolvedValue({id:'visit-1',status:'PENDING_REVIEW'})
+    state.savePatientProfile.mockReset().mockResolvedValue(profile)
     state.analyzeComplaint.mockReset().mockResolvedValue({
       status:'SUCCEEDED',rawComplaint:'我肚子痛',normalizedSummary:'患者自述腹部疼痛。',
       tags:[{code:'ABDOMINAL_PAIN',displayName:'腹痛',category:'消化系统',source:'ai_extracted',confidence:.96,evidenceText:'肚子痛',confirmationStatus:'proposed'}],
@@ -79,5 +81,36 @@ describe('PatientView v2 intake',()=>{
     }))
     expect(wrapper.text()).toContain('腹痛')
     expect(wrapper.text()).toContain('AI 识别')
+  })
+
+  it('uses click choices instead of free text for physiological information',async()=>{
+    const wrapper=mountView();await flushPromises()
+    await wrapper.findAll('button').find(button=>button.text()==='健康资料')!.trigger('click')
+    expect(wrapper.text()).toContain('出生时登记性别')
+    expect(wrapper.text()).toContain('当前生育相关情况')
+    await wrapper.findAll('button').find(button=>button.text()==='女')!.trigger('click')
+    await wrapper.findAll('button').find(button=>button.text()==='已怀孕')!.trigger('click')
+    await wrapper.findAll('button').find(button=>button.text()==='保存健康资料')!.trigger('click')
+    await flushPromises()
+    const saved=state.savePatientProfile.mock.calls[0][0]
+    expect(JSON.parse(saved.physiologicalInfo)).toEqual({birthSex:'FEMALE',reproductiveStatus:'PREGNANT'})
+    expect(saved.physiologicalInfoStatus).toBe('PROVIDED')
+  })
+
+  it('persists current health profile before submitting a visit',async()=>{
+    const wrapper=mountView();await flushPromises()
+    await wrapper.findAll('button').find(button=>button.text()==='健康资料')!.trigger('click')
+    await wrapper.findAll('button').find(button=>button.text()==='女')!.trigger('click')
+    await wrapper.findAll('button').find(button=>button.text()==='已怀孕')!.trigger('click')
+    await wrapper.findAll('button').find(button=>button.text()==='新建预问诊')!.trigger('click')
+    await wrapper.find('.symptom-picker-launcher').trigger('click')
+    await wrapper.findAll('button').find(button=>button.text().includes('头痛'))!.trigger('click')
+    await wrapper.findAll('button').find(button=>button.text().includes('检查提交'))!.trigger('click')
+    await wrapper.findAll('button').find(button=>button.text()==='提交预问诊')!.trigger('click')
+    await flushPromises()
+    expect(state.savePatientProfile).toHaveBeenCalledOnce()
+    expect(JSON.parse(state.savePatientProfile.mock.calls[0][0].physiologicalInfo)).toEqual({birthSex:'FEMALE',reproductiveStatus:'PREGNANT'})
+    expect(state.submitVisit).toHaveBeenCalledWith('visit-1')
+    expect(state.savePatientProfile.mock.invocationCallOrder[0]).toBeLessThan(state.submitVisit.mock.invocationCallOrder[0])
   })
 })

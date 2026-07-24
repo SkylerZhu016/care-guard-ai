@@ -86,7 +86,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-this-demo-secret-at-least-32-bytes}
       AI_BASE_URL: http://ai-api:8000
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-change-me-local-only}
-      AI_JOB_TIMEOUT_SECONDS: ${AI_JOB_TIMEOUT_SECONDS:-10}
+      AI_JOB_TIMEOUT_SECONDS: ${AI_JOB_TIMEOUT_SECONDS:-60}
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-change-me-local-only}

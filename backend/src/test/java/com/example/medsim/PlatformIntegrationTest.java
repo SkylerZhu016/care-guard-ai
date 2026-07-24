@@ -49,6 +49,22 @@ class PlatformIntegrationTest {
     }
 
     @Test
+    void errorEnvelopeIsConsistentForSecurityAndValidationFailures() throws Exception {
+        mvc.perform(get("/api/v2/intake-catalog"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.timestamp").isString())
+            .andExpect(jsonPath("$.requestId").isString())
+            .andExpect(jsonPath("$.code").value("AUTH_UNAUTHORIZED"))
+            .andExpect(jsonPath("$.fieldErrors").isArray());
+        mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content("{}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.timestamp").isString())
+            .andExpect(jsonPath("$.requestId").isString())
+            .andExpect(jsonPath("$.code").value("COMMON_VALIDATION_FAILED"))
+            .andExpect(jsonPath("$.fieldErrors").isArray());
+    }
+
+    @Test
     void unsupportedSymptomsRequireManualReviewAndNeverWriteSeverity() throws Exception {
         String patient = login("patient");
         JsonNode draft = createV2(patient, unsupportedVisit());
@@ -158,6 +174,40 @@ class PlatformIntegrationTest {
                 .header("Idempotency-Key", "complaint-only-001"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("VISIT_SYMPTOMS_REQUIRED"));
+    }
+
+    @Test
+    void completingEveryFollowupTaskCompletesPlanAndClosesVisit() throws Exception {
+        String patient = login("patient"), clinician = login("clinician"), followup = login("followup");
+        JsonNode submitted = submitV2(patient, createV2(patient, unsupportedVisit()).get("id").asText(), "followup-complete-001");
+        JsonNode reviewed = mapper.readTree(mvc.perform(post("/api/v1/triage-results/{id}/review", submitted.at("/triage/id").asText())
+                .header("Authorization", bearer(clinician)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"decision\":\"ACCEPT\",\"reason\":\"已完成人工复核\",\"finalUrgency\":\"ROUTINE\"}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("REVIEWED"))
+            .andReturn().getResponse().getContentAsString());
+        JsonNode plan = mapper.readTree(mvc.perform(post("/api/v1/followup-plans").header("Authorization", bearer(clinician))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"visitId\":\"" + reviewed.get("id").asText() + "\",\"templateCode\":\"GENERAL_FOLLOWUP_V1\"}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("DRAFT"))
+            .andReturn().getResponse().getContentAsString());
+        JsonNode active = mapper.readTree(mvc.perform(post("/api/v1/followup-plans/{id}/activate", plan.get("id").asText())
+                .header("Authorization", bearer(clinician)))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ACTIVE"))
+            .andExpect(jsonPath("$.tasks.length()").value(4))
+            .andReturn().getResponse().getContentAsString());
+        for (JsonNode task : active.get("tasks")) {
+            String taskId = task.get("id").asText();
+            mvc.perform(patch("/api/v1/followup-tasks/{id}", taskId).header("Authorization", bearer(followup))
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"IN_PROGRESS\",\"resultSummary\":\"处理中\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+            mvc.perform(patch("/api/v1/followup-tasks/{id}", taskId).header("Authorization", bearer(followup))
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"COMPLETED\",\"resultSummary\":\"任务已完成\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("COMPLETED"));
+        }
+        assertThat(jdbc.queryForObject("SELECT status FROM followup_plans WHERE id=?", String.class, UUID.fromString(plan.get("id").asText()))).isEqualTo("COMPLETED");
+        assertThat(jdbc.queryForObject("SELECT status FROM visits WHERE id=?", String.class, UUID.fromString(reviewed.get("id").asText()))).isEqualTo("CLOSED");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE action='FOLLOWUP_PLAN_COMPLETED' AND target_id=?", Integer.class,
+            UUID.fromString(plan.get("id").asText()))).isEqualTo(1);
     }
 
     @Test

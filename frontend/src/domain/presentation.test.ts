@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { reasonLabel, taskPresentation } from './presentation'
+import { parsePhysiologicalInfo, physiologicalInfoLabel, reasonLabel, serializePhysiologicalInfo, taskPresentation } from './presentation'
 
 describe('presentation safety boundary', () => {
   it('describes unsupported symptoms as requiring human review', () => {
@@ -13,5 +13,11 @@ describe('presentation safety boundary', () => {
 
   it('uses human-readable task labels', () => {
     expect(taskPresentation('BP_RECORD').label).toBe('血压记录')
+  })
+
+  it('serializes physiological choices without free-text input', () => {
+    const encoded=serializePhysiologicalInfo({birthSex:'FEMALE',reproductiveStatus:'PREGNANT'})
+    expect(parsePhysiologicalInfo(encoded)).toEqual({birthSex:'FEMALE',reproductiveStatus:'PREGNANT'})
+    expect(physiologicalInfoLabel(encoded)).toContain('已怀孕')
   })
 })

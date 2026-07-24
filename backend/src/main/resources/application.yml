@@ -37,7 +37,7 @@ app:
   jwt-expiration-minutes: 60
   ai-base-url: ${AI_BASE_URL:http://127.0.0.1:8000}
   internal-service-token: ${INTERNAL_SERVICE_TOKEN:change-me-local-only}
-  ai-job-timeout-seconds: ${AI_JOB_TIMEOUT_SECONDS:10}
+  ai-job-timeout-seconds: ${AI_JOB_TIMEOUT_SECONDS:60}
   minio-endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:59000}
   minio-access-key: ${MINIO_ACCESS_KEY:minioadmin}
   minio-secret-key: ${MINIO_SECRET_KEY:change-me-local-only}

@@ -142,6 +142,7 @@ class PlatformService {
         if (complete && (input.resultSummary()==null || input.resultSummary().isBlank())) throw new ApiException(HttpStatus.BAD_REQUEST,"FOLLOWUP_RESULT_REQUIRED","完成任务必须填写结果摘要");
         task.status=input.status(); task.resultSummary=privacy.sanitize(input.resultSummary()); if(task.status==TaskStatus.COMPLETED) task.completedAt=OffsetDateTime.now();
         tasks.save(task); audit(actor.id(), "FOLLOWUP_TASK_UPDATED", "FOLLOWUP_TASK", task.id, "SUCCESS", Map.of("status", task.status.name()));
+        if (complete) completePlanWhenAllTasksFinished(task.planId, actor.id());
         return taskView(task);
     }
 
@@ -181,6 +182,15 @@ class PlatformService {
         alert.reasonCodes=String.join(",", reasons); alert.redactedSummary="自动信息整理未完成，需要人工复核"; alerts.save(alert);
     }
     private void transition(Visit visit, VisitStatus target) { if(!rules.canTransition(visit.status,target)) throw ApiException.conflict("VISIT_INVALID_TRANSITION", "不允许的病例状态迁移"); visit.status=target; }
+    private void completePlanWhenAllTasksFinished(UUID planId, UUID actorId) {
+        var plan=plans.findById(planId).orElseThrow(ApiException::notFound);
+        var planTasks=tasks.findByPlanId(planId);
+        if (plan.status!=PlanStatus.ACTIVE || planTasks.isEmpty() || planTasks.stream().anyMatch(value->value.status!=TaskStatus.COMPLETED)) return;
+        plan.status=PlanStatus.COMPLETED; plans.save(plan);
+        var visit=visits.findById(plan.visitId).orElseThrow(ApiException::notFound);
+        if (visit.status==VisitStatus.FOLLOWUP_ACTIVE) { transition(visit, VisitStatus.CLOSED); visits.save(visit); }
+        audit(actorId, "FOLLOWUP_PLAN_COMPLETED", "FOLLOWUP_PLAN", plan.id, "SUCCESS", Map.of("taskCount", planTasks.size()));
+    }
     private Visit ownedDraft(AuthPrincipal actor, UUID id) { var v=visits.findById(id).orElseThrow(ApiException::notFound); if(!v.ownerId.equals(actor.id())) throw ApiException.notFound(); if(v.status!=VisitStatus.DRAFT) throw ApiException.conflict("VISIT_NOT_EDITABLE", "只有草稿可编辑"); return v; }
     private void replaceSymptoms(UUID visitId, List<SymptomInput> input) { symptoms.deleteByVisitId(visitId); for(var item:input){ var s=new SymptomEntity(); s.id=UUID.randomUUID(); s.visitId=visitId; s.code=item.code(); s.name=privacy.sanitize(item.name()); s.legacySeverity=item.severity(); s.onset=privacy.sanitize(item.onset()); s.catalogVersion="legacy-v1"; s.supportLevel=Set.of("CHEST_PAIN","DYSPNEA","SYNCOPE","ALTERED_CONSCIOUSNESS").contains(item.code())?SupportLevel.RULE_SUPPORTED:SupportLevel.RECORD_ONLY; s.reportSource="LEGACY"; symptoms.save(s); } }
     private void createTask(FollowupPlan plan, UUID assignee, String code, String title, int dueDays) { var t=new FollowupTask(); t.id=UUID.randomUUID(); t.planId=plan.id; t.assigneeId=assignee; t.taskCode=code; t.title=title; t.dueAt=OffsetDateTime.now().plusDays(dueDays); tasks.save(t); }

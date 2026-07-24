@@ -23,6 +23,9 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v2/intake-catalog:
     get:
       summary: 获取版本化症状目录与动态问题
@@ -32,6 +35,9 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/IntakeCatalog' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v2/patient-profile:
     get:
       summary: 获取当前患者健康资料
@@ -41,6 +47,9 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PatientProfileView' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
     put:
       summary: 保存当前患者健康资料
       requestBody:
@@ -54,6 +63,10 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PatientProfileView' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v2/visits:
     post:
       summary: 创建 v2 草稿
@@ -68,6 +81,10 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/VisitViewV2' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v2/visits/{id}:
     parameters:
       - $ref: '#/components/parameters/VisitId'
@@ -79,6 +96,9 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/VisitViewV2' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
     put:
       summary: 自动保存或更新 v2 草稿
       requestBody:
@@ -92,7 +112,11 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/VisitViewV2' }
-        '409': { description: 已提交或历史问诊不可编辑 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v2/visits/{id}/submit:
     post:
       summary: 提交 v2 问诊
@@ -108,6 +132,12 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/VisitViewV2' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v2/visits/{id}/analyze-complaint:
     post:
       summary: 对草稿中的原始主诉进行 AI 结构化并匹配目录标签
@@ -120,6 +150,12 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ComplaintAnalysis' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v2/visits/{id}/complaint-structure:
     put:
       summary: 保存患者确认、删除或补充后的主诉结构
@@ -136,6 +172,12 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ComplaintAnalysis' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v2/visits/{id}/supplements:
     post:
       summary: 为已提交问诊追加补充信息
@@ -152,6 +194,12 @@ paths:
                 content: { type: string, minLength: 1, maxLength: 2000 }
       responses:
         '200': { description: 已追加 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v2/visits/mine:
     get:
       summary: 当前患者的全部问诊
@@ -161,6 +209,9 @@ paths:
           content:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/VisitViewV2' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v2/clinician/visits:
     get:
       summary: 医务人员待审队列
@@ -170,6 +221,9 @@ paths:
           content:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/VisitViewV2' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v1/triage-results/{id}/review:
     post:
       summary: 医务人员人工终审
@@ -185,7 +239,12 @@ paths:
             schema: { $ref: '#/components/schemas/ReviewInput' }
       responses:
         '200': { description: 已终审 }
-        '409': { description: 尝试降低确定性规则等级 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v1/followup-plans:
     post:
       summary: 创建通用随访计划草稿
@@ -201,12 +260,21 @@ paths:
                 templateCode: { type: string, const: GENERAL_FOLLOWUP_V1 }
       responses:
         '200': { description: 已创建 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v1/visits:
     post:
       deprecated: true
       summary: 已停用的 v1 写接口
       responses:
-        '410': { description: INTAKE_V1_DEPRECATED }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v1/visits/{id}/intake:
     put:
       deprecated: true
@@ -214,7 +282,10 @@ paths:
       parameters:
         - $ref: '#/components/parameters/VisitId'
       responses:
-        '410': { description: INTAKE_V1_DEPRECATED }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /api/v1/visits/{id}/submit:
     post:
       deprecated: true
@@ -222,7 +293,10 @@ paths:
       parameters:
         - $ref: '#/components/parameters/VisitId'
       responses:
-        '410': { description: INTAKE_V1_DEPRECATED }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
 components:
   securitySchemes:
     bearerAuth:
@@ -235,7 +309,122 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+  responses:
+    BadRequest:
+      description: 请求格式、参数或业务前置条件无效
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            timestamp: '2026-07-24T10:00:00+08:00'
+            requestId: 29c6f765-392d-4c69-9be5-f9f4207293b6
+            code: COMMON_VALIDATION_FAILED
+            message: 输入校验失败
+            fieldErrors:
+              - field: chiefComplaint
+                code: NotBlank
+    Unauthorized:
+      description: 未登录、登录凭据无效或访问令牌失效
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            timestamp: '2026-07-24T10:00:00+08:00'
+            requestId: b10ffbac-cd12-46c5-a2de-ad44c83943b1
+            code: AUTH_UNAUTHORIZED
+            message: 请先登录
+            fieldErrors: []
+    Forbidden:
+      description: 已登录，但角色或资源权限不足
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            timestamp: '2026-07-24T10:00:00+08:00'
+            requestId: e1d76a8f-4d29-4c89-b041-b3b2ce435e80
+            code: AUTH_FORBIDDEN
+            message: 无权执行该操作
+            fieldErrors: []
+    NotFound:
+      description: 资源不存在，或资源所有权校验不通过
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            timestamp: '2026-07-24T10:00:00+08:00'
+            requestId: d7d8fd7f-1ea2-47fd-8cc1-94c7870f946d
+            code: RESOURCE_NOT_FOUND
+            message: 资源不存在或无权访问
+            fieldErrors: []
+    Conflict:
+      description: 当前资源状态不允许执行请求，例如问诊已提交、状态迁移非法或尝试降低规则等级
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            timestamp: '2026-07-24T10:00:00+08:00'
+            requestId: 0c3d1d3b-d060-42cd-894c-91068b306ed8
+            code: VISIT_INVALID_TRANSITION
+            message: 不允许的病例状态迁移
+            fieldErrors: []
+    Gone:
+      description: 旧版问诊写接口已停用
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            timestamp: '2026-07-24T10:00:00+08:00'
+            requestId: 2a97d063-9041-42d4-9264-8f3e5456298e
+            code: INTAKE_V1_DEPRECATED
+            message: 旧版问诊写接口已停用，请使用 /api/v2/visits
+            fieldErrors: []
+    InternalServerError:
+      description: 服务内部错误；响应不会包含堆栈、密钥或原始敏感数据
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            timestamp: '2026-07-24T10:00:00+08:00'
+            requestId: c97e3685-1e56-48e9-a59a-031b42f90269
+            code: INTERNAL_ERROR
+            message: 系统暂时不可用，请稍后重试
+            fieldErrors: []
   schemas:
+    FieldError:
+      type: object
+      required: [field, code]
+      properties:
+        field:
+          type: string
+          description: 校验失败的请求字段
+        code:
+          type: string
+          description: Bean Validation 或输入解析错误代码
+    ErrorResponse:
+      type: object
+      required: [timestamp, requestId, code, message, fieldErrors]
+      properties:
+        timestamp: { type: string, format: date-time }
+        requestId:
+          type: string
+          description: 本次错误响应的追踪标识
+        code:
+          type: string
+          description: 稳定的机器可读错误码
+          examples:
+            - COMMON_VALIDATION_FAILED
+            - AUTH_UNAUTHORIZED
+            - AUTH_FORBIDDEN
+            - RESOURCE_NOT_FOUND
+            - VISIT_INVALID_TRANSITION
+            - INTAKE_V1_DEPRECATED
+            - INTERNAL_ERROR
+        message:
+          type: string
+          description: 面向用户的中文错误说明
+        fieldErrors:
+          type: array
+          items: { $ref: '#/components/schemas/FieldError' }
     LoginRequest:
       type: object
       required: [username, password]
@@ -296,7 +485,14 @@ components:
       properties:
         ageBand: { type: string, enum: [CHILD, ADOLESCENT, ADULT, OLDER_ADULT, UNKNOWN] }
         physiologicalInfoStatus: { $ref: '#/components/schemas/ProfileFieldStatus' }
-        physiologicalInfo: { type: string }
+        physiologicalInfo:
+          type: string
+          description: >-
+            患者点击选项后生成的 JSON 字符串，不接受任意生理信息自由描述。
+            birthSex 可为 MALE、FEMALE、INTERSEX_OR_OTHER、UNKNOWN、PREFER_NOT_TO_SAY；
+            reproductiveStatus 可为 NOT_APPLICABLE、NOT_PREGNANT、POSSIBLY_PREGNANT、
+            PREGNANT、POSTPARTUM_SIX_WEEKS、BREASTFEEDING、UNKNOWN、PREFER_NOT_TO_SAY。
+          example: '{"birthSex":"FEMALE","reproductiveStatus":"PREGNANT"}'
         chronicConditionsStatus: { $ref: '#/components/schemas/ProfileFieldStatus' }
         chronicConditions: { type: array, items: { type: string } }
         allergiesStatus: { $ref: '#/components/schemas/ProfileFieldStatus' }

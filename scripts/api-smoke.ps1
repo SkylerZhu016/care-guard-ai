@@ -54,7 +54,7 @@ $followup = Login 'followup'
 $admin = Login 'admin'
 
 $catalog = Invoke-Api Get '/api/v2/intake-catalog' $patient.accessToken $null
-Assert-That ($catalog.version -eq 'intake-catalog-2026.07') 'v2 catalog version must match'
+Assert-That ($catalog.version -eq 'intake-catalog-2026.07.2') 'v2 catalog version must match'
 Assert-That (($catalog.symptoms | Where-Object { $_.code -eq 'HEADACHE' }).supportLevel -eq 'RECORD_ONLY') 'headache must be record-only'
 
 $profile = Invoke-Api Put '/api/v2/patient-profile' $patient.accessToken @{
@@ -111,18 +111,22 @@ Assert-That ($activePlan.status -eq 'ACTIVE') 'follow-up plan must be active'
 Assert-That ($activePlan.tasks.Count -eq 4) 'follow-up plan must create four tasks'
 
 $staffTasks = @(Invoke-Api Get '/api/v1/followup-tasks/mine' $followup.accessToken $null)
-$task = $staffTasks | Where-Object { $_.planId -eq $plan.id } | Select-Object -First 1
-Assert-That ($null -ne $task) 'follow-up staff must receive a task'
-$null = Invoke-Api Patch "/api/v1/followup-tasks/$($task.id)" $followup.accessToken @{ status = 'IN_PROGRESS'; resultSummary = '自动化测试处理中' }
-$completed = Invoke-Api Patch "/api/v1/followup-tasks/$($task.id)" $followup.accessToken @{ status = 'COMPLETED'; resultSummary = '自动化测试已完成' }
-Assert-That ($completed.status -eq 'COMPLETED') 'follow-up task must complete'
+$planTasks = @($staffTasks | Where-Object { $_.planId -eq $plan.id })
+Assert-That ($planTasks.Count -eq 4) 'follow-up staff must receive all four plan tasks'
+foreach ($task in $planTasks) {
+    $null = Invoke-Api Patch "/api/v1/followup-tasks/$($task.id)" $followup.accessToken @{ status = 'IN_PROGRESS'; resultSummary = '自动化测试处理中' }
+    $completed = Invoke-Api Patch "/api/v1/followup-tasks/$($task.id)" $followup.accessToken @{ status = 'COMPLETED'; resultSummary = '自动化测试已完成' }
+    Assert-That ($completed.status -eq 'COMPLETED') 'each follow-up task must complete'
+}
 
 $patientTasks = @(Invoke-Api Get '/api/v1/followup-tasks/mine' $patient.accessToken $null)
+$patientVisits = @(Invoke-Api Get '/api/v2/visits/mine' $patient.accessToken $null)
 $alerts = @(Invoke-Api Get '/api/v1/admin/safety-alerts' $admin.accessToken $null)
 $audits = @(Invoke-Api Get '/api/v1/admin/audit-logs' $admin.accessToken $null)
 $runs = @(Invoke-Api Get '/api/v1/admin/agent-runs' $admin.accessToken $null)
 $guidelines = @(Invoke-Api Get '/api/v1/admin/guidelines' $admin.accessToken $null)
 Assert-That (($patientTasks | Where-Object { $_.planId -eq $plan.id }).Count -eq 4) 'patient must see all plan tasks'
+Assert-That (($patientVisits | Where-Object { $_.id -eq $visit.id }).status -eq 'CLOSED') 'visit must close after every follow-up task completes'
 Assert-That ($audits.Count -gt 0) 'admin audit log must not be empty'
 Assert-That ($runs.Count -gt 0) 'admin agent run list must not be empty'
 Assert-That ($guidelines.Count -ge 2) 'admin must see active guideline metadata'
@@ -131,7 +135,7 @@ Assert-That (($guidelines | Measure-Object -Property chunkCount -Sum).Sum -ge 3)
 [pscustomobject]@{
     status = 'PASS'; visitId = $visit.id; manualReviewVisitId = $manualVisit.id; ruleUrgency = $submitted.triage.ruleUrgency
     aiRunStatus = $submitted.runs[0].status; citationCount = $submitted.runs[0].citations.Count
-    planId = $plan.id; completedTaskId = $task.id
+    planId = $plan.id; completedTaskCount = $planTasks.Count
     patientTaskCount = $patientTasks.Count; alertCount = $alerts.Count; auditCount = $audits.Count; agentRunCount = $runs.Count
     agentTraceCount = $submitted.runs[0].agentTrace.Count; guidelineCount = $guidelines.Count
 } | ConvertTo-Json -Depth 5

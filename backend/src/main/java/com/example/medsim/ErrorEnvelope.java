@@ -1,6 +1,7 @@
 package com.example.medsim;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +60,9 @@ class ApiExceptionHandler {
 }
 
 final class ErrorEnvelope {
-    private static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+        .findAndRegisterModules()
+        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private ErrorEnvelope() {}
     static void write(HttpServletResponse response, int status, String code, String message) throws IOException {
         response.setStatus(status); response.setContentType("application/json;charset=UTF-8");
