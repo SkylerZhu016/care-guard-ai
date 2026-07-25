@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight, Bell, Check, CircleCheck, Clock, Delete, Document, EditPen, FirstAidKit, FolderOpened, Plus, User } from '@element-plus/icons-vue'
 import { ApiClient } from '../api'
-import { BIRTH_SEX_OPTIONS, formatDate, formatDateTime, parsePhysiologicalInfo, REPRODUCTIVE_STATUS_OPTIONS, serializePhysiologicalInfo } from '../domain/presentation'
+import { BIRTH_SEX_OPTIONS, formatDate, formatDateTime, normalizeReproductiveStatus, parsePhysiologicalInfo, reproductiveOptionsFor, serializePhysiologicalInfo } from '../domain/presentation'
 import { useSessionStore } from '../stores/session'
 import type { CatalogSymptom, ComplaintAnalysis, IntakeCatalog, PatientProfileInput, QuestionAnswer, SymptomReport, Task, Visit } from '../types'
 import StatusPill from '../components/StatusPill.vue'
@@ -21,6 +21,7 @@ const physiology=reactive(parsePhysiologicalInfo())
 const form=reactive({primarySymptomCode:'',chiefComplaint:'',freeText:'',symptomReports:[] as SymptomReport[]})
 
 const areas=[{id:'INTAKE',label:'新建预问诊',icon:FirstAidKit},{id:'RECORDS',label:'问诊记录',icon:FolderOpened},{id:'TASKS',label:'随访任务',icon:Bell},{id:'PROFILE',label:'健康资料',icon:User}] as const
+const filteredReproductiveOptions=computed(()=>reproductiveOptionsFor(physiology.birthSex))
 const filteredCatalog=computed(()=>catalog.value.symptoms.filter(item=>!query.value.trim()||`${item.name}${item.category}`.includes(query.value.trim())))
 const selectedDefinitions=computed(()=>form.symptomReports.map(report=>definition(report.symptomCode)).filter(Boolean) as CatalogSymptom[])
 const canSaveDraft=computed(()=>!!form.chiefComplaint.trim())
@@ -96,12 +97,13 @@ async function submit(){
 async function editDraft(visit:Visit){draftId.value=visit.id;complaintAnalysis.value=visit.complaintAnalysis||null;Object.assign(form,{primarySymptomCode:visit.primarySymptomCode||visit.symptomReports[0]?.symptomCode||'',chiefComplaint:visit.chiefComplaint,freeText:visit.freeText,symptomReports:visit.symptomReports.map(item=>({...item,customName:item.supportLevel==='CUSTOM'?item.name:undefined,answers:item.answers.map(a=>({...a,selectedOptions:[...a.selectedOptions]}))}))});area.value='INTAKE';step.value=1;window.scrollTo({top:0,behavior:'smooth'})}
 async function refreshVisits(){visits.value=await api.myVisits()}
 async function addSupplement(visit:Visit){try{const result=await ElMessageBox.prompt('请只补充与本次不适有关的新信息，不要填写姓名、电话或地址。','补充信息',{confirmButtonText:'提交补充',cancelButtonText:'取消',inputType:'textarea',inputValidator:value=>!!value.trim()||'请输入补充内容'});supplementing.value=visit.id;await api.supplementVisit(visit.id,result.value);ElMessage.success('补充信息已提交，将随原记录一起审核');await refreshVisits()}catch(e:any){if(e!=='cancel'&&e!=='close')ElMessage.error(e.message)}finally{supplementing.value=null}}
-function syncPhysiologicalInfo(){profile.physiologicalInfo=serializePhysiologicalInfo(physiology);profile.physiologicalInfoStatus=physiology.birthSex==='UNKNOWN'&&physiology.reproductiveStatus==='UNKNOWN'?'UNKNOWN':'PROVIDED'}
+function syncPhysiologicalInfo(){physiology.reproductiveStatus=normalizeReproductiveStatus(physiology.birthSex,physiology.reproductiveStatus);profile.physiologicalInfo=serializePhysiologicalInfo(physiology);profile.physiologicalInfoStatus=physiology.birthSex==='UNKNOWN'&&physiology.reproductiveStatus==='UNKNOWN'?'UNKNOWN':'PROVIDED'}
 async function persistProfile(){syncPhysiologicalInfo();return api.savePatientProfile({...profile})}
 async function saveProfile(){saving.value=true;try{await persistProfile();ElMessage.success('健康资料已保存，只影响之后提交的问诊快照')}catch(e:any){ElMessage.error(e.message)}finally{saving.value=false}}
 function listText(values:string[]){return values.join('、')}
 function setList(key:'chronicConditions'|'allergies'|'longTermMedications',value:string){profile[key]=value.split(/[，,、\n]/).map(item=>item.trim()).filter(Boolean)}
 watch(form,()=>{if(form.chiefComplaint.trim()||form.symptomReports.length)localStorage.setItem(draftKey,JSON.stringify(form))},{deep:true})
+watch(()=>physiology.birthSex,birthSex=>{physiology.reproductiveStatus=normalizeReproductiveStatus(birthSex,physiology.reproductiveStatus)})
 onMounted(()=>load().catch((e:any)=>ElMessage.error(e.message)))
 </script>
 
@@ -173,7 +175,7 @@ onMounted(()=>load().catch((e:any)=>ElMessage.error(e.message)))
         </template>
 
         <template v-else>
-          <div class="page-heading"><div><span class="eyebrow">健康资料</span><h1>维护必要的健康背景</h1><p>生理情况直接点击选项；慢性病、过敏和长期用药仍可选择“无、不确定、已填写”。提交问诊时会保存当时的资料快照。</p></div></div>
+          <div class="page-heading"><div><span class="eyebrow">健康资料</span><h1>维护必要的健康背景</h1><p>选择出生时登记性别后，系统会筛选适用的生育相关选项；仍可选择“不确定”或“暂不回答”。提交问诊时会保存当时的资料快照。</p></div></div>
           <article class="panel profile-panel">
             <el-form label-position="top">
               <div class="profile-grid">
@@ -191,7 +193,7 @@ onMounted(()=>load().catch((e:any)=>ElMessage.error(e.message)))
                   <section class="profile-option-section" aria-labelledby="reproductive-status-label">
                     <strong id="reproductive-status-label">当前生育相关情况</strong>
                     <div class="profile-choice-grid reproductive">
-                      <button v-for="option in REPRODUCTIVE_STATUS_OPTIONS" :key="option.value" type="button" class="profile-choice" :class="{selected:physiology.reproductiveStatus===option.value}" :aria-pressed="physiology.reproductiveStatus===option.value" @click="physiology.reproductiveStatus=option.value">{{option.label}}</button>
+                      <button v-for="option in filteredReproductiveOptions" :key="option.value" type="button" class="profile-choice" :class="{selected:physiology.reproductiveStatus===option.value}" :aria-pressed="physiology.reproductiveStatus===option.value" @click="physiology.reproductiveStatus=option.value">{{option.label}}</button>
                     </div>
                   </section>
                 </el-form-item>

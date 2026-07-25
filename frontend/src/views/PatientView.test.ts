@@ -97,6 +97,23 @@ describe('PatientView v2 intake',()=>{
     expect(saved.physiologicalInfoStatus).toBe('PROVIDED')
   })
 
+  it('filters reproductive choices and normalizes a stale selection after sex changes',async()=>{
+    const wrapper=mountView();await flushPromises()
+    await wrapper.findAll('button').find(button=>button.text()==='健康资料')!.trigger('click')
+    await wrapper.findAll('button').find(button=>button.text()==='女')!.trigger('click')
+    expect(wrapper.findAll('.reproductive button').map(button=>button.text())).toEqual([
+      '目前未怀孕','可能怀孕','已怀孕','产后 6 周内','正在哺乳','不确定','暂不回答',
+    ])
+    await wrapper.findAll('button').find(button=>button.text()==='已怀孕')!.trigger('click')
+    await wrapper.findAll('button').find(button=>button.text()==='男')!.trigger('click')
+    expect(wrapper.findAll('.reproductive button').map(button=>button.text())).toEqual(['不适用','不确定','暂不回答'])
+    await wrapper.findAll('button').find(button=>button.text()==='保存健康资料')!.trigger('click')
+    await flushPromises()
+    expect(JSON.parse(state.savePatientProfile.mock.calls[0][0].physiologicalInfo)).toEqual({
+      birthSex:'MALE',reproductiveStatus:'NOT_APPLICABLE',
+    })
+  })
+
   it('persists current health profile before submitting a visit',async()=>{
     const wrapper=mountView();await flushPromises()
     await wrapper.findAll('button').find(button=>button.text()==='健康资料')!.trigger('click')

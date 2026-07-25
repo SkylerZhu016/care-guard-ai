@@ -37,10 +37,29 @@ export const REPRODUCTIVE_STATUS_OPTIONS:Array<{value:ReproductiveStatus;label:s
   {value:'PREFER_NOT_TO_SAY',label:'暂不回答'},
 ]
 
+const MALE_REPRODUCTIVE_STATUS_VALUES=new Set<ReproductiveStatus>(['NOT_APPLICABLE','UNKNOWN','PREFER_NOT_TO_SAY'])
+const FEMALE_REPRODUCTIVE_STATUS_VALUES=new Set<ReproductiveStatus>([
+  'NOT_PREGNANT','POSSIBLY_PREGNANT','PREGNANT','POSTPARTUM_SIX_WEEKS','BREASTFEEDING','UNKNOWN','PREFER_NOT_TO_SAY',
+])
+const maleReproductiveStatusOptions=REPRODUCTIVE_STATUS_OPTIONS.filter(item=>MALE_REPRODUCTIVE_STATUS_VALUES.has(item.value))
+const femaleReproductiveStatusOptions=REPRODUCTIVE_STATUS_OPTIONS.filter(item=>FEMALE_REPRODUCTIVE_STATUS_VALUES.has(item.value))
+
 const birthSexValues=new Set(BIRTH_SEX_OPTIONS.map(item=>item.value))
 const reproductiveStatusValues=new Set(REPRODUCTIVE_STATUS_OPTIONS.map(item=>item.value))
 const birthSexLabels=Object.fromEntries(BIRTH_SEX_OPTIONS.map(item=>[item.value,item.label])) as Record<BirthSex,string>
 const reproductiveStatusLabels=Object.fromEntries(REPRODUCTIVE_STATUS_OPTIONS.map(item=>[item.value,item.label])) as Record<ReproductiveStatus,string>
+
+export function reproductiveOptionsFor(birthSex:BirthSex){
+  if(birthSex==='MALE')return maleReproductiveStatusOptions
+  if(birthSex==='FEMALE')return femaleReproductiveStatusOptions
+  return REPRODUCTIVE_STATUS_OPTIONS
+}
+
+export function normalizeReproductiveStatus(birthSex:BirthSex,reproductiveStatus:ReproductiveStatus):ReproductiveStatus {
+  const allowed=new Set(reproductiveOptionsFor(birthSex).map(item=>item.value))
+  if(allowed.has(reproductiveStatus))return reproductiveStatus
+  return birthSex==='MALE'?'NOT_APPLICABLE':'UNKNOWN'
+}
 
 export function parsePhysiologicalInfo(value?:string):PhysiologicalSelection {
   try {
